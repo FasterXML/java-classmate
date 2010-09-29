@@ -1,0 +1,2 @@
+ClassMate is a zero-dependency Java library for accurately introspecting
+type information, including reliable resolution of generic type declarations.
