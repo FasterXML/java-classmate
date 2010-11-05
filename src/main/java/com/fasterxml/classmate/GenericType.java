@@ -18,12 +18,16 @@ import java.lang.reflect.Type;
  *</pre>
  * which can be passed to methods that accept <code>GenericReference</code>.
  */
-public abstract class GenericType <T>
+public abstract class GenericType<T>
 {
     protected final Type type;
 
-    protected GenericType()
+    protected GenericType() throws IllegalArgumentException
     {
+        /* First things first: may have multiple levels... we could try resolving
+         * it, but that could get messy with type variables.
+         * So for now, let's require direct extension
+         */
         Type superClass = getClass().getGenericSuperclass();
         if (superClass instanceof Class<?>) { // verify that we do have parameterization
             throw new IllegalArgumentException("TypeReference constructed without actual type information");
@@ -32,7 +36,12 @@ public abstract class GenericType <T>
             throw new IllegalArgumentException("Internal error: TypeReference's super type not ParameterizedType, but "
                     +superClass.getClass().getName());
         }
-        type = ((ParameterizedType) superClass).getActualTypeArguments()[0];
+        ParameterizedType pt = (ParameterizedType) superClass;
+        Type raw = pt.getRawType();
+        if (raw != GenericType.class) {
+            throw new IllegalArgumentException("TypeReference must be directly extended (was extending type "+raw+" instead)");
+        }
+        type = pt.getActualTypeArguments()[0];
     }
 
     public Type getType() { return type; }
