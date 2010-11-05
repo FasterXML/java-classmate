@@ -41,7 +41,7 @@ public class ClassKey
      */
 
     @Override
-        public boolean equals(Object o)
+    public boolean equals(Object o)
     {
         if (o == this) return true;
         if (o == null) return false;

@@ -128,4 +128,14 @@ public class TypeBindings
         }
         return Arrays.asList(_types);
     }
+
+    /*
+    /**********************************************************************
+    /* Package accessible methods
+    /**********************************************************************
+     */
+
+    protected ResolvedType[] typeParameterArray() {
+        return _types;
+    }
 }

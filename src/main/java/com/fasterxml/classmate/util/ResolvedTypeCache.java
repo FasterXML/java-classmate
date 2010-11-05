@@ -1,8 +1,6 @@
 package com.fasterxml.classmate.util;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.fasterxml.classmate.ResolvedType;
 
@@ -27,7 +25,7 @@ public class ResolvedTypeCache
         return get(new Key(simpleType));
     }
 
-    public synchronized ResolvedType find(Class<?> erasedType, List<ResolvedType> tp) {
+    public synchronized ResolvedType find(Class<?> erasedType, ResolvedType[] tp) {
         return get(new Key(erasedType, tp));
     }
 
@@ -36,10 +34,9 @@ public class ResolvedTypeCache
         return super.size();
     }
     
-    public synchronized void add(ResolvedType type)
+    public synchronized void add(ResolvedType type, ResolvedType[] typeParams)
     {
-        Key key = new Key(type.getErasedType(), type.getTypeParameters());
-        put(key, type);
+        put(new Key(type.getErasedType(), typeParams), type);
     }
     
     @Override
@@ -54,7 +51,7 @@ public class ResolvedTypeCache
     {
         private final Class<?> _erasedType;
         
-        private final List<ResolvedType> _typeParameters;
+        private final ResolvedType[] _typeParameters;
         
         private final int _hashCode;
         
@@ -62,15 +59,17 @@ public class ResolvedTypeCache
             this(simpleType, null);
         }
         
-        public Key(Class<?> erasedType, List<ResolvedType> tp) {
-            if (tp != null && tp.isEmpty()) {
+        public Key(Class<?> erasedType, ResolvedType[] tp)
+        {
+            // let's not hold on type empty arrays
+            if (tp != null && tp.length == 0) {
                 tp = null;
             }
             _erasedType = erasedType;
             _typeParameters = tp;
             int h = erasedType.getName().hashCode();
             if (tp != null) {
-                h += tp.size();
+                h += tp.length;
             }
             _hashCode = h;
         }
@@ -85,15 +84,15 @@ public class ResolvedTypeCache
             if (o == null || o.getClass() != getClass()) return false;
             Key other = (Key) o;
             if (other._erasedType != _erasedType) return false;
-            List<ResolvedType> otherTP = other._typeParameters;
+            ResolvedType[] otherTP = other._typeParameters;
             if (_typeParameters == null) {
                 return (otherTP == null);
             }
-            if (otherTP == null || otherTP.size() != _typeParameters.size()) {
+            if (otherTP == null || otherTP.length != _typeParameters.length) {
                 return false;
             }
-            for (int i = 0, len = _typeParameters.size(); i < len; ++i) {
-                if (!_typeParameters.get(i).equals(otherTP.get(i))) {
+            for (int i = 0, len = _typeParameters.length; i < len; ++i) {
+                if (!_typeParameters[i].equals(otherTP[i])) {
                     return false;
                 }
             }
@@ -101,4 +100,16 @@ public class ResolvedTypeCache
         }
     }
 
+    /*
+    /**********************************************************************
+    /* Methods for unit tests
+    /**********************************************************************
+     */
+    
+    public void add(ResolvedType type)
+    {
+        List<ResolvedType> tp = type.getTypeParameters();
+        ResolvedType[] tpa = tp.toArray(new ResolvedType[tp.size()]);
+        this.add(type, tpa);
+    }
 }

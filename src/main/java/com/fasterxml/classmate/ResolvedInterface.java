@@ -7,7 +7,7 @@ public class ResolvedInterface extends ResolvedType
     /**
      * List of interfaces this type implements; may be empty but never null
      */
-    protected final List<ResolvedType> _superInterfaces;
+    protected final ResolvedType[] _superInterfaces;
 
     /*
     /**********************************************************************
@@ -16,7 +16,7 @@ public class ResolvedInterface extends ResolvedType
      */
 
     public ResolvedInterface(Class<?> erased, TypeBindings bindings,
-            List<ResolvedType> superInterfaces)
+            ResolvedType[] superInterfaces)
     {
         super(erased, bindings);
         _superInterfaces = superInterfaces;
@@ -35,12 +35,12 @@ public class ResolvedInterface extends ResolvedType
 
     @Override
     public List<ResolvedType> getImplementedInterfaces() {
-        return _superInterfaces;
+        return (_superInterfaces.length == 0) ?
+                Collections.<ResolvedType>emptyList() : Arrays.asList(_superInterfaces);
     }
     
     @Override
-    public ResolvedType getArrayElementType() {
-        // interfaces are never arrays, so:
+    public ResolvedType getArrayElementType() { // interfaces are never arrays, so:
         return null;
     }
 

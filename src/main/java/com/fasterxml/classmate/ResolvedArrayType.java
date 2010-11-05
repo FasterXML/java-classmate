@@ -14,7 +14,6 @@ public class ResolvedArrayType  extends ResolvedClass
      */
 
     public ResolvedArrayType(Class<?> erased, TypeBindings bindings,
-            List<ResolvedType> typeParameters,
             ResolvedClass superclass, // must be java.lang.Object
             ResolvedType elementType)
     {

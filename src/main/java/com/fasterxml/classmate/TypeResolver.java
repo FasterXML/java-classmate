@@ -1,7 +1,7 @@
 package com.fasterxml.classmate;
 
 import java.lang.reflect.*;
-import java.util.HashMap;
+import java.util.*;
 
 import com.fasterxml.classmate.util.ClassKey;
 import com.fasterxml.classmate.util.ResolvedTypeCache;
@@ -38,11 +38,12 @@ public class TypeResolver
     
     /**
      * Since number of primitive types is small, and they are frequently needed,
-     * let's actually pre-create them for efficient reuse
+     * let's actually pre-create them for efficient reuse. Same goes for limited number
+     * of other "standard" types...
      */
-    protected final static HashMap<ClassKey, ResolvedPrimitiveType> _primitiveTypes;
+    protected final static HashMap<ClassKey, ResolvedType> _primitiveTypes;
     static {
-        _primitiveTypes = new HashMap<ClassKey, ResolvedPrimitiveType>(16);
+        _primitiveTypes = new HashMap<ClassKey, ResolvedType>(16);
         _primitiveTypes.put(new ClassKey(Boolean.TYPE), new ResolvedPrimitiveType(Boolean.TYPE, 'Z'));
         _primitiveTypes.put(new ClassKey(Byte.TYPE), new ResolvedPrimitiveType(Byte.TYPE, 'B'));
         _primitiveTypes.put(new ClassKey(Short.TYPE), new ResolvedPrimitiveType(Short.TYPE, 'S'));
@@ -53,6 +54,9 @@ public class TypeResolver
         _primitiveTypes.put(new ClassKey(Double.TYPE), new ResolvedPrimitiveType(Double.TYPE, 'D'));
         // should we include "void"? might as well...
         _primitiveTypes.put(new ClassKey(Void.TYPE), sVoid);
+
+        // and some other 'well-known' types...
+        _primitiveTypes.put(new ClassKey(Object.class), sJavaLangObject);
     }
 
     /*
@@ -86,11 +90,6 @@ public class TypeResolver
      */
     public ResolvedType resolve(Class<?> rawType)
     {
-        // First: a primitive type perhaps?
-        ResolvedType type = _primitiveTypes.get(new ClassKey(rawType));
-        if (type != null) {
-            return type;
-        }
         // with erased class, no bindings:
         return _fromClass(rawType, TypeBindings.emptyBindings());
     }
@@ -179,24 +178,100 @@ public class TypeResolver
         throw new IllegalArgumentException("Unrecognized type class: "+mainType.getClass().getName());
     }
 
-    private ResolvedType _fromClass(Class<?> cls, TypeBindings typeBindings)
+    private ResolvedType _fromClass(Class<?> rawType, TypeBindings typeBindings)
     {
-        return null;
+        // First: a primitive type perhaps?
+        ResolvedType type = _primitiveTypes.get(new ClassKey(rawType));
+        if (type != null) {
+            return type;
+        }
+        // If not, already recently resolved?
+        type = _resolvedTypes.find(rawType, typeBindings.typeParameterArray());
+        if (type != null) {
+            return type;
+        }
+        // Ok: no easy shortcut, let's figure out type of type...
+        if (rawType.isArray()) {
+            ResolvedType elementType = _fromAny(rawType.getComponentType(), typeBindings);
+            return new ResolvedArrayType(rawType, typeBindings, sJavaLangObject, elementType);
+        }
+        // For other types super interfaces are needed...
+        if (rawType.isInterface()) {
+            return new ResolvedInterface(rawType, typeBindings,
+                    _resolveSuperInterfaces(rawType, typeBindings));
+            
+        }
+        if (Modifier.isAbstract(rawType.getModifiers())) {
+            return new ResolvedAbstractClass(rawType, typeBindings,
+                    _resolveSuperClass(rawType, typeBindings),
+                    _resolveSuperInterfaces(rawType, typeBindings));
+        }
+        return new ResolvedConcreteClass(rawType, typeBindings,
+                _resolveSuperClass(rawType, typeBindings),
+                _resolveSuperInterfaces(rawType, typeBindings));
+    }
+
+    private ResolvedType[] _resolveSuperInterfaces(Class<?> rawType, TypeBindings typeBindings)
+    {
+        Type[] types = rawType.getGenericInterfaces();
+        if (types == null || types.length == 0) {
+            return ResolvedType.NO_TYPES;
+        }
+        int len = types.length;
+        ResolvedType[] resolved = new ResolvedType[len];
+        for (int i = 0; i < len; ++i) {
+            resolved[i] = _fromAny(types[i], typeBindings);
+        }
+        return resolved;
+    }
+
+    private ResolvedClass _resolveSuperClass(Class<?> rawType, TypeBindings typeBindings)
+    {
+        Type parent = rawType.getGenericSuperclass();
+        if (parent == null) {
+            return null;
+        }
+        ResolvedType rt = _fromAny(parent, typeBindings);
+        // can this ever be something other than class? (primitive, array)
+        return (ResolvedClass) rt;
     }
     
-    private ResolvedType _fromParamType(ParameterizedType ptype, TypeBindings typeBindings)
+    private ResolvedType _fromParamType(ParameterizedType ptype, TypeBindings parentBindings)
     {
-        return null;
+        /* First: what is the actual base type? One odd thing is that 'getRawType'
+         * returns Type, not Class<?> as one might expect. But let's assume it is
+         * always of type Class: if not, need to add more code to resolve it...
+         */
+        Class<?> rawType = (Class<?>) ptype.getRawType();
+        Type[] params = ptype.getActualTypeArguments();
+        int len = params.length;
+        ResolvedType[] types = new ResolvedType[len];
+
+        for (int i = 0; i < len; ++i) {
+            types[i] = _fromAny(params[i], parentBindings);
+        }
+        // Ok: this gives us current bindings for this type:
+        TypeBindings newBindings = TypeBindings.create(rawType, types);
+        return _fromClass(rawType, newBindings);
     }
 
     private ResolvedType _fromArrayType(GenericArrayType arrayType, TypeBindings typeBindings)
     {
-        return null;
+        ResolvedType elementType = _fromAny(arrayType.getGenericComponentType(), typeBindings);
+        // Figuring out raw class for generic array is actually bit tricky...
+        Object emptyArray = Array.newInstance(elementType.getErasedType(), 0);
+        return new ResolvedArrayType(emptyArray.getClass(), typeBindings,
+                sJavaLangObject, elementType);
     }
 
-    private ResolvedType _fromWildcard(WildcardType wcType, TypeBindings typeBindings)
+    private ResolvedType _fromWildcard(WildcardType wildType, TypeBindings typeBindings)
     {
-        return null;
+        /* Similar to challenges with TypeVariable, we may have multiple upper bounds.
+         * But it is also possible that if upper bound defaults to Object, we might want to
+         * consider lower bounds instead?
+         * For now, we won't try anything more advanced; above is just for future reference.
+         */
+        return _fromAny(wildType.getUpperBounds()[0], typeBindings);
     }
     
     private ResolvedType _fromVariable(TypeVariable<?> variable, TypeBindings typeBindings)

@@ -9,7 +9,7 @@ public class ResolvedAbstractClass extends ResolvedClass
     /**
      * List of interfaces this type implements; may be empty but never null
      */
-    protected final List<ResolvedType> _interfaces;
+    protected final ResolvedType[] _superInterfaces;
     
     /*
     /**********************************************************************
@@ -18,11 +18,11 @@ public class ResolvedAbstractClass extends ResolvedClass
      */
 
     public ResolvedAbstractClass(Class<?> erased, TypeBindings bindings,
-            ResolvedClass superClass, List<ResolvedType> interfaces)
+            ResolvedClass superClass, ResolvedType[] interfaces)
     {
         super(erased, bindings);
         _superClass = superClass;
-        _interfaces = (interfaces == null) ? Collections.<ResolvedType>emptyList() : interfaces;
+        _superInterfaces = (interfaces == null) ? NO_TYPES : interfaces;
     }
 
     /*
@@ -32,11 +32,12 @@ public class ResolvedAbstractClass extends ResolvedClass
      */
     
     @Override
-    public ResolvedType getParentClass() { return _superClass; }
+    public ResolvedClass getParentClass() { return _superClass; }
 
     @Override
     public List<ResolvedType> getImplementedInterfaces() {
-        return _interfaces;
+        return (_superInterfaces.length == 0) ?
+                Collections.<ResolvedType>emptyList() : Arrays.asList(_superInterfaces);
     }
     
     /*

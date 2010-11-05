@@ -4,6 +4,8 @@ import java.util.*;
 
 public abstract class ResolvedType
 {
+    protected final static ResolvedType[] NO_TYPES = new ResolvedType[0];
+    
     protected final Class<?> _erasedType;
 
     /**
