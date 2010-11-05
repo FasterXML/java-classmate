@@ -1,25 +1,31 @@
-package com.fasterxml.classmate;
+package com.fasterxml.classmate.types;
 
 import java.util.*;
 
-public class ResolvedInterface extends ResolvedType
+import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.TypeBindings;
+
+public class ResolvedAbstractClass extends ResolvedClass
 {
+    protected final ResolvedClass _superClass;
+
     /**
      * List of interfaces this type implements; may be empty but never null
      */
     protected final ResolvedType[] _superInterfaces;
-
+    
     /*
     /**********************************************************************
     /* Life cycle
     /**********************************************************************
      */
 
-    public ResolvedInterface(Class<?> erased, TypeBindings bindings,
-            ResolvedType[] superInterfaces)
+    public ResolvedAbstractClass(Class<?> erased, TypeBindings bindings,
+            ResolvedClass superClass, ResolvedType[] interfaces)
     {
         super(erased, bindings);
-        _superInterfaces = superInterfaces;
+        _superClass = superClass;
+        _superInterfaces = (interfaces == null) ? NO_TYPES : interfaces;
     }
 
     /*
@@ -28,10 +34,8 @@ public class ResolvedInterface extends ResolvedType
     /**********************************************************************
      */
     
-    public ResolvedType getParentClass() {
-        // interfaces do not have parent class, just interfaces
-        return null;
-    }
+    @Override
+    public ResolvedClass getParentClass() { return _superClass; }
 
     @Override
     public List<ResolvedType> getImplementedInterfaces() {
@@ -39,11 +43,6 @@ public class ResolvedInterface extends ResolvedType
                 Collections.<ResolvedType>emptyList() : Arrays.asList(_superInterfaces);
     }
     
-    @Override
-    public ResolvedType getArrayElementType() { // interfaces are never arrays, so:
-        return null;
-    }
-
     /*
     /**********************************************************************
     /* Simple property accessors
@@ -51,10 +50,10 @@ public class ResolvedInterface extends ResolvedType
      */
 
     @Override
-    public boolean isInterface() { return true; }
+    public boolean isConcrete() { return false; }
 
     @Override
-    public boolean isConcrete() { return false; }
+    public ResolvedType getArrayElementType() { return null; }
 
     @Override
     public boolean isArray() { return false; }
@@ -62,5 +61,3 @@ public class ResolvedInterface extends ResolvedType
     @Override
     public boolean isPrimitive() { return false; }
 }
-
-

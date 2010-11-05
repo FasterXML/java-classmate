@@ -1,7 +1,9 @@
-package com.fasterxml.classmate;
+package com.fasterxml.classmate.types;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
+import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.TypeBindings;
 
 /**
  * Type used for Java primitive types (which does not include arrays here).
@@ -12,6 +14,8 @@ import java.util.List;
  */
 public final class ResolvedPrimitiveType extends ResolvedClass
 {
+    private final static ResolvedPrimitiveType VOID = new ResolvedPrimitiveType(Void.TYPE, 'V');
+    
     /**
      * Primitive types have single-character Signature, easy and efficient
      * to just store here
@@ -30,6 +34,25 @@ public final class ResolvedPrimitiveType extends ResolvedClass
         _signature = String.valueOf(sig);
     }
 
+    public static List<ResolvedPrimitiveType> all()
+    {
+        ArrayList<ResolvedPrimitiveType> all = new ArrayList<ResolvedPrimitiveType>();
+        all.add(new ResolvedPrimitiveType(Boolean.TYPE, 'Z'));
+        all.add(new ResolvedPrimitiveType(Byte.TYPE, 'B'));
+        all.add(new ResolvedPrimitiveType(Short.TYPE, 'S'));
+        all.add(new ResolvedPrimitiveType(Character.TYPE, 'C'));
+        all.add(new ResolvedPrimitiveType(Integer.TYPE, 'I'));
+        all.add(new ResolvedPrimitiveType(Long.TYPE, 'J'));
+        all.add(new ResolvedPrimitiveType(Float.TYPE, 'F'));
+        all.add(new ResolvedPrimitiveType(Double.TYPE, 'D'));
+        return all;
+    }
+
+    public static ResolvedPrimitiveType voidType()
+    {
+        return VOID;
+    }
+    
     /*
     /**********************************************************************
     /* Accessors for related types

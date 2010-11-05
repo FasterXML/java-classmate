@@ -1,8 +1,11 @@
-package com.fasterxml.classmate;
+package com.fasterxml.classmate.types;
 
 import java.util.*;
 
-public class ResolvedAbstractClass extends ResolvedClass
+import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.TypeBindings;
+
+public class ResolvedConcreteClass extends ResolvedClass
 {
     protected final ResolvedClass _superClass;
 
@@ -10,14 +13,14 @@ public class ResolvedAbstractClass extends ResolvedClass
      * List of interfaces this type implements; may be empty but never null
      */
     protected final ResolvedType[] _superInterfaces;
-    
+
     /*
     /**********************************************************************
     /* Life cycle
     /**********************************************************************
      */
 
-    public ResolvedAbstractClass(Class<?> erased, TypeBindings bindings,
+    public ResolvedConcreteClass(Class<?> erased, TypeBindings bindings,
             ResolvedClass superClass, ResolvedType[] interfaces)
     {
         super(erased, bindings);
@@ -47,7 +50,7 @@ public class ResolvedAbstractClass extends ResolvedClass
      */
 
     @Override
-    public boolean isConcrete() { return false; }
+    public boolean isConcrete() { return true; }
 
     @Override
     public ResolvedType getArrayElementType() { return null; }
@@ -57,4 +60,5 @@ public class ResolvedAbstractClass extends ResolvedClass
 
     @Override
     public boolean isPrimitive() { return false; }
+
 }

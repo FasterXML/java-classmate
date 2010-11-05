@@ -1,4 +1,7 @@
-package com.fasterxml.classmate;
+package com.fasterxml.classmate.types;
+
+import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.TypeBindings;
 
 /**
  * Intermediate base class for all non-interface types

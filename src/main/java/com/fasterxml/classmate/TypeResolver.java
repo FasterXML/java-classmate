@@ -3,6 +3,12 @@ package com.fasterxml.classmate;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.fasterxml.classmate.types.ResolvedAbstractClass;
+import com.fasterxml.classmate.types.ResolvedArrayType;
+import com.fasterxml.classmate.types.ResolvedClass;
+import com.fasterxml.classmate.types.ResolvedConcreteClass;
+import com.fasterxml.classmate.types.ResolvedInterface;
+import com.fasterxml.classmate.types.ResolvedPrimitiveType;
 import com.fasterxml.classmate.util.ClassKey;
 import com.fasterxml.classmate.util.ResolvedTypeCache;
 
@@ -22,11 +28,6 @@ public class TypeResolver
     /* Pre-created instances
     /**********************************************************************
      */
-    
-    /**
-     * "Void" type is sometimes used as placeholder, so let's pre-create it
-     */
-    private final static ResolvedPrimitiveType sVoid = new ResolvedPrimitiveType(Void.TYPE, 'V');
 
     /**
      * We will also need to return "unknown" type for cases where type variable binding
@@ -51,19 +52,14 @@ public class TypeResolver
     protected final static HashMap<ClassKey, ResolvedType> _primitiveTypes;
     static {
         _primitiveTypes = new HashMap<ClassKey, ResolvedType>(16);
-        _primitiveTypes.put(new ClassKey(Boolean.TYPE), new ResolvedPrimitiveType(Boolean.TYPE, 'Z'));
-        _primitiveTypes.put(new ClassKey(Byte.TYPE), new ResolvedPrimitiveType(Byte.TYPE, 'B'));
-        _primitiveTypes.put(new ClassKey(Short.TYPE), new ResolvedPrimitiveType(Short.TYPE, 'S'));
-        _primitiveTypes.put(new ClassKey(Character.TYPE), new ResolvedPrimitiveType(Character.TYPE, 'C'));
-        _primitiveTypes.put(new ClassKey(Integer.TYPE), new ResolvedPrimitiveType(Integer.TYPE, 'I'));
-        _primitiveTypes.put(new ClassKey(Long.TYPE), new ResolvedPrimitiveType(Long.TYPE, 'J'));
-        _primitiveTypes.put(new ClassKey(Float.TYPE), new ResolvedPrimitiveType(Float.TYPE, 'F'));
-        _primitiveTypes.put(new ClassKey(Double.TYPE), new ResolvedPrimitiveType(Double.TYPE, 'D'));
+        for (ResolvedPrimitiveType type : ResolvedPrimitiveType.all()) {
+            _primitiveTypes.put(new ClassKey(type.getErasedType()), type);
+        }
         // should we include "void"? might as well...
-        _primitiveTypes.put(new ClassKey(Void.TYPE), sVoid);
-
-        // and some other 'well-known' types...
+        _primitiveTypes.put(new ClassKey(Void.TYPE), ResolvedPrimitiveType.voidType());
+        // and at least java.lang.Object should be added too.
         _primitiveTypes.put(new ClassKey(Object.class), sJavaLangObject);
+        // but most other types can be added dynamically
     }
 
     /*

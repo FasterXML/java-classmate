@@ -1,7 +1,10 @@
-package com.fasterxml.classmate;
+package com.fasterxml.classmate.types;
 
 import java.util.Collections;
 import java.util.List;
+
+import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.TypeBindings;
 
 public class ResolvedArrayType  extends ResolvedClass
 {

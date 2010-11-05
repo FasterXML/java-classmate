@@ -2,6 +2,8 @@ package com.fasterxml.classmate;
 
 import java.util.*;
 
+import com.fasterxml.classmate.types.ResolvedConcreteClass;
+
 import junit.framework.TestCase;
 
 public class TestTypeResolver extends TestCase

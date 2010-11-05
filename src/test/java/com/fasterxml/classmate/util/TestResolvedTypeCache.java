@@ -5,6 +5,7 @@ import java.util.*;
 import junit.framework.TestCase;
 
 import com.fasterxml.classmate.*;
+import com.fasterxml.classmate.types.ResolvedInterface;
 
 public class TestResolvedTypeCache extends TestCase
 {

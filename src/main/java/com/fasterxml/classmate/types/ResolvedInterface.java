@@ -1,11 +1,12 @@
-package com.fasterxml.classmate;
+package com.fasterxml.classmate.types;
 
 import java.util.*;
 
-public class ResolvedConcreteClass extends ResolvedClass
-{
-    protected final ResolvedClass _superClass;
+import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.TypeBindings;
 
+public class ResolvedInterface extends ResolvedType
+{
     /**
      * List of interfaces this type implements; may be empty but never null
      */
@@ -17,12 +18,11 @@ public class ResolvedConcreteClass extends ResolvedClass
     /**********************************************************************
      */
 
-    public ResolvedConcreteClass(Class<?> erased, TypeBindings bindings,
-            ResolvedClass superClass, ResolvedType[] interfaces)
+    public ResolvedInterface(Class<?> erased, TypeBindings bindings,
+            ResolvedType[] superInterfaces)
     {
         super(erased, bindings);
-        _superClass = superClass;
-        _superInterfaces = (interfaces == null) ? NO_TYPES : interfaces;
+        _superInterfaces = superInterfaces;
     }
 
     /*
@@ -31,8 +31,10 @@ public class ResolvedConcreteClass extends ResolvedClass
     /**********************************************************************
      */
     
-    @Override
-    public ResolvedClass getParentClass() { return _superClass; }
+    public ResolvedType getParentClass() {
+        // interfaces do not have parent class, just interfaces
+        return null;
+    }
 
     @Override
     public List<ResolvedType> getImplementedInterfaces() {
@@ -40,6 +42,11 @@ public class ResolvedConcreteClass extends ResolvedClass
                 Collections.<ResolvedType>emptyList() : Arrays.asList(_superInterfaces);
     }
     
+    @Override
+    public ResolvedType getArrayElementType() { // interfaces are never arrays, so:
+        return null;
+    }
+
     /*
     /**********************************************************************
     /* Simple property accessors
@@ -47,15 +54,16 @@ public class ResolvedConcreteClass extends ResolvedClass
      */
 
     @Override
-    public boolean isConcrete() { return true; }
+    public boolean isInterface() { return true; }
 
     @Override
-    public ResolvedType getArrayElementType() { return null; }
+    public boolean isConcrete() { return false; }
 
     @Override
     public boolean isArray() { return false; }
 
     @Override
     public boolean isPrimitive() { return false; }
-
 }
+
+
