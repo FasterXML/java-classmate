@@ -1,12 +1,24 @@
 package com.fasterxml.classmate;
 
+import com.fasterxml.classmate.util.ResolvedTypeCache;
+
 /**
  * Class used for constructing {@link ResolvedType} instances from type-erased classes
  * (that may extend generic classes) and {@link GenericType}s.
+ *<p>
+ * Note that resolver instances are stateful in that resolvers cache resolved
+ * types for efficiency. Since this is internal state and not directly visible
+ * to callers, access to state is fully synchronized so that access from
+ * multiple threads is safe.
  */
 public class TypeResolver
 {
-    private TypeResolver() { }
+    /**
+     * Simple cache of types resolved by this resolved; capped to last 200 resolved types.
+     */
+    protected final ResolvedTypeCache _resolvedTypes = new ResolvedTypeCache(200);
+
+    public TypeResolver() { }
 
     /*
     ///////////////////////////////////////////////////////////////////////

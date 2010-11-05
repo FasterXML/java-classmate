@@ -1,5 +1,6 @@
 package com.fasterxml.classmate;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class ResolvedType
@@ -16,7 +17,13 @@ public abstract class ResolvedType
     protected ResolvedType(Class<?> cls, List<ResolvedType> typeParameters, List<ResolvedType> interfaces)
     {
         _erasedType = cls;
+        if (typeParameters == null) {
+            typeParameters = Collections.emptyList();
+        }
         _typeParameters = typeParameters;
+        if (interfaces == null) {
+            interfaces = Collections.emptyList();
+        }
         _interfaces = interfaces;
     }
 
