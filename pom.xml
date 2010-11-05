@@ -3,7 +3,7 @@
   <groupId>com.fasterxml</groupId>
   <artifactId>classmate</artifactId>
   <name>ClassMate</name>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
   <packaging>bundle</packaging>
   <description>Library for introspecting types with full generic information
 including resolving of field and method types.
@@ -119,7 +119,9 @@ including resolving of field and method types.
               <Private-Package>
 </Private-Package>
               <Export-Package>
-com.fasterxml.classmate
+com.fasterxml.classmate,
+com.fasterxml.classmate.members,
+com.fasterxml.classmate.types
 </Export-Package>
             </instructions>
           </configuration>
