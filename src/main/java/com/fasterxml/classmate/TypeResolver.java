@@ -220,10 +220,20 @@ public class TypeResolver
         }
         
         // If not, already recently resolved?
-        type = _resolvedTypes.find(rawType, typeBindings.typeParameterArray());
+        ResolvedType[] typeParameters = typeBindings.typeParameterArray();
+        ResolvedTypeCache.Key key = _resolvedTypes.key(rawType, typeParameters);
+                
+        type = _resolvedTypes.find(key);
         if (type != null) {
             return type;
         }
+        type = _constructType(context, rawType, typeBindings);
+        _resolvedTypes.put(key, type);
+        return type;
+    }
+
+    private ResolvedType _constructType(ClassStack context, Class<?> rawType, TypeBindings typeBindings)
+    {
         // Ok: no easy shortcut, let's figure out type of type...
         if (rawType.isArray()) {
             ResolvedType elementType = _fromAny(context, rawType.getComponentType(), typeBindings);

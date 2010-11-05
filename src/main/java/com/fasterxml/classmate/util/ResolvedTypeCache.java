@@ -12,37 +12,57 @@ import com.fasterxml.classmate.ResolvedType;
  */
 @SuppressWarnings("serial")
 public class ResolvedTypeCache
-    extends LinkedHashMap<ResolvedTypeCache.Key, ResolvedType>
 {
-    protected final int _maxEntries;
+    protected final CacheMap _map;
     
-    public ResolvedTypeCache(int maxEntries)
-    {
-        _maxEntries = maxEntries;
+    public ResolvedTypeCache(int maxEntries) {
+        _map = new CacheMap(maxEntries);
     }
 
-    public synchronized ResolvedType find(Class<?> simpleType) {
-        return get(new Key(simpleType));
+    /**
+     * Helper method for constructing reusable cache keys
+     */
+    public Key key(Class<?> simpleType) {
+        return new Key(simpleType);
     }
 
-    public synchronized ResolvedType find(Class<?> erasedType, ResolvedType[] tp) {
-        return get(new Key(erasedType, tp));
+    /**
+     * Helper method for constructing reusable cache keys
+     */
+    public Key key(Class<?> simpleType, ResolvedType[] tp) {
+        return new Key(simpleType, tp);
+    }
+    
+    public synchronized ResolvedType find(Key key) {
+        return _map.get(key);
     }
 
-    @Override
     public synchronized int size() {
-        return super.size();
+        return _map.size();
     }
     
-    public synchronized void add(ResolvedType type, ResolvedType[] typeParams)
+    public synchronized void put(Key key, ResolvedType type) {
+        _map.put(key, type);
+    }
+
+    /*
+    /**********************************************************************
+    /* Methods for unit tests
+    /**********************************************************************
+     */
+    
+    public void add(ResolvedType type)
     {
-        put(new Key(type.getErasedType(), typeParams), type);
+        List<ResolvedType> tp = type.getTypeParameters();
+        ResolvedType[] tpa = tp.toArray(new ResolvedType[tp.size()]);
+        put(key(type.getErasedType(), tpa), type);
     }
     
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<Key, ResolvedType> eldest) {
-        return size() > _maxEntries;
-    }
+    /*
+    /**********************************************************************
+    /* Helper classes
+    /**********************************************************************
+     */
     
     /**
      * Key used for type entries.
@@ -100,16 +120,21 @@ public class ResolvedTypeCache
         }
     }
 
-    /*
-    /**********************************************************************
-    /* Methods for unit tests
-    /**********************************************************************
+    /**
+     * Simple sub-class to get LRU cache
      */
-    
-    public void add(ResolvedType type)
+    private final static class CacheMap
+        extends LinkedHashMap<ResolvedTypeCache.Key, ResolvedType>
     {
-        List<ResolvedType> tp = type.getTypeParameters();
-        ResolvedType[] tpa = tp.toArray(new ResolvedType[tp.size()]);
-        this.add(type, tpa);
+        protected final int _maxEntries;
+        
+        public CacheMap(int maxEntries) {
+            _maxEntries = maxEntries;
+        }
+
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<Key, ResolvedType> eldest) {
+            return size() > _maxEntries;
+        }
     }
 }

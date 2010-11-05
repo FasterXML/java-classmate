@@ -30,7 +30,16 @@ public class TestTypeResolver extends TestCase
         // let's check some default java types
         ResolvedType objectType = _testSimpleConcrete(Object.class);
         ResolvedType stringType = _testSimpleConcrete(String.class);
+
+        // minor other thing; see that caching works
+        assertSame(stringType, _testSimpleConcrete(String.class));
+
+        ResolvedType stringParent = stringType.getParentClass();
+        assertNotNull(stringParent);
+        // actually, should also resolve to same as direct lookup:
+        assertSame(objectType, stringParent);
     }
+    
 
     /*
     /**********************************************************************

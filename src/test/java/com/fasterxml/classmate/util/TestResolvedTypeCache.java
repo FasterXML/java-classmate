@@ -27,9 +27,9 @@ public class TestResolvedTypeCache extends TestCase
         assertEquals(2, cache.size());
         // should now have types 2 and 3 available
 
-        ResolvedType found1 = cache.find(Map.class);
-        ResolvedType found2 = cache.find(Set.class);
-        ResolvedType found3 = cache.find(List.class);
+        ResolvedType found1 = cache.find(cache.key(Map.class));
+        ResolvedType found2 = cache.find(cache.key(Set.class));
+        ResolvedType found3 = cache.find(cache.key(List.class));
         // should now have types 2 and 3 available
         assertNull(found1);
         assertSame(type2, found2);
