@@ -1,5 +1,7 @@
 package com.fasterxml.classmate;
 
+import java.lang.reflect.*;
+
 import com.fasterxml.classmate.util.ResolvedTypeCache;
 
 /**
@@ -97,4 +99,47 @@ public class TypeResolver
     // Internal methods
     ///////////////////////////////////////////////////////////////////////
      */
+
+    static class StringIntMap extends StringKeyMap<Integer> { }
+    static class StringKeyMap<V> extends java.util.HashMap<String,V> { }
+    
+    public static void main(String[] args)
+    {
+        print(StringIntMap.class, false);
+    }
+
+    public static void print(java.lang.reflect.Type t, boolean supertype)
+    {
+        if (t == null) return; // to stop superclasses
+        if (supertype) {
+            System.out.print(" -> supertype = ");
+        }
+        if (t instanceof Class<?>) {
+            Class<?> cls = (Class<?>) t;
+            System.out.println("Class "+cls.getName());
+            print(cls.getGenericSuperclass(), true);
+            return;
+        }
+        if (t instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType) t;
+            Class<?> cls = (Class<?>) pt.getRawType();
+            System.out.println("ParametricType "+cls.getName()+", actuals = {");
+            Type[] types = pt.getActualTypeArguments();
+            TypeVariable<?>[] vars = cls.getTypeParameters();
+            int count = 0;
+            for (Type t2 : types) {
+                System.out.print(" type param #"+count+", '"+vars[count].getName()+"' = ");
+                print(t2, false);
+                ++count;
+            }
+            System.out.println("}");
+            print(cls.getGenericSuperclass(), true);
+            return;
+        }
+        if (t instanceof TypeVariable<?>) {
+            System.out.println("Type variable '"+((TypeVariable<?>) t).getName()+"'");
+            return;
+        }
+        throw new Error("Weird type: "+t.getClass());
+    }
 }
