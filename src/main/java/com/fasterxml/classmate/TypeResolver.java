@@ -33,7 +33,14 @@ public class TypeResolver
      * is not found ('raw' instances of generic types); easiest way is to
      * pre-create type for <code>java.lang.Object</code>
      */
-    private final static ResolvedConcreteClass sJavaLangObject =
+    private final static ResolvedConcreteClass sJavaLangObject = 
+        new ResolvedConcreteClass(Object.class, null, null, null);
+
+    /**
+     * Also, let's use another marker for self-references; points to <code>java.lang.Object</code>
+     * but is different object.
+     */
+    private final static ResolvedConcreteClass sSelfReference = 
         new ResolvedConcreteClass(Object.class, null, null, null);
     
     /**
@@ -91,7 +98,7 @@ public class TypeResolver
     public ResolvedType resolve(Class<?> rawType)
     {
         // with erased class, no bindings:
-        return _fromClass(rawType, TypeBindings.emptyBindings());
+        return _fromClass(null, rawType, TypeBindings.emptyBindings());
     }
 
     /**
@@ -117,7 +124,7 @@ public class TypeResolver
         int len = typeParameters.length;
         ResolvedType[] resolvedParams = new ResolvedType[len];
         for (int i = 0; i < len; ++i) {
-            resolvedParams[i] = _fromClass(typeParameters[i], bindings);
+            resolvedParams[i] = _fromClass(null, typeParameters[i], bindings);
         }
         return resolve(type, resolvedParams);
     }
@@ -140,7 +147,7 @@ public class TypeResolver
         if (typeParameters == null || typeParameters.length == 0) {
             return resolve(type);
         }
-        return _fromClass(type, TypeBindings.create(type, typeParameters));
+        return _fromClass(null, type, TypeBindings.create(type, typeParameters));
     }
     
     /**
@@ -148,7 +155,24 @@ public class TypeResolver
      */
     public ResolvedType resolve(GenericType<?> type)
     {
-        return _fromAny(type.getType(), TypeBindings.emptyBindings());
+        return _fromAny(null, type.getType(), TypeBindings.emptyBindings());
+    }
+
+    /*
+    /**********************************************************************
+    /* Misc other methods
+    /**********************************************************************
+     */
+
+    /**
+     * Helper method that can be used to checked whether given resolved type
+     * (with erased type of <code>java.lang.Object</code>) is a placeholder
+     * for "self-reference"; these are nasty recursive ("self") types
+     * needed with some interfaces
+     */
+    public static boolean isSelfReference(ResolvedType type)
+    {
+        return (type == sSelfReference);
     }
     
     /*
@@ -157,34 +181,44 @@ public class TypeResolver
     /**********************************************************************
      */
 
-    private ResolvedType _fromAny(Type mainType, TypeBindings typeBindings)
+    private ResolvedType _fromAny(ClassStack context, Type mainType, TypeBindings typeBindings)
     {
         if (mainType instanceof Class<?>) {
-            return _fromClass((Class<?>) mainType, typeBindings);
+            return _fromClass(context, (Class<?>) mainType, typeBindings);
         }
         if (mainType instanceof ParameterizedType) {
-            return _fromParamType((ParameterizedType) mainType, typeBindings);
+            return _fromParamType(context, (ParameterizedType) mainType, typeBindings);
         }
         if (mainType instanceof GenericArrayType) {
-            return _fromArrayType((GenericArrayType) mainType, typeBindings);
+            return _fromArrayType(context, (GenericArrayType) mainType, typeBindings);
         }
         if (mainType instanceof TypeVariable<?>) {
-            return _fromVariable((TypeVariable<?>) mainType, typeBindings);
+            return _fromVariable(context, (TypeVariable<?>) mainType, typeBindings);
         }
         if (mainType instanceof WildcardType) {
-            return _fromWildcard((WildcardType) mainType, typeBindings);
+            return _fromWildcard(context, (WildcardType) mainType, typeBindings);
         }
         // should never get here...
         throw new IllegalArgumentException("Unrecognized type class: "+mainType.getClass().getName());
     }
 
-    private ResolvedType _fromClass(Class<?> rawType, TypeBindings typeBindings)
+    private ResolvedType _fromClass(ClassStack context, Class<?> rawType, TypeBindings typeBindings)
     {
         // First: a primitive type perhaps?
         ResolvedType type = _primitiveTypes.get(new ClassKey(rawType));
         if (type != null) {
             return type;
         }
+        // Second: recursive reference?
+        if (context == null) {
+            context = new ClassStack(rawType);
+        } else {
+            context = context.add(rawType);
+            if (context == null) { // yuck; self-reference; gotta bail
+                return sSelfReference;
+            }
+        }
+        
         // If not, already recently resolved?
         type = _resolvedTypes.find(rawType, typeBindings.typeParameterArray());
         if (type != null) {
@@ -192,26 +226,26 @@ public class TypeResolver
         }
         // Ok: no easy shortcut, let's figure out type of type...
         if (rawType.isArray()) {
-            ResolvedType elementType = _fromAny(rawType.getComponentType(), typeBindings);
+            ResolvedType elementType = _fromAny(context, rawType.getComponentType(), typeBindings);
             return new ResolvedArrayType(rawType, typeBindings, sJavaLangObject, elementType);
         }
         // For other types super interfaces are needed...
         if (rawType.isInterface()) {
             return new ResolvedInterface(rawType, typeBindings,
-                    _resolveSuperInterfaces(rawType, typeBindings));
+                    _resolveSuperInterfaces(context, rawType, typeBindings));
             
         }
         if (Modifier.isAbstract(rawType.getModifiers())) {
             return new ResolvedAbstractClass(rawType, typeBindings,
-                    _resolveSuperClass(rawType, typeBindings),
-                    _resolveSuperInterfaces(rawType, typeBindings));
+                    _resolveSuperClass(context, rawType, typeBindings),
+                    _resolveSuperInterfaces(context, rawType, typeBindings));
         }
         return new ResolvedConcreteClass(rawType, typeBindings,
-                _resolveSuperClass(rawType, typeBindings),
-                _resolveSuperInterfaces(rawType, typeBindings));
+                _resolveSuperClass(context, rawType, typeBindings),
+                _resolveSuperInterfaces(context, rawType, typeBindings));
     }
 
-    private ResolvedType[] _resolveSuperInterfaces(Class<?> rawType, TypeBindings typeBindings)
+    private ResolvedType[] _resolveSuperInterfaces(ClassStack context, Class<?> rawType, TypeBindings typeBindings)
     {
         Type[] types = rawType.getGenericInterfaces();
         if (types == null || types.length == 0) {
@@ -220,23 +254,23 @@ public class TypeResolver
         int len = types.length;
         ResolvedType[] resolved = new ResolvedType[len];
         for (int i = 0; i < len; ++i) {
-            resolved[i] = _fromAny(types[i], typeBindings);
+            resolved[i] = _fromAny(context, types[i], typeBindings);
         }
         return resolved;
     }
 
-    private ResolvedClass _resolveSuperClass(Class<?> rawType, TypeBindings typeBindings)
+    private ResolvedClass _resolveSuperClass(ClassStack context, Class<?> rawType, TypeBindings typeBindings)
     {
         Type parent = rawType.getGenericSuperclass();
         if (parent == null) {
             return null;
         }
-        ResolvedType rt = _fromAny(parent, typeBindings);
+        ResolvedType rt = _fromAny(context, parent, typeBindings);
         // can this ever be something other than class? (primitive, array)
         return (ResolvedClass) rt;
     }
     
-    private ResolvedType _fromParamType(ParameterizedType ptype, TypeBindings parentBindings)
+    private ResolvedType _fromParamType(ClassStack context, ParameterizedType ptype, TypeBindings parentBindings)
     {
         /* First: what is the actual base type? One odd thing is that 'getRawType'
          * returns Type, not Class<?> as one might expect. But let's assume it is
@@ -248,33 +282,33 @@ public class TypeResolver
         ResolvedType[] types = new ResolvedType[len];
 
         for (int i = 0; i < len; ++i) {
-            types[i] = _fromAny(params[i], parentBindings);
+            types[i] = _fromAny(context, params[i], parentBindings);
         }
         // Ok: this gives us current bindings for this type:
         TypeBindings newBindings = TypeBindings.create(rawType, types);
-        return _fromClass(rawType, newBindings);
+        return _fromClass(context, rawType, newBindings);
     }
 
-    private ResolvedType _fromArrayType(GenericArrayType arrayType, TypeBindings typeBindings)
+    private ResolvedType _fromArrayType(ClassStack context, GenericArrayType arrayType, TypeBindings typeBindings)
     {
-        ResolvedType elementType = _fromAny(arrayType.getGenericComponentType(), typeBindings);
+        ResolvedType elementType = _fromAny(context, arrayType.getGenericComponentType(), typeBindings);
         // Figuring out raw class for generic array is actually bit tricky...
         Object emptyArray = Array.newInstance(elementType.getErasedType(), 0);
         return new ResolvedArrayType(emptyArray.getClass(), typeBindings,
                 sJavaLangObject, elementType);
     }
 
-    private ResolvedType _fromWildcard(WildcardType wildType, TypeBindings typeBindings)
+    private ResolvedType _fromWildcard(ClassStack context, WildcardType wildType, TypeBindings typeBindings)
     {
         /* Similar to challenges with TypeVariable, we may have multiple upper bounds.
          * But it is also possible that if upper bound defaults to Object, we might want to
          * consider lower bounds instead?
          * For now, we won't try anything more advanced; above is just for future reference.
          */
-        return _fromAny(wildType.getUpperBounds()[0], typeBindings);
+        return _fromAny(context, wildType.getUpperBounds()[0], typeBindings);
     }
     
-    private ResolvedType _fromVariable(TypeVariable<?> variable, TypeBindings typeBindings)
+    private ResolvedType _fromVariable(ClassStack context, TypeVariable<?> variable, TypeBindings typeBindings)
     {
         // ideally should find it via bindings:
         ResolvedType type = typeBindings.findBoundType(variable.getName());
@@ -287,7 +321,51 @@ public class TypeResolver
         // !!! 05-Nov-2010, tatu: How about recursive types? (T extends Comparable<T>)
         Type[] bounds = variable.getBounds();
         //context._addPlaceholder(name);        
-        return _fromAny(bounds[0], typeBindings);
+        return _fromAny(context, bounds[0], typeBindings);
+    }
+
+    /*
+    /**********************************************************************
+    /* Helper classes
+    /**********************************************************************
+     */
+    
+    /**
+     * Simple helper class used to keep track of 'call stack' for classes being referenced
+     */
+    private final static class ClassStack
+    {
+        private final ClassStack _parent;
+        private final Class<?> _current;
+
+        public ClassStack(Class<?> rootType) {
+            this(null, rootType);
+        }
+        
+        private ClassStack(ClassStack parent, Class<?> curr) {
+            _parent = parent;
+            _current = curr;
+        }
+
+        /**
+         * @return New stack frame, if addition is ok; null if not
+         */
+        public ClassStack add(Class<?> cls)
+        {
+            if (contains(cls)) {
+                return null;
+            }
+            return new ClassStack(this, cls);
+        }
+
+        public boolean contains(Class<?> cls)
+        {
+            if (_current == cls) return true;
+            if (_parent != null && _parent.contains(cls)) {
+                return true;
+            }
+            return false;
+        }
     }
 
     /*
