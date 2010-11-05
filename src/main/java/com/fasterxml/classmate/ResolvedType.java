@@ -64,30 +64,39 @@ public abstract class ResolvedType
      */
     public List<ResolvedType> typeParametersFor(Class<?> erasedSupertype)
     {
-        if (erasedSupertype == _erasedType) {
-            return getTypeParameters();
+        ResolvedType type = findSupertype(erasedSupertype);
+        if (type != null) {
+            return type.getTypeParameters();
         }
-        // first, check super-class
+        // nope; doesn't look like we extend or implement super type in question
+        return null;
+    }
+
+    public ResolvedType findSupertype(Class<?> erasedSupertype)
+    {
+        if (erasedSupertype == _erasedType) {
+            return this;
+        }
         ResolvedType pc = getParentClass();
         if (pc != null) {
-            List<ResolvedType> typeParams = pc.typeParametersFor(erasedSupertype);
-            if (typeParams != null) {
-                return typeParams;
+            ResolvedType type = pc.findSupertype(erasedSupertype);
+            if (type != null) {
+                return type;
             }
         }
         // if not found, and we are looking for an interface, try implemented interfaces:
         if (erasedSupertype.isInterface()) {
             for (ResolvedType it : getImplementedInterfaces()) {
-                List<ResolvedType> typeParams = it.typeParametersFor(erasedSupertype);
-                if (typeParams != null) {
-                    return typeParams;
+                ResolvedType type = it.findSupertype(erasedSupertype);
+                if (type != null) {
+                    return type;
                 }
             }
         }
         // nope; doesn't look like we extend or implement super type in question
         return null;
     }
-
+    
     /*
     /**********************************************************************
     /* Simple property accessors

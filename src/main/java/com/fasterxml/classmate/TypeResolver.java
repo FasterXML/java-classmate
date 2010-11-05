@@ -153,11 +153,38 @@ public class TypeResolver
     /**
      * Factory method for resolving given generic type.
      */
-    public ResolvedType resolve(GenericType<?> type)
+    public ResolvedType resolve(GenericType<?> generic)
     {
-        return _fromAny(null, type.getType(), TypeBindings.emptyBindings());
+        /* To allow multiple levels of inheritance (just in case someone
+         * wants to go to town with inheritnace of GenericType),
+         * we better resolve the whole thing; then dig out
+         * type parameterization...
+         */
+        ResolvedType type = _fromClass(null, generic.getClass(), TypeBindings.emptyBindings());
+        ResolvedType genType = type.findSupertype(GenericType.class);
+        if (genType == null) { // sanity check; shouldn't occur
+            throw new IllegalArgumentException("Unparameterized GenericType instance ("+generic.getClass().getName()+")");
+        }
+        TypeBindings b = genType.getBindings();
+        ResolvedType[] params = b.typeParameterArray();
+        if (params.length == 0) {
+            throw new IllegalArgumentException("Unparameterized GenericType instance ("+generic.getClass().getName()+")");
+        }
+        return params[0];
     }
 
+    /**
+     * Factory method for constructing array type of given element type
+     */
+    public ResolvedArrayType arrayType(ResolvedType elementType)
+    {
+        // Arrays are cumbersome for some reason:
+        Object emptyArray = Array.newInstance(elementType.getErasedType(), 0);
+        // Should we try to use cache? It's bit tricky, so let's not bother yet
+        return new ResolvedArrayType(emptyArray.getClass(), TypeBindings.emptyBindings(),
+                sJavaLangObject, elementType);
+    }
+    
     /*
     /**********************************************************************
     /* Misc other methods
