@@ -35,9 +35,18 @@ public class TypeResolver
      *  ResolvedType type = TypeResolver.resolve(new GenericType&lt;List&lt;Integer>>() { });
      *</pre>
      */
-    public static ResolvedType resolve(Class<?> type, Class<?>[] typeParameters) {
-        // !!! TBI
-        return null;
+    public static ResolvedType resolve(Class<?> type, Class<?>... typeParameters)
+    {
+        if (typeParameters == null || typeParameters.length == 0) {
+            return resolve(type);
+        }
+        // First: resolve type parameters
+        int len = typeParameters.length;
+        ResolvedType[] resolvedParams = new ResolvedType[len];
+        for (int i = 0; i < len; ++i) {
+            resolvedParams[i] = resolve(typeParameters[i]);
+        }
+        return resolve(type, resolvedParams);
     }
 
     /**
@@ -55,6 +64,9 @@ public class TypeResolver
      */
     public static ResolvedType resolve(Class<?> type, ResolvedType[] typeParameters)
     {
+        if (typeParameters == null || typeParameters.length == 0) {
+            return resolve(type);
+        }
         // !!! TBI
         return null;
     }
@@ -62,7 +74,8 @@ public class TypeResolver
     /**
      * Factory method for resolving given generic type.
      */
-    public static ResolvedType resolve(GenericType<?> type) {
+    public static ResolvedType resolve(GenericType<?> type)
+    {
         // !!! TBI
         return null;
     }
