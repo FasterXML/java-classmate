@@ -1,26 +1,32 @@
 package com.fasterxml.classmate;
 
-import java.lang.reflect.Modifier;
-import java.util.List;
-
-public class ResolvedClass extends ResolvedType
+/**
+ * Intermediate base class for all non-interface types
+ */
+public abstract class ResolvedClass extends ResolvedType
 {
-    protected final ResolvedClass _superclass;
+    /*
+    /**********************************************************************
+    /* Life cycle
+    /**********************************************************************
+     */
     
-    public ResolvedClass(Class<?> erased, List<ResolvedType> typeParameters, ResolvedClass superclass, List<ResolvedType> interfaces)
+    public ResolvedClass(Class<?> erased, TypeBindings bindings)
     {
-        super(erased, typeParameters, interfaces);
-        _superclass = superclass;
+        super(erased, bindings);
     }
 
-    public ResolvedType getParentClass() {
-        return _superclass;
-    }
+  
+    /*
+    /**********************************************************************
+    /* Simple property accessors
+    /**********************************************************************
+     */
     
+    @Override
     public boolean isInterface() { return false; }
 
-    public boolean isConcrete() {
-        return Modifier.isAbstract(_erasedType.getModifiers());
-    }
+    @Override
+    public abstract boolean isConcrete();
 }
 

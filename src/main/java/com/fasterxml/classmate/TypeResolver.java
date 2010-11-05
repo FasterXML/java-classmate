@@ -1,7 +1,9 @@
 package com.fasterxml.classmate;
 
 import java.lang.reflect.*;
+import java.util.HashMap;
 
+import com.fasterxml.classmate.util.ClassKey;
 import com.fasterxml.classmate.util.ResolvedTypeCache;
 
 /**
@@ -15,26 +17,82 @@ import com.fasterxml.classmate.util.ResolvedTypeCache;
  */
 public class TypeResolver
 {
+    /*
+    /**********************************************************************
+    /* Pre-created instances
+    /**********************************************************************
+     */
+    
+    /**
+     * "Void" type is sometimes used as placeholder, so let's pre-create it
+     */
+    private final static ResolvedPrimitiveType sVoid = new ResolvedPrimitiveType(Void.TYPE, 'V');
+
+    /**
+     * We will also need to return "unknown" type for cases where type variable binding
+     * is not found ('raw' instances of generic types); easiest way is to
+     * pre-create type for <code>java.lang.Object</code>
+     */
+    private final static ResolvedConcreteClass sJavaLangObject =
+        new ResolvedConcreteClass(Object.class, null, null, null);
+    
+    /**
+     * Since number of primitive types is small, and they are frequently needed,
+     * let's actually pre-create them for efficient reuse
+     */
+    protected final static HashMap<ClassKey, ResolvedPrimitiveType> _primitiveTypes;
+    static {
+        _primitiveTypes = new HashMap<ClassKey, ResolvedPrimitiveType>(16);
+        _primitiveTypes.put(new ClassKey(Boolean.TYPE), new ResolvedPrimitiveType(Boolean.TYPE, 'Z'));
+        _primitiveTypes.put(new ClassKey(Byte.TYPE), new ResolvedPrimitiveType(Byte.TYPE, 'B'));
+        _primitiveTypes.put(new ClassKey(Short.TYPE), new ResolvedPrimitiveType(Short.TYPE, 'S'));
+        _primitiveTypes.put(new ClassKey(Character.TYPE), new ResolvedPrimitiveType(Character.TYPE, 'C'));
+        _primitiveTypes.put(new ClassKey(Integer.TYPE), new ResolvedPrimitiveType(Integer.TYPE, 'I'));
+        _primitiveTypes.put(new ClassKey(Long.TYPE), new ResolvedPrimitiveType(Long.TYPE, 'J'));
+        _primitiveTypes.put(new ClassKey(Float.TYPE), new ResolvedPrimitiveType(Float.TYPE, 'F'));
+        _primitiveTypes.put(new ClassKey(Double.TYPE), new ResolvedPrimitiveType(Double.TYPE, 'D'));
+        // should we include "void"? might as well...
+        _primitiveTypes.put(new ClassKey(Void.TYPE), sVoid);
+    }
+
+    /*
+    /**********************************************************************
+    /* Caching
+    /**********************************************************************
+     */
+    
     /**
      * Simple cache of types resolved by this resolved; capped to last 200 resolved types.
      */
     protected final ResolvedTypeCache _resolvedTypes = new ResolvedTypeCache(200);
 
+    /*
+    /**********************************************************************
+    /* Life cycle
+    /**********************************************************************
+     */
+    
     public TypeResolver() { }
 
     /*
-    ///////////////////////////////////////////////////////////////////////
-    // Factory methods
-    ///////////////////////////////////////////////////////////////////////
+    /**********************************************************************
+    /* Factory methods
+    /**********************************************************************
      */
     
     /**
      * Factory method for resolving a type-erased class; in this case any
      * generic type information has to come from super-types (via inheritance).
      */
-    public static ResolvedType resolve(Class<?> type) {
-        // !!! TBI
-        return null;
+    public ResolvedType resolve(Class<?> rawType)
+    {
+        // First: a primitive type perhaps?
+        ResolvedType type = _primitiveTypes.get(new ClassKey(rawType));
+        if (type != null) {
+            return type;
+        }
+        // with erased class, no bindings:
+        return _fromClass(rawType, TypeBindings.emptyBindings());
     }
 
     /**
@@ -49,16 +107,18 @@ public class TypeResolver
      *  ResolvedType type = TypeResolver.resolve(new GenericType&lt;List&lt;Integer>>() { });
      *</pre>
      */
-    public static ResolvedType resolve(Class<?> type, Class<?>... typeParameters)
+    public ResolvedType resolve(Class<?> type, Class<?>... typeParameters)
     {
         if (typeParameters == null || typeParameters.length == 0) {
             return resolve(type);
         }
+        // with erased class, no bindings "from above"
+        TypeBindings bindings = TypeBindings.emptyBindings();
         // First: resolve type parameters
         int len = typeParameters.length;
         ResolvedType[] resolvedParams = new ResolvedType[len];
         for (int i = 0; i < len; ++i) {
-            resolvedParams[i] = resolve(typeParameters[i]);
+            resolvedParams[i] = _fromClass(typeParameters[i], bindings);
         }
         return resolve(type, resolvedParams);
     }
@@ -76,31 +136,94 @@ public class TypeResolver
      *  ResolvedType type = TypeResolver.resolve(new GenericType&lt;List&lt;Set&lt;String>>() { });
      *</pre>
      */
-    public static ResolvedType resolve(Class<?> type, ResolvedType[] typeParameters)
+    public ResolvedType resolve(Class<?> type, ResolvedType[] typeParameters)
     {
         if (typeParameters == null || typeParameters.length == 0) {
             return resolve(type);
         }
-        // !!! TBI
-        return null;
+        return _fromClass(type, TypeBindings.create(type, typeParameters));
     }
     
     /**
      * Factory method for resolving given generic type.
      */
-    public static ResolvedType resolve(GenericType<?> type)
+    public ResolvedType resolve(GenericType<?> type)
     {
-        // !!! TBI
-        return null;
+        return _fromAny(type.getType(), TypeBindings.emptyBindings());
     }
     
     /*
-    ///////////////////////////////////////////////////////////////////////
-    // Internal methods
-    ///////////////////////////////////////////////////////////////////////
+    /**********************************************************************
+    /* Internal methods
+    /**********************************************************************
      */
 
+    private ResolvedType _fromAny(Type mainType, TypeBindings typeBindings)
+    {
+        if (mainType instanceof Class<?>) {
+            return _fromClass((Class<?>) mainType, typeBindings);
+        }
+        if (mainType instanceof ParameterizedType) {
+            return _fromParamType((ParameterizedType) mainType, typeBindings);
+        }
+        if (mainType instanceof GenericArrayType) {
+            return _fromArrayType((GenericArrayType) mainType, typeBindings);
+        }
+        if (mainType instanceof TypeVariable<?>) {
+            return _fromVariable((TypeVariable<?>) mainType, typeBindings);
+        }
+        if (mainType instanceof WildcardType) {
+            return _fromWildcard((WildcardType) mainType, typeBindings);
+        }
+        // should never get here...
+        throw new IllegalArgumentException("Unrecognized type class: "+mainType.getClass().getName());
+    }
+
+    private ResolvedType _fromClass(Class<?> cls, TypeBindings typeBindings)
+    {
+        return null;
+    }
+    
+    private ResolvedType _fromParamType(ParameterizedType ptype, TypeBindings typeBindings)
+    {
+        return null;
+    }
+
+    private ResolvedType _fromArrayType(GenericArrayType arrayType, TypeBindings typeBindings)
+    {
+        return null;
+    }
+
+    private ResolvedType _fromWildcard(WildcardType wcType, TypeBindings typeBindings)
+    {
+        return null;
+    }
+    
+    private ResolvedType _fromVariable(TypeVariable<?> variable, TypeBindings typeBindings)
+    {
+        // ideally should find it via bindings:
+        ResolvedType type = typeBindings.findBoundType(variable.getName());
+        if (type != null) {
+            return type;
+        }
+        /* but if not, use bounds... note that approach here is simplistics; not taking
+         * into account possible multiple bounds, nor consider upper bounds.
+         */
+        // !!! 05-Nov-2010, tatu: How about recursive types? (T extends Comparable<T>)
+        Type[] bounds = variable.getBounds();
+        //context._addPlaceholder(name);        
+        return _fromAny(bounds[0], typeBindings);
+    }
+
+    /*
+    /**********************************************************************
+    /* Manual test method(s)
+    /**********************************************************************
+     */
+    
+    @SuppressWarnings("serial")
     static class StringIntMap extends StringKeyMap<Integer> { }
+    @SuppressWarnings("serial")
     static class StringKeyMap<V> extends java.util.HashMap<String,V> { }
     
     public static void main(String[] args)

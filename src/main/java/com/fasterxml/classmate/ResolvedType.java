@@ -1,46 +1,57 @@
 package com.fasterxml.classmate;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public abstract class ResolvedType
 {
     protected final Class<?> _erasedType;
 
     /**
-     * List of interfaces this type implements; may be empty but never null
+     * Type bindings active when resolving members (methods, fields,
+     * constructors) of this type
      */
-    protected final List<ResolvedType> _interfaces;
-
-    protected final List<ResolvedType> _typeParameters;
+    protected final TypeBindings _typeBindings;
     
-    protected ResolvedType(Class<?> cls, List<ResolvedType> typeParameters, List<ResolvedType> interfaces)
+    /*
+    /**********************************************************************
+    /* Life cycle
+    /**********************************************************************
+     */
+    
+    protected ResolvedType(Class<?> cls, TypeBindings bindings)
     {
         _erasedType = cls;
-        if (typeParameters == null) {
-            typeParameters = Collections.emptyList();
-        }
-        _typeParameters = typeParameters;
-        if (interfaces == null) {
-            interfaces = Collections.emptyList();
-        }
-        _interfaces = interfaces;
+        _typeBindings = (bindings == null) ? TypeBindings.emptyBindings() : bindings;
     }
 
+    /*
+    /**********************************************************************
+    /* Accessors for related types
+    /**********************************************************************
+     */
+    
     public Class<?> getErasedType() { return _erasedType; }
 
     public abstract ResolvedType getParentClass();
 
-    public List<ResolvedType> getImplementedInterfaces() {
-        return _interfaces;
+    /**
+     * Method that can be used to access element type of array types; will return
+     * null for non-array types, and non-null type for array types.
+     */
+    public abstract ResolvedType getArrayElementType();
+    
+    public abstract List<ResolvedType> getImplementedInterfaces();
+
+    public List<ResolvedType> getTypeParameters() {
+        return _typeBindings.getTypeParameters();
     }
 
-    public List<ResolvedType> getTypeParameters() { return _typeParameters; }
+    /**
+     * Method for accessing bindings of type variables to resolved types in context
+     * of this type.
+     */
+    public TypeBindings getBindings() { return _typeBindings; }
     
-    public abstract boolean isInterface();
-    public abstract boolean isConcrete();
-    public final boolean isAbstract() { return !isConcrete(); }
-
     /**
      * Method that will try to find type parameterization this type
      * has for specified super type
@@ -74,5 +85,26 @@ public abstract class ResolvedType
         // nope; doesn't look like we extend or implement super type in question
         return null;
     }
-}
 
+    /*
+    /**********************************************************************
+    /* Simple property accessors
+    /**********************************************************************
+     */
+    
+    public abstract boolean isInterface();
+    public abstract boolean isConcrete();
+    public final boolean isAbstract() { return !isConcrete(); }
+
+    /**
+     * Method that indicates whether this type is an array type.
+     */
+    public abstract boolean isArray();
+
+    /**
+     * Method that indicates whether this type is one of small number of primitive
+     * Java types; not including array types of primitive types but just basic
+     * primitive types.
+     */
+    public abstract boolean isPrimitive();
+}
