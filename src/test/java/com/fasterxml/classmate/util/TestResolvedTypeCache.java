@@ -9,7 +9,7 @@ import com.fasterxml.classmate.types.ResolvedInterface;
 
 public class TestResolvedTypeCache extends TestCase
 {
-    public void testSimpleTypesBasic()
+    public void testSimpleCaching()
     {
         ResolvedTypeCache cache = new ResolvedTypeCache(2);
         assertEquals(0, cache.size());
@@ -26,12 +26,11 @@ public class TestResolvedTypeCache extends TestCase
         ResolvedType type3 = new ResolvedInterface(List.class, null, null);
         cache.add(type3);
         assertEquals(2, cache.size());
-        // should now have types 2 and 3 available
 
+        // should now only have types 2 and 3 available
         ResolvedType found1 = cache.find(cache.key(Map.class));
         ResolvedType found2 = cache.find(cache.key(Set.class));
         ResolvedType found3 = cache.find(cache.key(List.class));
-        // should now have types 2 and 3 available
         assertNull(found1);
         assertSame(type2, found2);
         assertSame(type3, found3);

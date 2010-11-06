@@ -2,13 +2,11 @@ package com.fasterxml.classmate;
 
 import java.util.*;
 
-import junit.framework.TestCase;
-
 /**
  * Unit tests for verifying that resolved types give expected string description
  * and signatures.
  */
-public class TestTypeDescriptions extends TestCase
+public class TestTypeDescriptions extends BaseTest
 {
     /*
     /**********************************************************************

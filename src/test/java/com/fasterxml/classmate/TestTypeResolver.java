@@ -4,10 +4,8 @@ import java.util.*;
 
 import com.fasterxml.classmate.types.ResolvedConcreteClass;
 
-import junit.framework.TestCase;
-
 @SuppressWarnings("serial")
-public class TestTypeResolver extends TestCase
+public class TestTypeResolver extends BaseTest
 {
     /*
     /**********************************************************************
@@ -30,7 +28,7 @@ public class TestTypeResolver extends TestCase
     
     /*
     /**********************************************************************
-    /* Unit tests
+    /* Unit tests, normal operation
     /**********************************************************************
      */
 
@@ -147,6 +145,34 @@ public class TestTypeResolver extends TestCase
         assertEquals(2, mapParams.size());
         assertSame(String.class, mapParams.get(0).getErasedType());
         assertSame(Long.class, mapParams.get(1).getErasedType());
+    }
+
+    /*
+    /**********************************************************************
+    /* Unit tests, error cases
+    /**********************************************************************
+     */
+
+    /**
+     * Unit test to verify that discrepancies are properly detected
+     */
+    public void testGenericParamMismatch()
+    {
+        // Maps require 2 type params:
+        try {
+            typeResolver.resolve(Map.class, Long.class);
+            fail("Expected failure");
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "1 type parameter: class expects 2");
+        }
+
+        // And Lists just 1
+        try {
+            typeResolver.resolve(List.class, Integer.class, Long.class);
+            fail("Expected failure");
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "2 type parameters: class expects 1");
+        }
     }
     
     /*

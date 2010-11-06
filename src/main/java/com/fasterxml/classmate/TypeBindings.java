@@ -71,7 +71,8 @@ public class TypeBindings
         // Check here to give better error message
         if (names.length != types.length) {
             throw new IllegalArgumentException("Can not create TypeBinding for class "+erasedType.getName()
-                   +" with "+types.length+" type parameters: class expects "+names.length);
+                   +" with "+types.length+" type parameter"
+                   +((types.length == 1) ? "" : "s")+": class expects "+names.length);
         }
         return new TypeBindings(names, types);
     }
