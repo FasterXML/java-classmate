@@ -37,6 +37,9 @@ public class TestTypeResolver extends BaseTest
         public long field;
     }
 
+    // and recursive types...
+    static abstract class SelfRefType implements Comparable<SelfRefType> { }
+    
     /*
     /**********************************************************************
     /* Unit tests, normal operation
@@ -179,7 +182,26 @@ public class TestTypeResolver extends BaseTest
         assertEquals(1, tp.size());
         assertSame(String.class, tp.get(0).getErasedType());
     }
-    
+
+    public void testSimpleSelfRef()
+    {
+        ResolvedType type = typeResolver.resolve(SelfRefType.class);
+        assertSame(SelfRefType.class, type.getErasedType());
+        List<ResolvedType> interfaces = type.getImplementedInterfaces();
+        assertEquals(1, interfaces.size());
+        ResolvedType compType = interfaces.get(0);
+        assertSame(Comparable.class, compType.getErasedType());
+        List<ResolvedType> pts = compType.getTypeParameters();
+        assertEquals(1, pts.size());
+        ResolvedType compParam = pts.get(0);
+        // ok this ought to be self-ref
+        assertSame(ResolvedRecursiveType.class, compParam.getClass());
+        assertSame(SelfRefType.class, compParam.getErasedType());
+        assertNull(compParam.getParentClass());
+        // but we should be able to find what it really is, too:
+        assertSame(type, compParam.getSelfReferencedType());
+    }
+
     /*
     /**********************************************************************
     /* Unit tests, error cases

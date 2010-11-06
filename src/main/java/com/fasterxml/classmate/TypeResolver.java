@@ -245,12 +245,15 @@ public class TypeResolver
         if (context == null) {
             context = new ClassStack(rawType);
         } else {
-            context = context.add(rawType);
-            if (context == null) {
-                /* Self-reference: needs special handling, then...
-                 */
-                return new ResolvedRecursiveType(rawType, typeBindings);
+            ClassStack prev = context.find(rawType);
+            if (prev != null) {
+                // Self-reference: needs special handling, then...
+                ResolvedRecursiveType selfRef = new ResolvedRecursiveType(rawType, typeBindings);
+                prev.addSelfReference(selfRef);
+                return selfRef;
             }
+            // no, can just add
+            context = context.child(rawType);
         }
         
         // If not, already recently resolved?
@@ -258,11 +261,11 @@ public class TypeResolver
         ResolvedTypeCache.Key key = _resolvedTypes.key(rawType, typeParameters);
                 
         type = _resolvedTypes.find(key);
-        if (type != null) {
-            return type;
+        if (type == null) {
+            type = _constructType(context, rawType, typeBindings);
+            _resolvedTypes.put(key, type);
         }
-        type = _constructType(context, rawType, typeBindings);
-        _resolvedTypes.put(key, type);
+        context.resolveSelfReferences(type);
         return type;
     }
 
@@ -377,6 +380,8 @@ public class TypeResolver
         private final ClassStack _parent;
         private final Class<?> _current;
 
+        private ArrayList<ResolvedRecursiveType> _selfRefs;
+        
         public ClassStack(Class<?> rootType) {
             this(null, rootType);
         }
@@ -389,21 +394,44 @@ public class TypeResolver
         /**
          * @return New stack frame, if addition is ok; null if not
          */
-        public ClassStack add(Class<?> cls)
+        public ClassStack child(Class<?> cls)
         {
-            if (contains(cls)) {
-                return null;
-            }
             return new ClassStack(this, cls);
         }
 
-        public boolean contains(Class<?> cls)
+        /**
+         * Method called to indicate that there is a self-reference from
+         * deeper down in stack pointing into type this stack frame represents.
+         */
+        public void addSelfReference(ResolvedRecursiveType ref)
         {
-            if (_current == cls) return true;
-            if (_parent != null && _parent.contains(cls)) {
-                return true;
+            if (_selfRefs == null) {
+                _selfRefs = new ArrayList<ResolvedRecursiveType>();
             }
-            return false;
+            _selfRefs.add(ref);
+        }
+
+        /**
+         * Method called when type that this stack frame represents is
+         * fully resolved, allowing self-references to be completed
+         * (if there are any)
+         */
+        public void resolveSelfReferences(ResolvedType resolved)
+        {
+            if (_selfRefs != null) {
+                for (ResolvedRecursiveType ref : _selfRefs) {
+                    ref.setReference(resolved);
+                }
+            }
+        }
+        
+        public ClassStack find(Class<?> cls)
+        {
+            if (_current == cls) return this;
+            if (_parent != null) {
+                return _parent.find(cls);
+            }
+            return null;
         }
     }
 }

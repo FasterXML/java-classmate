@@ -47,6 +47,15 @@ public abstract class ResolvedType
     public abstract ResolvedType getParentClass();
 
     /**
+     * Accessor that must be used to find out actual type in
+     * case of "self-reference"; case where type refers
+     * recursive to itself (like, <code>T implements Comparable&lt;T></code>).
+     * For all other types returns null but for self-references "real" type.
+     * Separate accessor is provided to avoid accidental infinite loops.
+     */
+    public abstract ResolvedType getSelfReferencedType();
+    
+    /**
      * Method that can be used to access element type of array types; will return
      * null for non-array types, and non-null type for array types.
      */

@@ -37,6 +37,9 @@ public class ResolvedInterfaceType extends ResolvedType
     }
 
     @Override
+    public ResolvedType getSelfReferencedType() { return null; }
+    
+    @Override
     public List<ResolvedType> getImplementedInterfaces() {
         return (_superInterfaces.length == 0) ?
                 Collections.<ResolvedType>emptyList() : Arrays.asList(_superInterfaces);

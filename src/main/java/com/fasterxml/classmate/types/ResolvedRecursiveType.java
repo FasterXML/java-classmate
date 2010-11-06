@@ -19,7 +19,7 @@ public class ResolvedRecursiveType extends ResolvedType
     /**
      * Actual fully resolved type; assigned once resultion is complete
      */
-    protected ResolvedType _actualType;
+    protected ResolvedType _referencedType;
 
     /*
     /**********************************************************************
@@ -32,6 +32,16 @@ public class ResolvedRecursiveType extends ResolvedType
         super(erased, bindings);
     }
 
+    public void setReference(ResolvedType ref)
+    {
+        // sanity check; should not be called multiple times
+        if (_referencedType != null) {
+            throw new IllegalStateException("Trying to re-set self reference; old value = "+_referencedType+", new = "+ref);
+        }
+        _referencedType = ref;
+    }
+    
+
     /*
     /**********************************************************************
     /* Accessors for related types
@@ -41,10 +51,14 @@ public class ResolvedRecursiveType extends ResolvedType
     /**
      * To avoid infinite loops, will return null;
      */
+    @Override
     public ResolvedType getParentClass() {
         return null;
     }
 
+    @Override
+    public ResolvedType getSelfReferencedType() { return _referencedType; }
+    
     /**
      * To avoid infinite loops, will return empty list
      */

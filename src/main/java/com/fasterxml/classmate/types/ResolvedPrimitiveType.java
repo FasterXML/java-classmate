@@ -64,6 +64,9 @@ public final class ResolvedPrimitiveType extends ResolvedType
     /* Accessors for related types
     /**********************************************************************
      */
+
+    @Override
+    public ResolvedType getSelfReferencedType() { return null; }
     
     @Override
     public ResolvedType getParentClass() { return null; }

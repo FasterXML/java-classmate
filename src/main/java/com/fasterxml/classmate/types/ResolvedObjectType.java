@@ -47,6 +47,9 @@ public class ResolvedObjectType extends ResolvedType
     public ResolvedObjectType getParentClass() { return _superClass; }
 
     @Override
+    public ResolvedType getSelfReferencedType() { return null; }
+    
+    @Override
     public List<ResolvedType> getImplementedInterfaces() {
         return (_superInterfaces.length == 0) ?
                 Collections.<ResolvedType>emptyList() : Arrays.asList(_superInterfaces);
