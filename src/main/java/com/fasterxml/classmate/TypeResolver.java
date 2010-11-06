@@ -246,8 +246,10 @@ public class TypeResolver
             context = new ClassStack(rawType);
         } else {
             context = context.add(rawType);
-            if (context == null) { // yuck; self-reference; gotta bail
-                return sSelfReference;
+            if (context == null) {
+                /* Self-reference: needs special handling, then...
+                 */
+                return new ResolvedRecursiveType(rawType, typeBindings);
             }
         }
         

@@ -29,6 +29,16 @@ public class TestTypeDescriptions extends BaseTest
         assertEquals("java.lang.Object", objectType.getDescription());
         assertEquals("Ljava/lang/Object;", objectType.getErasedSignature());
         assertEquals("Ljava/lang/Object;", objectType.getSignature());
+
+        ResolvedType stringType = typeResolver.resolve(String.class);
+        /* Interesting thing with "simple" type like java.lang.String is that
+         * it has recursive type self-reference (via Comparable<T>)
+         */
+        assertEquals("java.lang.String extends java.lang.Object"
+                +" implements java.io.Serializable,java.lang.Comparable<java.lang.String>,java.lang.CharSequence",
+                stringType.getDescription());
+        assertEquals("Ljava/lang/String;", stringType.getErasedSignature());
+        assertEquals("Ljava/lang/String;", stringType.getSignature());
     }
 
     public void testPrimitiveTypes()
