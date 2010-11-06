@@ -1,40 +1,28 @@
 package com.fasterxml.classmate.types;
 
-import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
 
-/**
- * Type implementation for classes that do not represent interfaces,
- * primitive or array types.
- */
-public class ResolvedClass extends ResolvedType
+public class ResolvedInterfaceType extends ResolvedType
 {
-    protected final ResolvedClass _superClass;
     /**
      * List of interfaces this type implements; may be empty but never null
      */
     protected final ResolvedType[] _superInterfaces;
 
-    protected final int _modifiers;
-    
     /*
     /**********************************************************************
     /* Life cycle
     /**********************************************************************
      */
-    
-    public ResolvedClass(Class<?> erased, TypeBindings bindings,
-            ResolvedClass superClass, ResolvedType[] interfaces)
+
+    public ResolvedInterfaceType(Class<?> erased, TypeBindings bindings,
+            ResolvedType[] superInterfaces)
     {
         super(erased, bindings);
-        _superClass = superClass;
-        _superInterfaces = (interfaces == null) ? NO_TYPES : interfaces;
-        _modifiers = erased.getModifiers();
+        _superInterfaces = superInterfaces;
     }
 
     /*
@@ -42,45 +30,41 @@ public class ResolvedClass extends ResolvedType
     /* Accessors for related types
     /**********************************************************************
      */
-
-    @Override
-    public ResolvedClass getParentClass() { return _superClass; }
+    
+    public ResolvedType getParentClass() {
+        // interfaces do not have parent class, just interfaces
+        return null;
+    }
 
     @Override
     public List<ResolvedType> getImplementedInterfaces() {
         return (_superInterfaces.length == 0) ?
                 Collections.<ResolvedType>emptyList() : Arrays.asList(_superInterfaces);
     }
-
-    /*
-    /**********************************************************************
-    /* Accessors for related types
-    /**********************************************************************
-     */
     
     @Override
-    public final ResolvedType getArrayElementType() { return null; }
-    
+    public ResolvedType getArrayElementType() { // interfaces are never arrays, so:
+        return null;
+    }
+
     /*
     /**********************************************************************
     /* Simple property accessors
     /**********************************************************************
      */
-    
-    @Override
-    public final boolean isInterface() { return false; }
 
     @Override
-    public boolean isAbstract() {
-        return Modifier.isAbstract(_modifiers);
-    }
+    public boolean isInterface() { return true; }
 
     @Override
-    public final boolean isArray() { return false; }
+    public boolean isAbstract() { return true; }
 
     @Override
-    public final boolean isPrimitive() { return false; }
-    
+    public boolean isArray() { return false; }
+
+    @Override
+    public boolean isPrimitive() { return false; }
+
     /*
     /**********************************************************************
     /* String representations
@@ -101,19 +85,15 @@ public class ResolvedClass extends ResolvedType
     public StringBuilder appendBriefDescription(StringBuilder sb) {
         return _appendClassDescription(sb);
     }
-    
+
     @Override
     public StringBuilder appendFullDescription(StringBuilder sb)
     {
         sb = _appendClassDescription(sb);
-        if (_superClass != null) {
-            sb.append(" extends ");
-            sb = _superClass.appendBriefDescription(sb);
-        }
         // interfaces 'extend' other interfaces...
         int count = _superInterfaces.length;
         if (count > 0) {
-            sb.append(" implements ");
+            sb.append(" extends ");
             for (int i = 0; i < count; ++i) {
                 if (i > 0) {
                     sb.append(",");
@@ -124,4 +104,5 @@ public class ResolvedClass extends ResolvedType
         return sb;
     }
 }
+
 

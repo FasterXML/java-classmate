@@ -29,15 +29,15 @@ public class TypeResolver
      * is not found ('raw' instances of generic types); easiest way is to
      * pre-create type for <code>java.lang.Object</code>
      */
-    private final static ResolvedClass sJavaLangObject = 
-        new ResolvedClass(Object.class, null, null, null);
+    private final static ResolvedObjectType sJavaLangObject = 
+        new ResolvedObjectType(Object.class, null, null, null);
 
     /**
      * Also, let's use another marker for self-references; points to <code>java.lang.Object</code>
      * but is different object.
      */
-    private final static ResolvedClass sSelfReference = 
-        new ResolvedClass(Object.class, null, null, null);
+    private final static ResolvedObjectType sSelfReference = 
+        new ResolvedObjectType(Object.class, null, null, null);
     
     /**
      * Since number of primitive types is small, and they are frequently needed,
@@ -259,11 +259,11 @@ public class TypeResolver
         }
         // For other types super interfaces are needed...
         if (rawType.isInterface()) {
-            return new ResolvedInterface(rawType, typeBindings,
+            return new ResolvedInterfaceType(rawType, typeBindings,
                     _resolveSuperInterfaces(context, rawType, typeBindings));
             
         }
-        return new ResolvedClass(rawType, typeBindings,
+        return new ResolvedObjectType(rawType, typeBindings,
                 _resolveSuperClass(context, rawType, typeBindings),
                 _resolveSuperInterfaces(context, rawType, typeBindings));
     }
@@ -282,7 +282,7 @@ public class TypeResolver
         return resolved;
     }
 
-    private ResolvedClass _resolveSuperClass(ClassStack context, Class<?> rawType, TypeBindings typeBindings)
+    private ResolvedObjectType _resolveSuperClass(ClassStack context, Class<?> rawType, TypeBindings typeBindings)
     {
         Type parent = rawType.getGenericSuperclass();
         if (parent == null) {
@@ -290,7 +290,7 @@ public class TypeResolver
         }
         ResolvedType rt = _fromAny(context, parent, typeBindings);
         // can this ever be something other than class? (primitive, array)
-        return (ResolvedClass) rt;
+        return (ResolvedObjectType) rt;
     }
     
     private ResolvedType _fromParamType(ClassStack context, ParameterizedType ptype, TypeBindings parentBindings)

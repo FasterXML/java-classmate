@@ -5,7 +5,7 @@ import java.util.*;
 import junit.framework.TestCase;
 
 import com.fasterxml.classmate.*;
-import com.fasterxml.classmate.types.ResolvedInterface;
+import com.fasterxml.classmate.types.ResolvedInterfaceType;
 
 public class TestResolvedTypeCache extends TestCase
 {
@@ -14,16 +14,16 @@ public class TestResolvedTypeCache extends TestCase
         ResolvedTypeCache cache = new ResolvedTypeCache(2);
         assertEquals(0, cache.size());
         // bogus, just needed for testing:
-        ResolvedType type1 = new ResolvedInterface(Map.class, null, null);
+        ResolvedType type1 = new ResolvedInterfaceType(Map.class, null, null);
         cache.add(type1);
         assertEquals(1, cache.size());
         // re-adding won't change anything:
         cache.add(type1);
         assertEquals(1, cache.size());
-        ResolvedType type2 = new ResolvedInterface(Set.class, null, null);
+        ResolvedType type2 = new ResolvedInterfaceType(Set.class, null, null);
         cache.add(type2);
         assertEquals(2, cache.size());
-        ResolvedType type3 = new ResolvedInterface(List.class, null, null);
+        ResolvedType type3 = new ResolvedInterfaceType(List.class, null, null);
         cache.add(type3);
         assertEquals(2, cache.size());
 
