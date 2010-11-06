@@ -78,7 +78,7 @@ public final class ResolvedPrimitiveType extends ResolvedType
     public boolean isInterface() { return false; }
     
     @Override
-    public boolean isConcrete() { return true; }
+    public boolean isAbstract() { return false; }
 
     @Override
     public ResolvedType getArrayElementType() { return null; }

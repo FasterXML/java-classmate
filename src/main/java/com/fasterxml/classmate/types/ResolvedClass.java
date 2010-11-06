@@ -1,5 +1,6 @@
 package com.fasterxml.classmate.types;
 
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -8,9 +9,10 @@ import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
 
 /**
- * Intermediate base class for all non-interface types
+ * Type implementation for classes that do not represent interfaces,
+ * primitive or array types.
  */
-public abstract class ResolvedClass extends ResolvedType
+public class ResolvedClass extends ResolvedType
 {
     protected final ResolvedClass _superClass;
     /**
@@ -18,6 +20,8 @@ public abstract class ResolvedClass extends ResolvedType
      */
     protected final ResolvedType[] _superInterfaces;
 
+    protected final int _modifiers;
+    
     /*
     /**********************************************************************
     /* Life cycle
@@ -30,6 +34,7 @@ public abstract class ResolvedClass extends ResolvedType
         super(erased, bindings);
         _superClass = superClass;
         _superInterfaces = (interfaces == null) ? NO_TYPES : interfaces;
+        _modifiers = erased.getModifiers();
     }
 
     /*
@@ -66,7 +71,9 @@ public abstract class ResolvedClass extends ResolvedType
     public final boolean isInterface() { return false; }
 
     @Override
-    public abstract boolean isConcrete();
+    public boolean isAbstract() {
+        return Modifier.isAbstract(_modifiers);
+    }
 
     @Override
     public final boolean isArray() { return false; }

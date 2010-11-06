@@ -104,8 +104,8 @@ public abstract class ResolvedType
      */
     
     public abstract boolean isInterface();
-    public abstract boolean isConcrete();
-    public final boolean isAbstract() { return !isConcrete(); }
+    public final boolean isConcrete() { return !isAbstract(); }
+    public abstract boolean isAbstract();
 
     /**
      * Method that indicates whether this type is an array type.

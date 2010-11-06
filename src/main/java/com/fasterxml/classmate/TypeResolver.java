@@ -3,12 +3,7 @@ package com.fasterxml.classmate;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.fasterxml.classmate.types.ResolvedAbstractClass;
-import com.fasterxml.classmate.types.ResolvedArrayType;
-import com.fasterxml.classmate.types.ResolvedClass;
-import com.fasterxml.classmate.types.ResolvedConcreteClass;
-import com.fasterxml.classmate.types.ResolvedInterface;
-import com.fasterxml.classmate.types.ResolvedPrimitiveType;
+import com.fasterxml.classmate.types.*;
 import com.fasterxml.classmate.util.ClassKey;
 import com.fasterxml.classmate.util.ResolvedTypeCache;
 
@@ -34,15 +29,15 @@ public class TypeResolver
      * is not found ('raw' instances of generic types); easiest way is to
      * pre-create type for <code>java.lang.Object</code>
      */
-    private final static ResolvedConcreteClass sJavaLangObject = 
-        new ResolvedConcreteClass(Object.class, null, null, null);
+    private final static ResolvedClass sJavaLangObject = 
+        new ResolvedClass(Object.class, null, null, null);
 
     /**
      * Also, let's use another marker for self-references; points to <code>java.lang.Object</code>
      * but is different object.
      */
-    private final static ResolvedConcreteClass sSelfReference = 
-        new ResolvedConcreteClass(Object.class, null, null, null);
+    private final static ResolvedClass sSelfReference = 
+        new ResolvedClass(Object.class, null, null, null);
     
     /**
      * Since number of primitive types is small, and they are frequently needed,
@@ -268,12 +263,7 @@ public class TypeResolver
                     _resolveSuperInterfaces(context, rawType, typeBindings));
             
         }
-        if (Modifier.isAbstract(rawType.getModifiers())) {
-            return new ResolvedAbstractClass(rawType, typeBindings,
-                    _resolveSuperClass(context, rawType, typeBindings),
-                    _resolveSuperInterfaces(context, rawType, typeBindings));
-        }
-        return new ResolvedConcreteClass(rawType, typeBindings,
+        return new ResolvedClass(rawType, typeBindings,
                 _resolveSuperClass(context, rawType, typeBindings),
                 _resolveSuperInterfaces(context, rawType, typeBindings));
     }

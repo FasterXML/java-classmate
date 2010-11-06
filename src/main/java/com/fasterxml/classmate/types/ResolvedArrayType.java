@@ -50,7 +50,7 @@ public final class ResolvedArrayType  extends ResolvedType
     }
 
     @Override
-    public boolean isConcrete() { return true; }
+    public boolean isAbstract() { return false; }
 
     @Override
     public ResolvedType getArrayElementType() { return _elementType; }

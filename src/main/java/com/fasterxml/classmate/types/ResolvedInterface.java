@@ -57,7 +57,7 @@ public class ResolvedInterface extends ResolvedType
     public boolean isInterface() { return true; }
 
     @Override
-    public boolean isConcrete() { return false; }
+    public boolean isAbstract() { return true; }
 
     @Override
     public boolean isArray() { return false; }

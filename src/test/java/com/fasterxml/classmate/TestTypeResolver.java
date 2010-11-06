@@ -2,7 +2,7 @@ package com.fasterxml.classmate;
 
 import java.util.*;
 
-import com.fasterxml.classmate.types.ResolvedConcreteClass;
+import com.fasterxml.classmate.types.*;
 
 @SuppressWarnings("serial")
 public class TestTypeResolver extends BaseTest
@@ -184,7 +184,7 @@ public class TestTypeResolver extends BaseTest
     private ResolvedType _testSimpleConcrete(Class<?> cls)
     {
         ResolvedType type = typeResolver.resolve(cls);
-        assertTrue(type instanceof ResolvedConcreteClass);
+        assertTrue(type instanceof ResolvedClass);
         assertSame(cls, type.getErasedType());
         assertFalse(type.isAbstract());
         assertFalse(type.isArray());
