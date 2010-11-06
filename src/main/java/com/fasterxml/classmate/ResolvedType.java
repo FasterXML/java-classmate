@@ -118,4 +118,103 @@ public abstract class ResolvedType
      * primitive types.
      */
     public abstract boolean isPrimitive();
+
+    public final boolean isInstanceOf(Class<?> type) {
+        return type.isAssignableFrom(_erasedType);
+    }
+    
+    /*
+    /**********************************************************************
+    /* String representations
+    /**********************************************************************
+     */
+
+    /**
+     * Method that returns full generic signature of the type; suitable
+     * as signature for things like ASM package.
+     */
+    public String getSignature() {
+        StringBuilder sb = new StringBuilder();
+        return appendSignature(sb).toString();
+    }
+
+    /**
+     * Method that returns type erased signature of the type; suitable
+     * as non-generic signature some packages need
+     */
+    public String getErasedSignature() {
+        StringBuilder sb = new StringBuilder();
+        return appendErasedSignature(sb).toString();
+    }
+
+    /**
+     * Human-readable description of type
+     */
+    public String getDescription() {
+        StringBuilder sb = new StringBuilder();
+        return appendFullDescription(sb).toString();
+    }
+
+    public abstract StringBuilder appendBriefDescription(StringBuilder sb);
+    public abstract StringBuilder appendFullDescription(StringBuilder sb);
+    public abstract StringBuilder appendSignature(StringBuilder sb);
+    public abstract StringBuilder appendErasedSignature(StringBuilder sb);
+
+    /*
+    /**********************************************************************
+    /* Helper methods for sub-classes
+    /**********************************************************************
+     */
+
+    protected StringBuilder _appendClassSignature(StringBuilder sb)
+    {
+        sb.append('L');
+        sb = _appendClassName(sb);
+        int count = _typeBindings.size();
+        if (count > 0) {
+            sb.append('<');
+            for (int i = 0; i < count; ++i) {
+                sb = _typeBindings.getBoundType(i).appendErasedSignature(sb);
+            }
+            sb.append('>');
+        }
+        sb.append(';');
+        return sb;
+    }
+
+    protected StringBuilder _appendErasedClassSignature(StringBuilder sb)
+    {
+        sb.append('L');
+        sb = _appendClassName(sb);
+        sb.append(';');
+        return sb;
+    }
+
+    protected StringBuilder _appendClassDescription(StringBuilder sb)
+    {
+        sb.append(_erasedType.getName());
+        int count = _typeBindings.size();
+        if (count > 0) {
+            sb.append('<');
+            for (int i = 0; i < count; ++i) {
+                if (i > 0) {
+                    sb.append(',');
+                }
+                sb = _typeBindings.getBoundType(i).appendBriefDescription(sb);
+            }
+            sb.append('>');
+        }
+        return sb;
+    }
+    
+    protected StringBuilder _appendClassName(StringBuilder sb)
+    {
+        String name = _erasedType.getName();
+        for (int i = 0, len = name.length(); i < len; ++i) {
+            char c = name.charAt(i);
+            if (c == '.') c = '/';
+            sb.append(c);
+        }
+        return sb;
+    }
 }

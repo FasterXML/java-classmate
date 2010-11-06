@@ -5,7 +5,7 @@ import java.util.*;
 
 /**
  * Helper class used for storing binding of local type variables to
- * matching resolved types.
+ * matching resolved types, in context of a single class.
  */
 public class TypeBindings
 {
@@ -95,6 +95,10 @@ public class TypeBindings
         return null;
     }
 
+    public boolean isEmpty() {
+        return (_types.length == 0);
+    }
+    
     /**
      * Returns number of bindings contained
      */

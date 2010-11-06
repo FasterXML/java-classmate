@@ -6,14 +6,22 @@ import com.fasterxml.classmate.types.ResolvedConcreteClass;
 
 import junit.framework.TestCase;
 
+@SuppressWarnings("serial")
 public class TestTypeResolver extends TestCase
 {
     /*
     /**********************************************************************
-    /* Helper type
+    /* Helper types
     /**********************************************************************
      */
 
+    // // Multi-level resolution needed
+
+    static class MyStringLongMap extends MyStringKeyMap<Long> { }
+    static class MyStringKeyMap<V> extends TreeMap<String, V> { }
+    
+    // // Playing with GenericType using inheritance
+    
     static class IndirectRef
         extends GenericType<HashMap<String,Long>> { }
 
@@ -76,7 +84,8 @@ public class TestTypeResolver extends TestCase
         assertSame(Map.class, mapType.getErasedType());
         assertTrue(mapType.isAbstract());
         assertTrue(mapType.isInterface());
-
+        assertTrue(mapType.isInstanceOf(Map.class));
+        
         // Which should have proper parameterization:
         List<ResolvedType> params = mapType.typeParametersFor(Map.class);
         assertEquals(2, params.size());
@@ -94,6 +103,17 @@ public class TestTypeResolver extends TestCase
         assertSame(Boolean.class, params2.get(1).getErasedType());
     }
 
+    public void testParametricMap()
+    {
+        ResolvedType mapType = typeResolver.resolve(MyStringLongMap.class);
+        assertSame(MyStringLongMap.class, mapType.getErasedType());
+        // Ensure we can find parameters for Map
+        List<ResolvedType> params = mapType.typeParametersFor(Map.class);
+        assertEquals(2, params.size());
+        assertSame(String.class, params.get(0).getErasedType());
+        assertSame(Long.class, params.get(1).getErasedType());
+    }
+
     /**
      * Unit test for verifying that it is ok to sub-class {@link GenericType}
      */
@@ -101,6 +121,7 @@ public class TestTypeResolver extends TestCase
     {
         ResolvedType type = typeResolver.resolve(new IndirectRef());
         assertSame(HashMap.class, type.getErasedType());
+        assertTrue(type.isInstanceOf(Map.class));
         List<ResolvedType> mapParams = type.typeParametersFor(HashMap.class);
         assertNotNull(mapParams);
         assertEquals(2, mapParams.size());

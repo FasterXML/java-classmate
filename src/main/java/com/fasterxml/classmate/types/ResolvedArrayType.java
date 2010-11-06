@@ -6,7 +6,7 @@ import java.util.List;
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
 
-public class ResolvedArrayType  extends ResolvedClass
+public final class ResolvedArrayType  extends ResolvedType
 {
     protected final ResolvedType _elementType;
     
@@ -45,6 +45,11 @@ public class ResolvedArrayType  extends ResolvedClass
      */
 
     @Override
+    public boolean isInterface() {
+        return false;
+    }
+
+    @Override
     public boolean isConcrete() { return true; }
 
     @Override
@@ -55,4 +60,33 @@ public class ResolvedArrayType  extends ResolvedClass
 
     @Override
     public boolean isPrimitive() { return false; }
+
+    /*
+    /**********************************************************************
+    /* String representations
+    /**********************************************************************
+     */
+
+    @Override
+    public StringBuilder appendSignature(StringBuilder sb) {
+        sb.append('[');
+        return _elementType.appendSignature(sb);
+    }
+
+    @Override
+    public StringBuilder appendErasedSignature(StringBuilder sb) {
+        sb.append('[');
+        return _elementType.appendErasedSignature(sb);
+    }
+
+    public StringBuilder appendBriefDescription(StringBuilder sb)
+    {
+        sb = _elementType.appendBriefDescription(sb);
+        sb.append("[]");
+        return sb;
+    }
+
+    public StringBuilder appendFullDescription(StringBuilder sb) {
+        return appendBriefDescription(sb);
+    }
 }
