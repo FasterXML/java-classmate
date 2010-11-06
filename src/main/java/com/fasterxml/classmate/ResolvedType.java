@@ -32,8 +32,18 @@ public abstract class ResolvedType
     /**********************************************************************
      */
     
+    /**
+     * Returns type-erased Class<?> that this resolved type has.
+     */
     public Class<?> getErasedType() { return _erasedType; }
 
+    /**
+     * Returns parent class of this type, if it has one; primitive types
+     * and interfaces have no parent class, nor does Object type
+     * {@link java.lang.Object}.
+     * Also, placeholders for cyclic (recursive) types return null for
+     * this method.
+     */
     public abstract ResolvedType getParentClass();
 
     /**
@@ -41,18 +51,32 @@ public abstract class ResolvedType
      * null for non-array types, and non-null type for array types.
      */
     public abstract ResolvedType getArrayElementType();
-    
+
+    /**
+     * Returns ordered list of interfaces (in declaration order) that this type
+     * implements.
+     * 
+     * @return List of interfaces this type implements, if any; empty list if none
+     */
     public abstract List<ResolvedType> getImplementedInterfaces();
 
+    /**
+     * Returns list of generic type declarations for this type, in order they
+     * are declared in class description.
+     */
     public List<ResolvedType> getTypeParameters() {
         return _typeBindings.getTypeParameters();
     }
 
     /**
      * Method for accessing bindings of type variables to resolved types in context
-     * of this type.
+     * of this type. It has same number of entries as return List of
+     * {@link #getTypeParameters}, accessible using declared name to which they
+     * bind; for example, {@link java.util.Map} has 2 type bindings; one for
+     * key type (name "K", from Map.java) and one for value type
+     * (name "V", from Map.java).
      */
-    public TypeBindings getBindings() { return _typeBindings; }
+    public TypeBindings getTypeBindings() { return _typeBindings; }
     
     /**
      * Method that will try to find type parameterization this type
@@ -72,25 +96,33 @@ public abstract class ResolvedType
         return null;
     }
 
+    /**
+     * Method for finding super type of this type that has specified type
+     * erased signature. If supertype is an interface which is implemented
+     * using multiple inheritance paths, preference is given to interfaces
+     * implemented "highest up the stack" (directly implemented interfaces
+     * over interfaces superclass implements).
+     */
     public ResolvedType findSupertype(Class<?> erasedSupertype)
     {
         if (erasedSupertype == _erasedType) {
             return this;
         }
-        ResolvedType pc = getParentClass();
-        if (pc != null) {
-            ResolvedType type = pc.findSupertype(erasedSupertype);
-            if (type != null) {
-                return type;
-            }
-        }
-        // if not found, and we are looking for an interface, try implemented interfaces:
+        // Check super interfaces first:
         if (erasedSupertype.isInterface()) {
             for (ResolvedType it : getImplementedInterfaces()) {
                 ResolvedType type = it.findSupertype(erasedSupertype);
                 if (type != null) {
                     return type;
                 }
+            }
+        }
+        // and if not found, super class and its supertypes
+        ResolvedType pc = getParentClass();
+        if (pc != null) {
+            ResolvedType type = pc.findSupertype(erasedSupertype);
+            if (type != null) {
+                return type;
             }
         }
         // nope; doesn't look like we extend or implement super type in question

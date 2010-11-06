@@ -1,6 +1,7 @@
 package com.fasterxml.classmate;
 
 import java.util.*;
+import java.lang.reflect.*;
 
 import com.fasterxml.classmate.types.*;
 
@@ -25,7 +26,17 @@ public class TestTypeResolver extends BaseTest
 
     static class IndirectIndirectRef
         extends IndirectRef { }
-    
+
+    // // For verifying "jdk type" resolution
+
+    static class ListWrapper<T> {
+        public List<T> wrap() { return null; }
+    }
+
+    static class StringListWrapper extends ListWrapper<String> {
+        public long field;
+    }
+
     /*
     /**********************************************************************
     /* Unit tests, normal operation
@@ -147,6 +158,28 @@ public class TestTypeResolver extends BaseTest
         assertSame(Long.class, mapParams.get(1).getErasedType());
     }
 
+    public void testJdkType() throws Exception
+    {
+        ResolvedType wrapperType = typeResolver.resolve(StringListWrapper.class);
+        assertTrue(wrapperType instanceof ResolvedObjectType);
+        Field f = StringListWrapper.class.getDeclaredField("field");
+        assertNotNull(f);
+        // first; field has no generic stuff, should be simple
+        ResolvedType fieldType = typeResolver.resolve(f.getGenericType(), wrapperType.getTypeBindings());
+        assertEquals(Long.TYPE, fieldType.getErasedType());
+        assertTrue(fieldType.isPrimitive());
+        // but method return type is templatized; and MUST be given correct type bindings!
+        Method m = ListWrapper.class.getDeclaredMethod("wrap");
+        ResolvedType superType = wrapperType.getParentClass();
+        assertSame(ListWrapper.class, superType.getErasedType());
+        ResolvedType methodReturnType = typeResolver.resolve(m.getGenericReturnType(), superType.getTypeBindings());
+        // should be List<String>
+        assertSame(List.class, methodReturnType.getErasedType());
+        List<ResolvedType> tp = methodReturnType.getTypeParameters();
+        assertEquals(1, tp.size());
+        assertSame(String.class, tp.get(0).getErasedType());
+    }
+    
     /*
     /**********************************************************************
     /* Unit tests, error cases

@@ -142,7 +142,8 @@ public class TypeResolver
     }
     
     /**
-     * Factory method for resolving given generic type.
+     * Factory method for resolving given generic type, defined by using sub-class
+     * instance of {@link GenericType}
      */
     public ResolvedType resolve(GenericType<?> generic)
     {
@@ -156,7 +157,7 @@ public class TypeResolver
         if (genType == null) { // sanity check; shouldn't occur
             throw new IllegalArgumentException("Unparameterized GenericType instance ("+generic.getClass().getName()+")");
         }
-        TypeBindings b = genType.getBindings();
+        TypeBindings b = genType.getTypeBindings();
         ResolvedType[] params = b.typeParameterArray();
         if (params.length == 0) {
             throw new IllegalArgumentException("Unparameterized GenericType instance ("+generic.getClass().getName()+")");
@@ -165,7 +166,7 @@ public class TypeResolver
     }
 
     /**
-     * Factory method for constructing array type of given element type
+     * Factory method for constructing array type of given element type.
      */
     public ResolvedArrayType arrayType(ResolvedType elementType)
     {
@@ -174,6 +175,19 @@ public class TypeResolver
         // Should we try to use cache? It's bit tricky, so let's not bother yet
         return new ResolvedArrayType(emptyArray.getClass(), TypeBindings.emptyBindings(),
                 sJavaLangObject, elementType);
+    }
+
+    /**
+     * Factory method for resolving specified Java {@link java.lang.reflect.Type}, given
+     * {@link TypeBindings} needed to resolve any type variables.
+     *<p>
+     * Use of this method is discouraged (use if and only if you really know what you
+     * are doing!); but if used, type bindings passed should come from {@link ResolvedType}
+     * instance of declaring class (or interface).
+     */
+    public ResolvedType resolve(Type jdkType, TypeBindings typeBindings)
+    {
+        return _fromAny(null, jdkType, typeBindings);
     }
     
     /*
