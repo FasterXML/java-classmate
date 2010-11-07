@@ -189,6 +189,80 @@ public class TypeResolver
     {
         return _fromAny(null, jdkType, typeBindings);
     }
+
+    /**
+     * Factory method for constructing sub-classing specified type; class specified
+     * as sub-class must be compatible according to basic Java inheritance rules
+     * (subtype must propery extend or implement specified supertype).
+     *<p>
+     * A typical use case here is to refine a generic type; for example, given
+     * that we want a <code>List&ltInteger></code>, but which specific implementation
+     * class <code>ArrayList</code>, it could be achieved by calling:
+     *<pre>
+     *  ResolvedType mapType = typeResolver.resolve(List.class, Integer.class);
+     *  ResolveType concreteMapType = typeResolver.resolveSubType(mapType, ArrayList.class);
+     *</pre>
+     * (in this case, it would have been simpler to resolve directly; but in some
+     * cases we are handled supertype and want to refine it, in which case steps
+     * would be the same but separated by other code)
+     *<p>
+     * Note that this method will fail if extension can not succeed; either because
+     * this type is not extendable (sub-classable) -- which is true for primitive
+     * and array types -- or because given class is not a subtype of this type.
+     * To check whether subtyping could succeed, you can call
+     * {@link ResolvedType#canCreateSubtypes()} to see if supertype can ever
+     * be extended.
+     *
+     * @param supertype Type to subtype (extend)
+     * @param subclass Type-erased sub-class or sub-interface 
+     * 
+     * @return Resolved subtype
+     * 
+     * @throws IllegalArgumentException If this type can be extended in general, but not into specified sub-class
+     * @throws UnsupportedOperationException If this type can not be sub-classed
+     */
+    public ResolvedType resolveSubtype(ResolvedType supertype, Class<?> subtype)
+        throws IllegalArgumentException, UnsupportedOperationException
+    {
+        // first: if it's a recursive reference, find out referred-to type
+        ResolvedType refType = supertype.getSelfReferencedType();
+        if (refType != null) {
+            supertype = refType;
+        }
+        if (!supertype.canCreateSubtypes()) {
+            throw new UnsupportedOperationException("Can not subtype primitive or array types (type "+supertype.getDescription()+")");
+        }
+        // In general, must be able to subtype as per JVM rules:
+        Class<?> superclass = supertype.getErasedType();
+        if (!superclass.isAssignableFrom(subtype)) {
+            throw new IllegalArgumentException("Can not sub-class "+supertype.getDescription()
+                    +" into "+subtype.getName());
+        }
+        // First things first: need to create raw subtype, then replace parts with supertype
+        ResolvedType resolvedSubtype = resolve(subtype);
+        
+        // interfaces can be extended as sub-classes or as sub-interfaces
+        if (supertype.isInterface()) {
+            // interface extension is easy; just add/replace super-interface:
+            if (subtype.isInterface()) {
+                return new ResolvedInterfaceType(subtype, resolvedSubtype.getTypeBindings(),
+                        _replaceInterface(resolvedSubtype.getImplementedInterfaces(), supertype));
+            }
+            // class implementing an interface is similarly quite easy with add/replace
+            return new ResolvedObjectType(subtype, resolvedSubtype.getTypeBindings(),
+                    (ResolvedObjectType) resolvedSubtype.getParentClass(),
+                    _replaceInterface(resolvedSubtype.getImplementedInterfaces(), supertype));
+        }
+        /* Class extending class is trickiest, since we have to find where super-class
+         * needs to be replaced...
+         */
+        // !!! TBI
+        // class extending class
+        // Must be a class (interfaces can't extend classes), so this is simple
+        return new ResolvedObjectType(subtype, supertype.getTypeBindings(),
+                (ResolvedObjectType) supertype, ResolvedType.NO_TYPES);
+    }
+
     
     /*
     /**********************************************************************
@@ -209,7 +283,7 @@ public class TypeResolver
     
     /*
     /**********************************************************************
-    /* Internal methods
+    /* Internal methods, second-level factory methods
     /**********************************************************************
      */
 
@@ -360,12 +434,36 @@ public class TypeResolver
         /* but if not, use bounds... note that approach here is simplistics; not taking
          * into account possible multiple bounds, nor consider upper bounds.
          */
-        // !!! 05-Nov-2010, tatu: How about recursive types? (T extends Comparable<T>)
         Type[] bounds = variable.getBounds();
         //context._addPlaceholder(name);        
         return _fromAny(context, bounds[0], typeBindings);
     }
 
+    /*
+    /**********************************************************************
+    /* Internal methods, other
+    /**********************************************************************
+     */
+    
+    private ResolvedType[] _replaceInterface(List<ResolvedType> interfaces, ResolvedType newInterface)
+    {
+        ArrayList<ResolvedType> result = new ArrayList<ResolvedType>();
+        Class<?> interfaceToAdd = newInterface.getErasedType();
+        boolean wasAdded = false;
+        for (ResolvedType iface : interfaces) {
+            if (iface.getErasedType() == interfaceToAdd) {
+                result.add(newInterface);
+                wasAdded = true;
+            } else {
+                result.add(iface);
+            }
+        }
+        if (!wasAdded) {
+            result.add(newInterface);
+        }
+        return result.toArray(new ResolvedType[result.size()]);
+    }
+    
     /*
     /**********************************************************************
     /* Helper classes

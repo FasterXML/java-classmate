@@ -25,6 +25,11 @@ public class ResolvedInterfaceType extends ResolvedType
         _superInterfaces = superInterfaces;
     }
 
+    @Override
+    public boolean canCreateSubtypes() {
+        return true;
+    }
+    
     /*
     /**********************************************************************
     /* Accessors for related types

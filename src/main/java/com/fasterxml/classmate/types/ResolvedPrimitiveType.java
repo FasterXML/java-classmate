@@ -39,7 +39,7 @@ public final class ResolvedPrimitiveType extends ResolvedType
         _signature = String.valueOf(sig);
         _description = desc;
     }
-
+    
     public static List<ResolvedPrimitiveType> all()
     {
         ArrayList<ResolvedPrimitiveType> all = new ArrayList<ResolvedPrimitiveType>();
@@ -57,6 +57,11 @@ public final class ResolvedPrimitiveType extends ResolvedType
     public static ResolvedPrimitiveType voidType()
     {
         return VOID;
+    }
+    
+    @Override
+    public boolean canCreateSubtypes() {
+        return false;
     }
     
     /*

@@ -25,7 +25,22 @@ public abstract class ResolvedType
         _erasedType = cls;
         _typeBindings = (bindings == null) ? TypeBindings.emptyBindings() : bindings;
     }
+    
+    /**
+     * Method that can be used to check if call to {@link TypeResolver#resolveSubtype(ResolvedType, Class)}
+     * may ever succeed; if false, it will fail with an exception, if true, it may succeed.
+     */
+    public abstract boolean canCreateSubtypes();
 
+    /**
+     * Method that can be used to check if call to {@link TypeResolver#resolveSubtype(ResolvedType, Class)}
+     * will succeed for specific type; if false, it will fail with an exception; if tru it
+     * will succeed.
+     */
+    public final boolean canCreateSubtype(Class<?> subtype) {
+        return canCreateSubtypes() && _erasedType.isAssignableFrom(subtype);
+    }
+    
     /*
     /**********************************************************************
     /* Accessors for related types
