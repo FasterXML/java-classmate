@@ -119,7 +119,7 @@ public final class ResolvedPrimitiveType extends ResolvedType
     }
 
     @Override
-    public String getDescription() {
+    public String getFullDescription() {
         return _description;
     }
 

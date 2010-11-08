@@ -18,6 +18,8 @@ import com.fasterxml.classmate.util.ResolvedTypeCache;
  */
 public class TypeResolver
 {
+    private final static ResolvedType[] NO_TYPES = new ResolvedType[0];
+    
     /*
     /**********************************************************************
     /* Pre-created instances
@@ -29,16 +31,10 @@ public class TypeResolver
      * is not found ('raw' instances of generic types); easiest way is to
      * pre-create type for <code>java.lang.Object</code>
      */
-    private final static ResolvedObjectType sJavaLangObject = 
-        new ResolvedObjectType(Object.class, null, null, null);
+    private final static ResolvedObjectType sJavaLangObject =  new ResolvedObjectType(Object.class, null, null,
+            
+            NO_TYPES);
 
-    /**
-     * Also, let's use another marker for self-references; points to <code>java.lang.Object</code>
-     * but is different object.
-     */
-    private final static ResolvedObjectType sSelfReference = 
-        new ResolvedObjectType(Object.class, null, null, null);
-    
     /**
      * Since number of primitive types is small, and they are frequently needed,
      * let's actually pre-create them for efficient reuse. Same goes for limited number
@@ -196,8 +192,10 @@ public class TypeResolver
      * (subtype must propery extend or implement specified supertype).
      *<p>
      * A typical use case here is to refine a generic type; for example, given
-     * that we want a <code>List&ltInteger></code>, but which specific implementation
-     * class <code>ArrayList</code>, it could be achieved by calling:
+     * that we have generic type like <code>List&ltInteger></code>, but we want
+     * a more specific implementation type like
+     * class <code>ArrayList</code> but with same parameterization (here just <code>Integer</code>),
+     * we could achieve it by:
      *<pre>
      *  ResolvedType mapType = typeResolver.resolve(List.class, Integer.class);
      *  ResolveType concreteMapType = typeResolver.resolveSubType(mapType, ArrayList.class);
@@ -230,12 +228,12 @@ public class TypeResolver
             supertype = refType;
         }
         if (!supertype.canCreateSubtypes()) {
-            throw new UnsupportedOperationException("Can not subtype primitive or array types (type "+supertype.getDescription()+")");
+            throw new UnsupportedOperationException("Can not subtype primitive or array types (type "+supertype.getFullDescription()+")");
         }
         // In general, must be able to subtype as per JVM rules:
         Class<?> superclass = supertype.getErasedType();
         if (!superclass.isAssignableFrom(subtype)) {
-            throw new IllegalArgumentException("Can not sub-class "+supertype.getDescription()
+            throw new IllegalArgumentException("Can not sub-class "+supertype.getBriefDescription()
                     +" into "+subtype.getName());
         }
         // First things first: need to create raw subtype, then replace parts with supertype
@@ -254,13 +252,19 @@ public class TypeResolver
                     _replaceInterface(resolvedSubtype.getImplementedInterfaces(), supertype));
         }
         /* Class extending class is trickiest, since we have to find where super-class
-         * needs to be replaced...
+         * needs to be replaced, and need to do that recursively...
          */
-        // !!! TBI
-        // class extending class
-        // Must be a class (interfaces can't extend classes), so this is simple
-        return new ResolvedObjectType(subtype, supertype.getTypeBindings(),
-                (ResolvedObjectType) supertype, ResolvedType.NO_TYPES);
+        return _resolveSubClass(supertype, resolvedSubtype);
+    }
+    
+    private ResolvedType _resolveSubClass(ResolvedType supertype, ResolvedType subtype)
+    {
+        // Not direct super/subtype? Resolve recursively...
+        if (supertype.getErasedType() != subtype.getParentClass().getErasedType()) {
+            supertype = _resolveSubClass(supertype, subtype.getParentClass());
+        }
+        return new ResolvedObjectType(subtype.getErasedType(), subtype.getTypeBindings(),
+                (ResolvedObjectType) supertype, subtype.getImplementedInterfaces());
     }
 
     
@@ -278,7 +282,7 @@ public class TypeResolver
      */
     public static boolean isSelfReference(ResolvedType type)
     {
-        return (type == sSelfReference);
+        return (type instanceof ResolvedRecursiveType);
     }
     
     /*
@@ -365,7 +369,7 @@ public class TypeResolver
     {
         Type[] types = rawType.getGenericInterfaces();
         if (types == null || types.length == 0) {
-            return ResolvedType.NO_TYPES;
+            return NO_TYPES;
         }
         int len = types.length;
         ResolvedType[] resolved = new ResolvedType[len];

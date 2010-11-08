@@ -27,7 +27,15 @@ public class ResolvedObjectType extends ResolvedType
     /* Life cycle
     /**********************************************************************
      */
-    
+
+    public ResolvedObjectType(Class<?> erased, TypeBindings bindings,
+            ResolvedObjectType superClass, List<ResolvedType> interfaces)
+    {
+        this(erased, bindings, superClass,
+                (interfaces == null || interfaces.isEmpty()) ? NO_TYPES :
+                interfaces.toArray(new ResolvedType[interfaces.size()]));
+    }
+
     public ResolvedObjectType(Class<?> erased, TypeBindings bindings,
             ResolvedObjectType superClass, ResolvedType[] interfaces)
     {

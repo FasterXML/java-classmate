@@ -204,13 +204,23 @@ public abstract class ResolvedType
     }
 
     /**
-     * Human-readable description of type
+     * Human-readable full description of type, which includes specification
+     * of super types (in brief format)
      */
-    public String getDescription() {
+    public String getFullDescription() {
         StringBuilder sb = new StringBuilder();
         return appendFullDescription(sb).toString();
     }
 
+    /**
+     * Human-readable brief description of type, which does not include
+     * information about super types.
+     */
+    public String getBriefDescription() {
+        StringBuilder sb = new StringBuilder();
+        return appendBriefDescription(sb).toString();
+    }
+    
     public abstract StringBuilder appendBriefDescription(StringBuilder sb);
     public abstract StringBuilder appendFullDescription(StringBuilder sb);
     public abstract StringBuilder appendSignature(StringBuilder sb);
@@ -218,10 +228,38 @@ public abstract class ResolvedType
 
     /*
     /**********************************************************************
-    /* Helper methods for sub-classes
+    /* Standard methods
     /**********************************************************************
      */
 
+    @Override public String toString() {
+        return getBriefDescription();
+    }
+
+    @Override public int hashCode() {
+        return _erasedType.getName().hashCode() + _typeBindings.hashCode();
+    }
+
+    @Override public boolean equals(Object o)
+    {
+        if (o == this) return true;
+        // sub-types must be same:
+        if (o == null || o.getClass() != getClass()) return false;
+        // Should be possible to actually implement here...
+        ResolvedType other = (ResolvedType) o;
+        if (other._erasedType != _erasedType) {
+            return false;
+        }
+        // and type bindings must match as well
+        return _typeBindings.equals(other._typeBindings);
+    }
+    
+    /*
+    /**********************************************************************
+    /* Helper methods for sub-classes
+    /**********************************************************************
+     */
+    
     protected StringBuilder _appendClassSignature(StringBuilder sb)
     {
         sb.append('L');

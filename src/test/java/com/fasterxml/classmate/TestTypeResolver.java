@@ -202,6 +202,24 @@ public class TestTypeResolver extends BaseTest
         assertSame(type, compParam.getSelfReferencedType());
     }
 
+    public void testValidSubtype()
+    {
+        // First, make a concrete type that extends specified generic interface:
+        ResolvedType supertype = typeResolver.resolve(Map.class, String.class, Long.class);
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, HashMap.class);
+        assertSame(HashMap.class, subtype.getErasedType());
+
+        // hmmh. Whether we can resolve type bindings is an open question..
+        // !!! TBI: fix either test, or code; this won't pass:
+
+        /*
+        TypeBindings bindings = subtype.getTypeBindings();
+        assertEquals(2, bindings.size());
+        assertSame(String.class, bindings.getBoundType(0).getErasedType());
+        assertSame(Long.class, bindings.getBoundType(1).getErasedType());
+        */
+    }
+    
     /*
     /**********************************************************************
     /* Unit tests, error cases
@@ -227,6 +245,17 @@ public class TestTypeResolver extends BaseTest
             fail("Expected failure");
         } catch (IllegalArgumentException e) {
             verifyException(e, "2 type parameters: class expects 1");
+        }
+    }
+
+    public void testInvalidSubtype()
+    {
+        ResolvedType supertype = typeResolver.resolve(String.class);
+        try {
+            // can't do equivalent of "ArrayType extends String"
+            typeResolver.resolveSubtype(supertype, ArrayList.class);
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "Can not sub-class java.lang.String into java.util.ArrayList");
         }
     }
     

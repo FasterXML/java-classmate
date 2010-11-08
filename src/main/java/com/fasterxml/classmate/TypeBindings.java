@@ -7,13 +7,13 @@ import java.util.*;
  * Helper class used for storing binding of local type variables to
  * matching resolved types, in context of a single class.
  */
-public class TypeBindings
+public final class TypeBindings
 {
     private final static String[] NO_STRINGS = new String[0];
 
     private final static ResolvedType[] NO_TYPES = new ResolvedType[0];
 
-    private final static TypeBindings EMPTY = new TypeBindings(null, null);
+    private final static TypeBindings EMPTY = new TypeBindings(NO_STRINGS, NO_TYPES);
 
     /**
      * Array of type (type variable) names.
@@ -22,6 +22,8 @@ public class TypeBindings
 
     private final ResolvedType[] _types;
 
+    private final int _hashCode;
+    
     /*
     /**********************************************************************
     /* Construction
@@ -35,6 +37,11 @@ public class TypeBindings
         if (_names.length != _types.length) {
             throw new IllegalArgumentException("Mismatching names ("+_names.length+"), types ("+_types.length+")");
         }
+        int h = 1;
+        for (int i = 0, len = types.length; i < len; ++i) {
+            h += types[i].hashCode();
+        }
+        _hashCode = h;
     }
 
     public static TypeBindings emptyBindings() {
@@ -134,6 +141,49 @@ public class TypeBindings
         return Arrays.asList(_types);
     }
 
+    /*
+    /**********************************************************************
+    /* Standard methods
+    /**********************************************************************
+     */
+    
+    @Override public String toString()
+    {
+        if (_types.length == 0) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append('<');
+        for (int i = 0, len = _types.length; i < len; ++i) {
+            if (i > 0) {
+                sb.append(',');
+            }
+            sb = _types[i].appendBriefDescription(sb);
+        }
+        sb.append('>');
+        return sb.toString();
+    }
+
+    @Override public int hashCode() { return _hashCode; }
+
+    @Override public boolean equals(Object o)
+    {
+        if (o == this) return true;
+        if (o == null || o.getClass() != getClass()) return false;
+        TypeBindings other = (TypeBindings) o;
+        int len = _types.length;
+        if (len != other.size()) {
+            return false;
+        }
+        ResolvedType[] otherTypes = other._types;
+        for (int i = 0; i < len; ++i) {
+            if (!otherTypes[i].equals(_types[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
     /*
     /**********************************************************************
     /* Package accessible methods

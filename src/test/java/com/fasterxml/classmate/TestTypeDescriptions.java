@@ -26,7 +26,7 @@ public class TestTypeDescriptions extends BaseTest
     {
         // let's check some default java types
         ResolvedType objectType = typeResolver.resolve(Object.class);
-        assertEquals("java.lang.Object", objectType.getDescription());
+        assertEquals("java.lang.Object", objectType.getFullDescription());
         assertEquals("Ljava/lang/Object;", objectType.getErasedSignature());
         assertEquals("Ljava/lang/Object;", objectType.getSignature());
 
@@ -36,7 +36,7 @@ public class TestTypeDescriptions extends BaseTest
          */
         assertEquals("java.lang.String extends java.lang.Object"
                 +" implements java.io.Serializable,java.lang.Comparable<java.lang.String>,java.lang.CharSequence",
-                stringType.getDescription());
+                stringType.getFullDescription());
         assertEquals("Ljava/lang/String;", stringType.getErasedSignature());
         assertEquals("Ljava/lang/String;", stringType.getSignature());
     }
@@ -47,12 +47,12 @@ public class TestTypeDescriptions extends BaseTest
         ResolvedType intType = typeResolver.resolve(Integer.TYPE);
         assertEquals("I", intType.getSignature());
         assertEquals("I", intType.getErasedSignature());
-        assertEquals("int", intType.getDescription());
+        assertEquals("int", intType.getFullDescription());
 
         ResolvedType boolType = typeResolver.resolve(Boolean.TYPE);
         assertEquals("Z", boolType.getSignature());
         assertEquals("Z", boolType.getErasedSignature());
-        assertEquals("boolean", boolType.getDescription());
+        assertEquals("boolean", boolType.getFullDescription());
     }
 
     public void testGenericTypes()
@@ -60,6 +60,6 @@ public class TestTypeDescriptions extends BaseTest
         ResolvedType mapType = typeResolver.resolve(new GenericType<Map<Long,Boolean>>() { });
         assertEquals("Ljava/util/Map;", mapType.getErasedSignature());
         assertEquals("Ljava/util/Map<Ljava/lang/Long;Ljava/lang/Boolean;>;", mapType.getSignature());
-        assertEquals("java.util.Map<java.lang.Long,java.lang.Boolean>", mapType.getDescription());
+        assertEquals("java.util.Map<java.lang.Long,java.lang.Boolean>", mapType.getFullDescription());
     }
 }
