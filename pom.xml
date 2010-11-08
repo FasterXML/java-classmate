@@ -121,6 +121,7 @@ com.fasterxml.classmate.util
 </Private-Package>
               <Export-Package>
 com.fasterxml.classmate,
+com.fasterxml.classmate.members,
 com.fasterxml.classmate.types
 </Export-Package>
             </instructions>
