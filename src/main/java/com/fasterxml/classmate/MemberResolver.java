@@ -2,10 +2,9 @@ package com.fasterxml.classmate;
 
 /**
  * Builder class used to completely resolve members (fields, methods,
- * constructors) of bean types (or more precisely, any POJOs); optionally
- * 
+ * constructors) of {@link ResolvedType}s (generics-aware classes).
  */
-public class BeanResolver
+public class MemberResolver
 {
     /**
      * Default annotation configuration is to ignore all annotations types.
@@ -49,7 +48,7 @@ public class BeanResolver
      * Constructor that will use defaults for annotation configuration
      * (which is to ignore all annotations) and mix-ins (no mix-ins added)
      */
-    public BeanResolver(TypeResolver typeResolver, ResolvedType beanType)
+    public MemberResolver(TypeResolver typeResolver, ResolvedType beanType)
     {
         this(typeResolver, beanType, null);
     }
@@ -57,13 +56,13 @@ public class BeanResolver
     /**
      * Constructor that will use defaults mix-ins (no mix-ins added)
      */
-    public BeanResolver(TypeResolver typeResolver, ResolvedType beanType,
+    public MemberResolver(TypeResolver typeResolver, ResolvedType beanType,
             AnnotationConfiguration config)
     {
         this(typeResolver, beanType, config, null);
     }
 
-    public BeanResolver(TypeResolver typeResolver, ResolvedType beanType,
+    public MemberResolver(TypeResolver typeResolver, ResolvedType beanType,
             AnnotationConfiguration config,
             MixInProvider mixins)
     {

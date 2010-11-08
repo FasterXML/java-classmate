@@ -8,8 +8,10 @@ import com.fasterxml.classmate.util.ClassKey;
 import com.fasterxml.classmate.util.ResolvedTypeCache;
 
 /**
- * Class used for constructing {@link ResolvedType} instances from type-erased classes
- * (that may extend generic classes) and {@link GenericType}s.
+ * Object that is used for resolving generic type information of a class
+ * so that it is accessible using simple API. Resolved types are also starting
+ * point for accessing resolved (generics aware) return and argument types
+ * of class members (methods, fields, constructors).
  *<p>
  * Note that resolver instances are stateful in that resolvers cache resolved
  * types for efficiency. Since this is internal state and not directly visible
@@ -31,9 +33,8 @@ public class TypeResolver
      * is not found ('raw' instances of generic types); easiest way is to
      * pre-create type for <code>java.lang.Object</code>
      */
-    private final static ResolvedObjectType sJavaLangObject =  new ResolvedObjectType(Object.class, null, null,
-            
-            NO_TYPES);
+    private final static ResolvedObjectType sJavaLangObject =
+        new ResolvedObjectType(Object.class, null, null, NO_TYPES);
 
     /**
      * Since number of primitive types is small, and they are frequently needed,
@@ -61,6 +62,9 @@ public class TypeResolver
     
     /**
      * Simple cache of types resolved by this resolved; capped to last 200 resolved types.
+     * Caching works because type instances themselves are mostly immutable;
+     * and properly synchronized in cases where transient data (raw members) are
+     * accessed.
      */
     protected final ResolvedTypeCache _resolvedTypes = new ResolvedTypeCache(200);
 
