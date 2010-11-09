@@ -1,10 +1,12 @@
 package com.fasterxml.classmate.types;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
+import com.fasterxml.classmate.members.RawConstructor;
+import com.fasterxml.classmate.members.RawField;
+import com.fasterxml.classmate.members.RawMethod;
 
 public final class ResolvedArrayType  extends ResolvedType
 {
@@ -68,6 +70,18 @@ public final class ResolvedArrayType  extends ResolvedType
 
     @Override
     public boolean isPrimitive() { return false; }
+
+    /*
+    /**********************************************************************
+    /* Accessors for raw (minimally procesed) members
+    /**********************************************************************
+     */
+    
+    public List<RawField> getMemberFields() { return Collections.emptyList(); }
+    public List<RawField> getStaticFields() { return Collections.emptyList(); }
+    public List<RawMethod> getMemberMethods() { return Collections.emptyList(); }
+    public List<RawMethod> getStaticMethods() { return Collections.emptyList(); }
+    public List<RawConstructor> getConstructors() { return Collections.emptyList(); }    
 
     /*
     /**********************************************************************

@@ -1,10 +1,20 @@
 package com.fasterxml.classmate;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
+
+import com.fasterxml.classmate.members.*;
 
 public abstract class ResolvedType
 {
     protected final static ResolvedType[] NO_TYPES = new ResolvedType[0];
+
+    protected final static RawConstructor[] NO_CONSTRUCTORS = new RawConstructor[0];
+    protected final static RawField[] NO_FIELDS = new RawField[0];
+    protected final static RawMethod[] NO_METHODS = new RawMethod[0];
     
     protected final Class<?> _erasedType;
 
@@ -155,7 +165,8 @@ public abstract class ResolvedType
     
     /*
     /**********************************************************************
-    /* Simple property accessors
+    /* Accessors for simple properties
+     */
     /**********************************************************************
      */
     
@@ -178,7 +189,19 @@ public abstract class ResolvedType
     public final boolean isInstanceOf(Class<?> type) {
         return type.isAssignableFrom(_erasedType);
     }
-    
+
+    /*
+    /**********************************************************************
+    /* Accessors for raw (minimally procesed) members
+    /**********************************************************************
+     */
+
+    public abstract List<RawField> getMemberFields();
+    public abstract List<RawField> getStaticFields();
+    public abstract List<RawMethod> getStaticMethods();
+    public abstract List<RawMethod> getMemberMethods();
+    public abstract List<RawConstructor> getConstructors();
+
     /*
     /**********************************************************************
     /* String representations
@@ -256,7 +279,7 @@ public abstract class ResolvedType
     
     /*
     /**********************************************************************
-    /* Helper methods for sub-classes
+    /* Helper methods for sub-classes; string construction
     /**********************************************************************
      */
     
@@ -310,5 +333,64 @@ public abstract class ResolvedType
             sb.append(c);
         }
         return sb;
+    }
+
+    /*
+    /**********************************************************************
+    /* Helper methods for sub-classes; gathering members
+    /**********************************************************************
+     */
+    
+    /**
+     * @param statics Whether to return static methods (true) or member methods (false)
+     */
+    protected RawField[] _getFields(boolean statics)
+    {
+        ArrayList<RawField> fields = new ArrayList<RawField>();
+        for (Field f : _erasedType.getDeclaredFields()) {
+            // Only skip synthetic fields, which should not really be exposed
+            if (!f.isSynthetic()) {
+                if (Modifier.isStatic(f.getModifiers()) == statics) {
+                    fields.add(new RawField(this, f));
+                }
+            }
+        }
+        if (fields.isEmpty()) {
+            return NO_FIELDS;
+        }
+        return fields.toArray(new RawField[fields.size()]);
+    }
+
+    /**
+     * @param statics Whether to return static methods (true) or member methods (false)
+     */
+    protected RawMethod[] _getMethods(boolean statics)
+    {
+        ArrayList<RawMethod> methods = new ArrayList<RawMethod>();
+        for (Method m : _erasedType.getDeclaredMethods()) {
+            // Only skip synthetic fields, which should not really be exposed
+            if (!m.isSynthetic()) {
+                methods.add(new RawMethod(this, m));
+            }
+        }
+        if (methods.isEmpty()) {
+            return NO_METHODS;
+        }
+        return methods.toArray(new RawMethod[methods.size()]);
+    }
+
+    protected RawConstructor[] _getConstructors()
+    {
+        ArrayList<RawConstructor> ctors = new ArrayList<RawConstructor>();
+        for (Constructor<?> c : _erasedType.getDeclaredConstructors()) {
+            // Only skip synthetic fields, which should not really be exposed
+            if (!c.isSynthetic()) {
+                ctors.add(new RawConstructor(this, c));
+            }
+        }
+        if (ctors.isEmpty()) {
+            return NO_CONSTRUCTORS;
+        }
+        return ctors.toArray(new RawConstructor[ctors.size()]);
     }
 }

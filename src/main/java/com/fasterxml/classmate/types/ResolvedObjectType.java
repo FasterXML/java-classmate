@@ -7,6 +7,9 @@ import java.util.List;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
+import com.fasterxml.classmate.members.RawConstructor;
+import com.fasterxml.classmate.members.RawField;
+import com.fasterxml.classmate.members.RawMethod;
 
 /**
  * Type implementation for classes that do not represent interfaces,
@@ -20,7 +23,21 @@ public class ResolvedObjectType extends ResolvedType
      */
     protected final ResolvedType[] _superInterfaces;
 
+    /**
+     * Modifiers of the underlying class.
+     */
     protected final int _modifiers;
+
+    /**
+     * Constructors declared by the resolved Object class.
+     */
+    protected RawConstructor[] _constructors;
+
+    protected RawField[] _memberFields;
+    protected RawField[] _staticFields;
+
+    protected RawMethod[] _memberMethods;
+    protected RawMethod[] _staticMethods;
     
     /*
     /**********************************************************************
@@ -96,7 +113,69 @@ public class ResolvedObjectType extends ResolvedType
 
     @Override
     public final boolean isPrimitive() { return false; }
+
+    /*
+    /**********************************************************************
+    /* Accessors for raw (minimally procesed) members
+    /**********************************************************************
+     */
+
     
+    public synchronized List<RawField> getMemberFields()
+    {
+        if (_memberFields == null) {
+            _memberFields = _getFields(true);
+        }
+        if (_memberFields.length == 0) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(_memberFields);
+    }
+
+    public synchronized List<RawField> getStaticFields()
+    {
+        if (_staticFields == null) {
+            _staticFields = _getFields(true);
+        }
+        if (_staticFields.length == 0) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(_staticFields);
+    }
+
+    public synchronized List<RawMethod> getMemberMethods()
+    {
+        if (_memberMethods == null) {
+            _memberMethods = _getMethods(false);
+        }
+        if (_memberMethods.length == 0) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(_memberMethods);
+    } 
+
+    public synchronized List<RawMethod> getStaticMethods()
+    {
+        if (_staticMethods == null) {
+            _staticMethods = _getMethods(false);
+        }
+        if (_staticMethods.length == 0) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(_staticMethods);
+    } 
+
+    public List<RawConstructor> getConstructors()
+    {
+        if (_constructors == null) {
+            _constructors = _getConstructors();
+        }
+        if (_constructors.length == 0) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(_constructors);
+    }
+
     /*
     /**********************************************************************
     /* String representations

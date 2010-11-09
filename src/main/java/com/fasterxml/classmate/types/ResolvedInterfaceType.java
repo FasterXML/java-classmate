@@ -1,9 +1,13 @@
 package com.fasterxml.classmate.types;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
+import com.fasterxml.classmate.members.RawConstructor;
+import com.fasterxml.classmate.members.RawField;
+import com.fasterxml.classmate.members.RawMethod;
 
 public class ResolvedInterfaceType extends ResolvedType
 {
@@ -12,6 +16,16 @@ public class ResolvedInterfaceType extends ResolvedType
      */
     protected final ResolvedType[] _superInterfaces;
 
+    /**
+     * Interfaces can have static final (constant) fields.
+     */
+    protected RawField[] _constantFields;
+
+    /**
+     * Interface methods are all public and abstract.
+     */
+    protected RawMethod[] _memberMethods;
+    
     /*
     /**********************************************************************
     /* Life cycle
@@ -75,6 +89,41 @@ public class ResolvedInterfaceType extends ResolvedType
 
     /*
     /**********************************************************************
+    /* Accessors for raw (minimally procesed) members
+    /**********************************************************************
+     */
+    
+    public List<RawField> getMemberFields() { return Collections.emptyList(); }
+
+    public synchronized List<RawField> getStaticFields()
+    {
+        // Interfaces can have static fields, but only as static constants...
+        if (_constantFields == null) {
+            _constantFields = _getFields(true);
+        }
+        if (_constantFields.length == 0) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(_constantFields);
+    }
+
+    public synchronized List<RawMethod> getMemberMethods()
+    {
+        if (_memberMethods == null) {
+            _memberMethods = _getMethods(false);
+        }
+        if (_memberMethods.length == 0) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(_memberMethods);
+    } 
+
+    public List<RawMethod> getStaticMethods() { return Collections.emptyList(); }
+
+    public List<RawConstructor> getConstructors() { return Collections.emptyList(); }
+    
+    /*
+    /**********************************************************************
     /* String representations
     /**********************************************************************
      */
@@ -111,6 +160,24 @@ public class ResolvedInterfaceType extends ResolvedType
         }
         return sb;
     }
+
+    public static void main(String[] args)
+    {
+        Class<?> cls = int[].class;
+//        Class<?> cls = Integer.TYPE;
+        System.out.println("Type == "+cls+"; super == "+cls.getSuperclass());
+        for (Field f : cls.getDeclaredFields()) {
+            System.out.println("Field == "+f);
+        }
+        for (Method m : cls.getDeclaredMethods()) {
+            System.out.println("Method == "+m);
+        }
+        for (Constructor<?> c : cls.getDeclaredConstructors()) {
+            System.out.println("Ctor == "+c);
+        }
+        System.out.println("Done!");
+    }
 }
+
 
 

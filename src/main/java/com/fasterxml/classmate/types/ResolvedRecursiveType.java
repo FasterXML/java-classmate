@@ -5,6 +5,9 @@ import java.util.*;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
+import com.fasterxml.classmate.members.RawConstructor;
+import com.fasterxml.classmate.members.RawField;
+import com.fasterxml.classmate.members.RawMethod;
 
 /**
  * Specialized type placeholder used in cases where type definition is
@@ -98,6 +101,18 @@ public class ResolvedRecursiveType extends ResolvedType
     @Override
     public boolean isPrimitive() { return false; }
 
+    /*
+    /**********************************************************************
+    /* Accessors for raw (minimally procesed) members
+    /**********************************************************************
+     */
+
+    public List<RawField> getMemberFields() { return _referencedType.getMemberFields(); }
+    public List<RawField> getStaticFields() { return _referencedType.getStaticFields(); }
+    public List<RawMethod> getStaticMethods() { return _referencedType.getStaticMethods(); }
+    public List<RawMethod> getMemberMethods() { return _referencedType.getMemberMethods(); }
+    public List<RawConstructor> getConstructors() { return _referencedType.getConstructors(); }
+    
     /*
     /**********************************************************************
     /* String representations
