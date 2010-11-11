@@ -231,6 +231,11 @@ public class TypeResolver
         if (refType != null) {
             supertype = refType;
         }
+        // Then, trivial check for case where subtype is supertype...
+        if (supertype.getErasedType() == subtype) {
+            return supertype;
+        }
+        
         if (!supertype.canCreateSubtypes()) {
             throw new UnsupportedOperationException("Can not subtype primitive or array types (type "+supertype.getFullDescription()+")");
         }
@@ -240,37 +245,47 @@ public class TypeResolver
             throw new IllegalArgumentException("Can not sub-class "+supertype.getBriefDescription()
                     +" into "+subtype.getName());
         }
-        // First things first: need to create raw subtype, then replace parts with supertype
-        ResolvedType resolvedSubtype = resolve(subtype);
-        
-        // interfaces can be extended as sub-classes or as sub-interfaces
-        if (supertype.isInterface()) {
-            // interface extension is easy; just add/replace super-interface:
-            if (subtype.isInterface()) {
-                return new ResolvedInterfaceType(subtype, resolvedSubtype.getTypeBindings(),
-                        _replaceInterface(resolvedSubtype.getImplementedInterfaces(), supertype));
-            }
-            // class implementing an interface is similarly quite easy with add/replace
-            return new ResolvedObjectType(subtype, resolvedSubtype.getTypeBindings(),
-                    (ResolvedObjectType) resolvedSubtype.getParentClass(),
-                    _replaceInterface(resolvedSubtype.getImplementedInterfaces(), supertype));
-        }
-        /* Class extending class is trickiest, since we have to find where super-class
-         * needs to be replaced, and need to do that recursively...
-         */
-        return _resolveSubClass(supertype, resolvedSubtype);
-    }
-    
-    private ResolvedType _resolveSubClass(ResolvedType supertype, ResolvedType subtype)
-    {
-        // Not direct super/subtype? Resolve recursively...
-        if (supertype.getErasedType() != subtype.getParentClass().getErasedType()) {
-            supertype = _resolveSubClass(supertype, subtype.getParentClass());
-        }
-        return new ResolvedObjectType(subtype.getErasedType(), subtype.getTypeBindings(),
-                (ResolvedObjectType) supertype, subtype.getImplementedInterfaces());
-    }
+        // Ok, then, let us instantiate type with placeholders
+        ResolvedType resolvedSubtype;
+        int paramCount = subtype.getTypeParameters().length;
+        TypePlaceHolder[] placeholders;
 
+        if (paramCount == 0) { // no generics
+            placeholders = null;
+            resolvedSubtype = resolve(subtype);
+        } else {
+            placeholders = new TypePlaceHolder[paramCount];
+            for (int i = 0; i < paramCount; ++i) {
+                placeholders[i] = new TypePlaceHolder(i);
+            }
+            resolvedSubtype = resolve(subtype, placeholders);            
+        }
+        ResolvedType rawSupertype = resolvedSubtype.findSupertype(superclass);
+        if (rawSupertype == null) { // sanity check, should never occur
+            throw new IllegalArgumentException("Internal error: unable to locate supertype ("+subtype.getName()+") for type "+supertype.getBriefDescription());
+        }
+        // Ok, then, let's find and verify type assignments
+        _resolveTypePlaceholders(supertype, rawSupertype);
+        
+        // And then re-construct, if necessary
+        if (paramCount == 0) { // if no type parameters, fine as is
+            return resolvedSubtype;
+        }
+        // but with type parameters, need to reconstruct
+        ResolvedType[] typeParams = new ResolvedType[paramCount];
+        for (int i = 0; i < paramCount; ++i) {
+            ResolvedType t = placeholders[i].actualType();
+            /* Is it ok for it to be left unassigned? For now let's not
+             * allow that
+             */
+            if (t == null) {
+                throw new IllegalArgumentException("Failed to find type parameter #"+(i+1)+"/"
+                        +paramCount+" for "+subtype.getName());
+            }
+            typeParams[i] = t;
+        }
+        return resolve(subtype, typeParams);
+    }
     
     /*
     /**********************************************************************
@@ -449,27 +464,50 @@ public class TypeResolver
 
     /*
     /**********************************************************************
-    /* Internal methods, other
+    /* Internal methods, replacing and verifying type placeholders
     /**********************************************************************
      */
-    
-    private ResolvedType[] _replaceInterface(List<ResolvedType> interfaces, ResolvedType newInterface)
+
+    /**
+     * Method called to verify that types match; and if there are
+     */
+    private void _resolveTypePlaceholders(ResolvedType expectedType, ResolvedType actualType)
+        throws IllegalArgumentException
     {
-        ArrayList<ResolvedType> result = new ArrayList<ResolvedType>();
-        Class<?> interfaceToAdd = newInterface.getErasedType();
-        boolean wasAdded = false;
-        for (ResolvedType iface : interfaces) {
-            if (iface.getErasedType() == interfaceToAdd) {
-                result.add(newInterface);
-                wasAdded = true;
-            } else {
-                result.add(iface);
+        List<ResolvedType> expectedTypes = expectedType.getTypeParameters();
+        List<ResolvedType> actualTypes = actualType.getTypeParameters();
+        for (int i = 0, len = expectedTypes.size(); i < len; ++i) {
+            ResolvedType exp = expectedTypes.get(i);
+            ResolvedType act = actualTypes.get(i);
+            if (!_typesMatch(exp, act)) {
+                throw new IllegalArgumentException("Type parameter #"+(i+1)+"/"+len+" differs; expected "
+                        +exp.getBriefDescription()+", got "+act.getBriefDescription());
             }
         }
-        if (!wasAdded) {
-            result.add(newInterface);
+    }
+
+    private boolean _typesMatch(ResolvedType exp, ResolvedType act)
+    {
+        // Simple equality check, except for one thing: place holders for 'act'
+        if (act instanceof TypePlaceHolder) {
+            ((TypePlaceHolder) act).actualType(exp);
+            return true;
         }
-        return result.toArray(new ResolvedType[result.size()]);
+        // but due to recursive nature can't call equality...
+        if (exp.getErasedType() != act.getErasedType()) {
+            return false;
+        }
+        // But we can check type parameters "blindly"
+        List<ResolvedType> expectedTypes = exp.getTypeParameters();
+        List<ResolvedType> actualTypes = act.getTypeParameters();
+        for (int i = 0, len = expectedTypes.size(); i < len; ++i) {
+            ResolvedType exp2 = expectedTypes.get(i);
+            ResolvedType act2 = actualTypes.get(i);
+            if (!_typesMatch(exp2, act2)) {
+                return false;
+            }
+        }
+        return true;
     }
     
     /*

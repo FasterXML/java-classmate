@@ -4,9 +4,6 @@ import java.util.*;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
-import com.fasterxml.classmate.members.RawConstructor;
-import com.fasterxml.classmate.members.RawField;
-import com.fasterxml.classmate.members.RawMethod;
 
 /**
  * Type used for Java primitive types (which does not include arrays here).
@@ -111,15 +108,7 @@ public final class ResolvedPrimitiveType extends ResolvedType
     /**********************************************************************
      */
     
-    /* Primitive types are simple; no fields, no methods, no constructors
-     * (nor super class or interfaces!)
-     */
-    
-    public List<RawField> getMemberFields() { return Collections.emptyList(); }
-    public List<RawField> getStaticFields() { return Collections.emptyList(); }
-    public List<RawMethod> getStaticMethods() { return Collections.emptyList(); }
-    public List<RawMethod> getMemberMethods() { return Collections.emptyList(); }
-    public List<RawConstructor> getConstructors() { return Collections.emptyList(); }    
+    // Primitive types are simple; no fields, no methods, no constructors
     
     /*
     /**********************************************************************

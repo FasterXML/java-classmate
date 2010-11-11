@@ -5,28 +5,30 @@ import java.util.*;
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
 
-public final class ResolvedArrayType extends ResolvedType
+/**
+ * Placeholder used for resolving type assignments to figure out
+ * type parameters for subtypes.
+ */
+public class TypePlaceHolder extends ResolvedType
 {
-    protected final ResolvedType _elementType;
-    
-    /*
-    /**********************************************************************
-    /* Life cycle
-    /**********************************************************************
-     */
+    protected final int _ordinal;
 
-    public ResolvedArrayType(Class<?> erased, TypeBindings bindings,
-            ResolvedObjectType superclass, // must be java.lang.Object
-            ResolvedType elementType)
-    {
-        super(erased, bindings);
-        _elementType = elementType;
-    }
+    /**
+     * Type assigned during wildcard resolution
+     */
+    protected ResolvedType _actualType;
     
-    @Override
-    public boolean canCreateSubtypes() {
-        return false;
+    public TypePlaceHolder(int ordinal)
+    {
+        super(Object.class, TypeBindings.emptyBindings());
+        _ordinal = ordinal;
     }
+
+    @Override
+    public boolean canCreateSubtypes() { return false; }
+
+    public ResolvedType actualType() { return _actualType; }
+    public void actualType(ResolvedType t) { _actualType = t; }
     
     /*
     /**********************************************************************
@@ -36,15 +38,16 @@ public final class ResolvedArrayType extends ResolvedType
     
     @Override
     public ResolvedType getParentClass() { return null; }
-    
+
     @Override
     public ResolvedType getSelfReferencedType() { return null; }
     
     @Override
-    public List<ResolvedType> getImplementedInterfaces() {
-        return Collections.emptyList();
-    }
+    public List<ResolvedType> getImplementedInterfaces() { return Collections.<ResolvedType>emptyList(); }
     
+    @Override
+    public ResolvedType getArrayElementType() { return null; }
+
     /*
     /**********************************************************************
     /* Simple property accessors
@@ -52,18 +55,13 @@ public final class ResolvedArrayType extends ResolvedType
      */
 
     @Override
-    public boolean isInterface() {
-        return false;
-    }
+    public boolean isInterface() { return false; }
 
     @Override
-    public boolean isAbstract() { return false; }
+    public boolean isAbstract() { return true; }
 
     @Override
-    public ResolvedType getArrayElementType() { return _elementType; }
-
-    @Override
-    public boolean isArray() { return true; }
+    public boolean isArray() { return false; }
 
     @Override
     public boolean isPrimitive() { return false; }
@@ -73,8 +71,6 @@ public final class ResolvedArrayType extends ResolvedType
     /* Accessors for raw (minimally procesed) members
     /**********************************************************************
      */
-
-    // defaults are fine (nothing to access)
     
     /*
     /**********************************************************************
@@ -84,23 +80,21 @@ public final class ResolvedArrayType extends ResolvedType
 
     @Override
     public StringBuilder appendSignature(StringBuilder sb) {
-        sb.append('[');
-        return _elementType.appendSignature(sb);
+        return _appendClassSignature(sb);
     }
 
     @Override
     public StringBuilder appendErasedSignature(StringBuilder sb) {
-        sb.append('[');
-        return _elementType.appendErasedSignature(sb);
+        return _appendErasedClassSignature(sb);
     }
 
-    public StringBuilder appendBriefDescription(StringBuilder sb)
-    {
-        sb = _elementType.appendBriefDescription(sb);
-        sb.append("[]");
+    @Override
+    public StringBuilder appendBriefDescription(StringBuilder sb) {
+        sb.append('<').append(_ordinal).append('>');
         return sb;
     }
 
+    @Override
     public StringBuilder appendFullDescription(StringBuilder sb) {
         return appendBriefDescription(sb);
     }

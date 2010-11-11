@@ -1,11 +1,9 @@
 package com.fasterxml.classmate.types;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
-import com.fasterxml.classmate.members.RawConstructor;
 import com.fasterxml.classmate.members.RawField;
 import com.fasterxml.classmate.members.RawMethod;
 
@@ -92,8 +90,6 @@ public class ResolvedInterfaceType extends ResolvedType
     /* Accessors for raw (minimally procesed) members
     /**********************************************************************
      */
-    
-    public List<RawField> getMemberFields() { return Collections.emptyList(); }
 
     public synchronized List<RawField> getStaticFields()
     {
@@ -116,11 +112,7 @@ public class ResolvedInterfaceType extends ResolvedType
             return Collections.emptyList();
         }
         return Arrays.asList(_memberMethods);
-    } 
-
-    public List<RawMethod> getStaticMethods() { return Collections.emptyList(); }
-
-    public List<RawConstructor> getConstructors() { return Collections.emptyList(); }
+    }
     
     /*
     /**********************************************************************
@@ -159,23 +151,6 @@ public class ResolvedInterfaceType extends ResolvedType
             }
         }
         return sb;
-    }
-
-    public static void main(String[] args)
-    {
-        Class<?> cls = int[].class;
-//        Class<?> cls = Integer.TYPE;
-        System.out.println("Type == "+cls+"; super == "+cls.getSuperclass());
-        for (Field f : cls.getDeclaredFields()) {
-            System.out.println("Field == "+f);
-        }
-        for (Method m : cls.getDeclaredMethods()) {
-            System.out.println("Method == "+m);
-        }
-        for (Constructor<?> c : cls.getDeclaredConstructors()) {
-            System.out.println("Ctor == "+c);
-        }
-        System.out.println("Done!");
     }
 }
 

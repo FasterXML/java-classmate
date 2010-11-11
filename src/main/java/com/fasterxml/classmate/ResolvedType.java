@@ -196,11 +196,11 @@ public abstract class ResolvedType
     /**********************************************************************
      */
 
-    public abstract List<RawField> getMemberFields();
-    public abstract List<RawField> getStaticFields();
-    public abstract List<RawMethod> getStaticMethods();
-    public abstract List<RawMethod> getMemberMethods();
-    public abstract List<RawConstructor> getConstructors();
+    public List<RawConstructor> getConstructors() { return Collections.emptyList(); }
+    public List<RawField> getMemberFields() { return Collections.emptyList(); }
+    public List<RawMethod> getMemberMethods() { return Collections.emptyList(); }
+    public List<RawField> getStaticFields() { return Collections.emptyList(); }
+    public List<RawMethod> getStaticMethods() { return Collections.emptyList(); }
 
     /*
     /**********************************************************************
@@ -243,12 +243,12 @@ public abstract class ResolvedType
         StringBuilder sb = new StringBuilder();
         return appendBriefDescription(sb).toString();
     }
-    
+
     public abstract StringBuilder appendBriefDescription(StringBuilder sb);
     public abstract StringBuilder appendFullDescription(StringBuilder sb);
     public abstract StringBuilder appendSignature(StringBuilder sb);
     public abstract StringBuilder appendErasedSignature(StringBuilder sb);
-
+    
     /*
     /**********************************************************************
     /* Standard methods
