@@ -42,7 +42,7 @@ public class TestTypeResolver extends BaseTest
     
     /*
     /**********************************************************************
-    /* Unit tests, normal operation
+    /* setup
     /**********************************************************************
      */
 
@@ -54,6 +54,12 @@ public class TestTypeResolver extends BaseTest
         typeResolver = new TypeResolver();
     }
 
+    /*
+    /**********************************************************************
+    /* Unit tests, normal operation
+    /**********************************************************************
+     */
+    
     public void testSimpleTypes()
     {
         // let's check some default java types
@@ -200,24 +206,6 @@ public class TestTypeResolver extends BaseTest
         assertNull(compParam.getParentClass());
         // but we should be able to find what it really is, too:
         assertSame(type, compParam.getSelfReferencedType());
-    }
-
-    public void testValidSubtype()
-    {
-        // First, make a concrete type that extends specified generic interface:
-        ResolvedType supertype = typeResolver.resolve(Map.class, String.class, Long.class);
-        ResolvedType subtype = typeResolver.resolveSubtype(supertype, HashMap.class);
-        assertSame(HashMap.class, subtype.getErasedType());
-
-        // hmmh. Whether we can resolve type bindings is an open question..
-        // !!! TBI: fix either test, or code; this won't pass:
-
-        /*
-        TypeBindings bindings = subtype.getTypeBindings();
-        assertEquals(2, bindings.size());
-        assertSame(String.class, bindings.getBoundType(0).getErasedType());
-        assertSame(Long.class, bindings.getBoundType(1).getErasedType());
-        */
     }
     
     /*
