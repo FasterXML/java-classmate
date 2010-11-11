@@ -14,6 +14,8 @@ public class TestSubtypeResolution extends BaseTest
     static class IntArrayList extends ArrayList<Integer> { }
     
     static class StringIntMap extends HashMap<String,Integer> { }
+
+    interface StringKeyMap<VT> extends Map<String,VT> { }
     
     /*
     /**********************************************************************
@@ -68,6 +70,29 @@ public class TestSubtypeResolution extends BaseTest
                 subtype.getFullDescription());
     }
 
+    /**
+     * Let's test that we can also resolve to incomplete types; might
+     * be useful occasionally
+     */
+    public void testValidIncompleteSubtype()
+    {
+        ResolvedType supertype = typeResolver.resolve(Map.class, String.class, Long.class);
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, StringKeyMap.class);
+        assertSame(StringKeyMap.class, subtype.getErasedType());
+
+        TypeBindings bindings = subtype.getTypeBindings();
+        assertEquals(1, bindings.size());
+        assertSame(Long.class, bindings.getBoundType(0).getErasedType());
+
+        // And should see full types for Map
+        ResolvedType actualSupertype = subtype.findSupertype(Map.class);
+        assertSame(Map.class, actualSupertype.getErasedType());
+        bindings = actualSupertype.getTypeBindings();
+        assertEquals(2, bindings.size());
+        assertSame(String.class, bindings.getBoundType(0).getErasedType());
+        assertSame(Long.class, bindings.getBoundType(1).getErasedType());
+    }
+    
     // Test to verify that type erasures are compatible
     public void testInvalidSubClass()
     {
