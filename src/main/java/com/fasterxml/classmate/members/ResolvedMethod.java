@@ -4,11 +4,11 @@ import java.lang.reflect.Method;
 
 import com.fasterxml.classmate.ResolvedType;
 
-public class RawMethod extends RawMember
+public class ResolvedMethod extends ResolvedMember
 {
     protected final Method _method;
 
-    public RawMethod(ResolvedType context, Method method)
+    public ResolvedMethod(ResolvedType context, Method method)
     {
         super(context);
         _method = method;
@@ -36,5 +36,6 @@ public class RawMethod extends RawMember
         if (o == null || o.getClass() != getClass()) return false;
         RawMethod other = (RawMethod) o;
         return (other._method == _method);
-    }    
+    }
+
 }

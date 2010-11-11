@@ -30,14 +30,6 @@ public class RawField extends RawMember
     /**********************************************************************
      */
 
-    @Override public String toString() {
-        return _field.getName();
-    }
-
-    @Override public int hashCode() {
-        return _field.getName().hashCode();
-    }
-
     @Override public boolean equals(Object o)
     {
         if (o == this) return true;

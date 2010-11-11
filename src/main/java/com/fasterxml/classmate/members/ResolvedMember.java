@@ -6,13 +6,11 @@ import java.lang.reflect.Modifier;
 import com.fasterxml.classmate.ResolvedType;
 
 /**
- * Base class for all "raw" member (field, method, constructor) types; raw means that
- * actual types are not yet resolved, but relationship to declaring type is
- * retained for eventual resolution.
- * Instances are typically created by {@link com.fasterxml.classmate.ResolvedType}
- * when requested, and form the input to eventual full flattening of type members.
+ * Fully type-resolved equivalent of {@link RawMember}. Only members "that matter" (ones not
+ * overridden, or filtered out) are resolved, since resolution process can add non-trivial
+ * overhead.
  */
-public abstract class RawMember
+public abstract class ResolvedMember
 {
     /**
      * {@link ResolvedType} (class with generic type parameters) that declared
@@ -26,7 +24,7 @@ public abstract class RawMember
     /**********************************************************************
      */
     
-    protected RawMember(ResolvedType context)
+    protected ResolvedMember(ResolvedType context)
     {
         _declaringType = context;
     }
@@ -54,23 +52,6 @@ public abstract class RawMember
     public boolean isStatic() {
         return Modifier.isStatic(getModifiers());
     }
-
-    /*
-    /**********************************************************************
-    /* Standard method overrides
-    /**********************************************************************
-     */
-
-    // make abstract to force implementation by sub-class
-    @Override public abstract boolean equals(Object o);
-    
-    @Override public int hashCode() {
-        return getName().hashCode();
-    }
-    
-    @Override public String toString() {
-        return getName();
-    }
     
     /*
     /**********************************************************************
@@ -79,4 +60,5 @@ public abstract class RawMember
      */
 
     protected final int getModifiers() { return getRawMember().getModifiers(); }
+    
 }

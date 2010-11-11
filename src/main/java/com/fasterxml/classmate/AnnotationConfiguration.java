@@ -42,14 +42,22 @@ public abstract class AnnotationConfiguration
 
     /**
      * Method called to figure out how to handle instances of specified annotation
-     * type.
+     * type when used as class annotation.
      */
-    public abstract Inclusion getInclusion(Class<Annotation> annotationType);
+    public abstract Inclusion getInclusionForClass(Class<Annotation> annotationType);
 
+    /**
+     * Method called to figure out how to handle instances of specified annotation
+     * type when used as method annotation.
+     */
+    public abstract Inclusion getInclusionForMethod(Class<Annotation> annotationType);
+    
     /**
      * Simple implementation that can be configured with default behavior
      * for unknown annotations, as well as explicit behaviors for
-     * enumerated annotation types.
+     * enumerated annotation types. Same default is used for both class and
+     * member method annotations (constructor, field and static method
+     * annotations are never inherited)
      */
     public static class StdConfiguration extends AnnotationConfiguration
     {
@@ -63,13 +71,18 @@ public abstract class AnnotationConfiguration
         }
         
         @Override
-        public Inclusion getInclusion(Class<Annotation> annotationType)
+        public Inclusion getInclusionForClass(Class<Annotation> annotationType)
         {
             ClassKey key = new ClassKey(annotationType);
             Inclusion beh = _inclusions.get(key);
             return (beh == null) ? _defaultInclusion : beh;
         }
 
+        @Override
+        public Inclusion getInclusionForMethod(Class<Annotation> annotationType) {
+            return getInclusionForClass(annotationType);
+        }
+        
         public void setInclusion(Class<Annotation> annotationType, Inclusion incl)
         {
             _inclusions.put(new ClassKey(annotationType), incl);

@@ -30,10 +30,6 @@ public final class RawConstructor extends RawMember
     /**********************************************************************
      */
 
-    @Override public String toString() {
-        return _constructor.getName();
-    }
-
     @Override public int hashCode() {
         return _constructor.getName().hashCode();
     }

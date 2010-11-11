@@ -1,17 +1,17 @@
 package com.fasterxml.classmate.members;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 
 import com.fasterxml.classmate.ResolvedType;
 
-public class RawMethod extends RawMember
+public final class ResolvedConstructor extends ResolvedMember
 {
-    protected final Method _method;
+    protected final Constructor<?> _constructor;
 
-    public RawMethod(ResolvedType context, Method method)
+    public ResolvedConstructor(ResolvedType context, Constructor<?> constructor)
     {
         super(context);
-        _method = method;
+        _constructor = constructor;
     }
 
     /*
@@ -20,8 +20,8 @@ public class RawMethod extends RawMember
     /**********************************************************************
      */
 
-    public Method getRawMember() {
-        return _method;
+    public Constructor<?> getRawMember() {
+        return _constructor;
     }
     
     /*
@@ -30,11 +30,16 @@ public class RawMethod extends RawMember
     /**********************************************************************
      */
 
+    @Override public int hashCode() {
+        return _constructor.getName().hashCode();
+    }
+
     @Override public boolean equals(Object o)
     {
         if (o == this) return true;
         if (o == null || o.getClass() != getClass()) return false;
-        RawMethod other = (RawMethod) o;
-        return (other._method == _method);
-    }    
+        RawConstructor other = (RawConstructor) o;
+        return (other._constructor == _constructor);
+    }
+
 }

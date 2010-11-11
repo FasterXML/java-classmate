@@ -1,17 +1,17 @@
 package com.fasterxml.classmate.members;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 
 import com.fasterxml.classmate.ResolvedType;
 
-public class RawMethod extends RawMember
+public class ResolvedField extends ResolvedMember
 {
-    protected final Method _method;
+    protected final Field _field;
 
-    public RawMethod(ResolvedType context, Method method)
+    public ResolvedField(ResolvedType context, Field field)
     {
         super(context);
-        _method = method;
+        _field = field;
     }
 
     /*
@@ -20,8 +20,8 @@ public class RawMethod extends RawMember
     /**********************************************************************
      */
 
-    public Method getRawMember() {
-        return _method;
+    public Field getRawMember() {
+        return _field;
     }
     
     /*
@@ -34,7 +34,7 @@ public class RawMethod extends RawMember
     {
         if (o == this) return true;
         if (o == null || o.getClass() != getClass()) return false;
-        RawMethod other = (RawMethod) o;
-        return (other._method == _method);
-    }    
+        RawField other = (RawField) o;
+        return (other._field == _field);
+    }
 }
