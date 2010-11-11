@@ -2,6 +2,10 @@ package com.fasterxml.classmate;
 
 import java.util.*;
 
+/**
+ * Unit tests to verify that {@link TypeResolver#resolveSubtype(ResolvedType, Class)}
+ * works as expected.
+ */
 @SuppressWarnings("serial")
 public class TestSubtypeResolution extends BaseTest
 {
@@ -16,6 +20,14 @@ public class TestSubtypeResolution extends BaseTest
     static class StringIntMap extends HashMap<String,Integer> { }
 
     interface StringKeyMap<VT> extends Map<String,VT> { }
+
+    interface StringLongMap extends StringKeyMap<Long> { }
+
+    static class Wrapper<T> {
+        T value;
+    }
+
+    static class ListWrapper<E> extends Wrapper<List<E>> { }
     
     /*
     /**********************************************************************
@@ -77,6 +89,35 @@ public class TestSubtypeResolution extends BaseTest
         assertSame(LinkedHashSet.class, subtype.getErasedType());
         assertEquals("java.util.LinkedHashSet<java.lang.Byte>", subtype.getBriefDescription());
     }
+
+    public void testValidGenericSubInterfaceWithMap()
+    {
+        ResolvedType supertype = typeResolver.resolve(Map.class, String.class, Long.class);
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, StringLongMap.class);
+        assertSame(StringLongMap.class, subtype.getErasedType());
+        ResolvedType match = subtype.findSupertype(Map.class);
+        TypeBindings tb = match.getTypeBindings();
+        assertEquals(2, tb.size());
+        assertSame(String.class, tb.getBoundType(0).getErasedType());
+        assertSame(Long.class, tb.getBoundType(1).getErasedType());
+    }
+
+    public void testValidNestedType()
+    {
+        // Let's try to get to ListWrapper<String>, from Wrapper<List<String>>
+        ResolvedType elemType = typeResolver.resolve(List.class, String.class);
+        ResolvedType wrapperType = typeResolver.resolve(Wrapper.class, elemType);
+        ResolvedType subtype = typeResolver.resolveSubtype(wrapperType, ListWrapper.class);
+        assertSame(ListWrapper.class, subtype.getErasedType());
+        ResolvedType match = subtype.findSupertype(Wrapper.class);
+        TypeBindings tb = match.getTypeBindings();
+        assertEquals(1, tb.size());
+        ResolvedType listType = tb.getBoundType(0);
+        assertSame(List.class, listType.getErasedType());
+        tb = listType.getTypeBindings();
+        assertEquals(1, tb.size());
+        assertSame(String.class, tb.getBoundType(0).getErasedType());
+    }
     
     /**
      * Let's test that we can also resolve to incomplete types; might
@@ -120,7 +161,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // Test to further verify that type parameters are compatible
-    public void testIncompatibleTypeParameters()
+    public void testIncompatibleTypeParametersList()
     {
         ResolvedType supertype = typeResolver.resolve(ArrayList.class, String.class);
         try {
@@ -130,5 +171,15 @@ public class TestSubtypeResolution extends BaseTest
             verifyException(e, "Type parameter #1/1 differs; expected java.lang.String");
         }
     }
-    
+
+    public void testIncompatibleTypeParametersMap()
+    {
+        ResolvedType supertype = typeResolver.resolve(Map.class, String.class, Integer.class);
+        try {
+            typeResolver.resolveSubtype(supertype, StringLongMap.class);
+            fail("Expected failure");
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "Type parameter #2/2 differs; expected java.lang.Integer");
+        }
+    }
 }

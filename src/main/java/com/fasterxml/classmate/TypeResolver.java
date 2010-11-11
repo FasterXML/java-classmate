@@ -133,7 +133,7 @@ public class TypeResolver
      *  ResolvedType type = TypeResolver.resolve(new GenericType&lt;List&lt;Set&lt;String>>() { });
      *</pre>
      */
-    public ResolvedType resolve(Class<?> type, ResolvedType[] typeParameters)
+    public ResolvedType resolve(Class<?> type, ResolvedType... typeParameters)
     {
         if (typeParameters == null || typeParameters.length == 0) {
             return resolve(type);
