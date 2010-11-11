@@ -33,7 +33,7 @@ public class TestSubtypeResolution extends BaseTest
     
     /*
     /**********************************************************************
-    /* Unit tests
+    /* Unit tests, success
     /**********************************************************************
      */
 
@@ -51,7 +51,7 @@ public class TestSubtypeResolution extends BaseTest
         assertSame(Integer.class, bindings.get(1).getErasedType());
     }
 
-    public void testValidGenericSubtype()
+    public void testValidGenericSubClass()
     {
         // First, make a concrete type that extends specified generic interface:
         ResolvedType supertype = typeResolver.resolve(Map.class, String.class, Long.class);
@@ -70,6 +70,14 @@ public class TestSubtypeResolution extends BaseTest
                 subtype.getFullDescription());
     }
 
+    public void testValidGenericSubInterface()
+    {
+        ResolvedType supertype = typeResolver.resolve(Collection.class, Byte.class);
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, LinkedHashSet.class);
+        assertSame(LinkedHashSet.class, subtype.getErasedType());
+        assertEquals("java.util.LinkedHashSet<java.lang.Byte>", subtype.getBriefDescription());
+    }
+    
     /**
      * Let's test that we can also resolve to incomplete types; might
      * be useful occasionally
@@ -92,6 +100,12 @@ public class TestSubtypeResolution extends BaseTest
         assertSame(String.class, bindings.getBoundType(0).getErasedType());
         assertSame(Long.class, bindings.getBoundType(1).getErasedType());
     }
+
+    /*
+    /**********************************************************************
+    /* Unit tests, failure cases
+    /**********************************************************************
+     */
     
     // Test to verify that type erasures are compatible
     public void testInvalidSubClass()
