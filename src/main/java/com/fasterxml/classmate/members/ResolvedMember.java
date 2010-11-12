@@ -38,7 +38,16 @@ public abstract class ResolvedMember
     public final ResolvedType getDeclaringType() {
         return _declaringType;
     }
-    
+
+    /**
+     * Returns type of this member; if it has one, for methods this is the
+     * return type, for fields field type, and for constructors null.
+     */
+    public abstract ResolvedType getType();
+ 
+    /**
+     * Returns JDK object that represents member.
+     */
     public abstract Member getRawMember();
 
     public String getName() {

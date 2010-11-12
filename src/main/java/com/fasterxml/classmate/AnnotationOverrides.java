@@ -7,7 +7,7 @@ import com.fasterxml.classmate.util.ClassKey;
 /**
  * Interface for object that can provide mix-ins to override annotations.
  */
-public abstract class MixInProvider
+public abstract class AnnotationOverrides
 {
     /**
      * Method called to find out which class(es) are to be used as source
@@ -23,15 +23,16 @@ public abstract class MixInProvider
     public abstract List<Class<?>> mixInsFor(ClassKey beanClass);
     
     /**
-     * Simple implementation configured with explicit associations form
-     * target bean type to mix-in source type(s).
+     * Simple implementation configured with explicit associations with
+     * target class as key, and overrides as ordered list of classes
+     * (with first entry having precedence over later ones).
      */
-    public static class StdProvider extends MixInProvider
+    public static class StdImpl extends AnnotationOverrides
     {
         protected HashMap<ClassKey,List<Class<?>>> _targetsToMixins
             = new HashMap<ClassKey,List<Class<?>>>();
         
-        public StdProvider() { }
+        public StdImpl() { }
 
         @Override
         public List<Class<?>> mixInsFor(ClassKey target) {

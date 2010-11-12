@@ -6,51 +6,45 @@ import java.util.*;
 import com.fasterxml.classmate.util.ClassKey;
 
 /**
- * Interface for object that determines 
- * 
- * @author tsaloranta
+ * Interface for object that determines handling of annotations in regards
+ * to inheritance, overrides.
  */
 public abstract class AnnotationConfiguration
 {
     /**
-     * Enumeration that defines different settings for handling behavior
-     * of individual annotations
-     */
-    public enum Inclusion
-    {
-        /**
-         * Value that indicates that annotation is to be ignored, not included
-         * in resolved bean information.
-         */
-        DONT_INCLUDE,
-
-        /**
-         * Value that indicates that annotation is to be included in results, but
-         * only if directly associated with included member (or attached mix-in);
-         * will not inherit from supertypes.
-         */
-        INCLUDE_BUT_DONT_INHERIT,
-
-        /**
-         * Value that indicates that annotation is to be included in results; and
-         * values from overridden members are also inherited if not overridden
-         * by members of subtypes.
-         */
-        INCLUDE_AND_INHERIT
-        ;
-    }
-
-    /**
      * Method called to figure out how to handle instances of specified annotation
      * type when used as class annotation.
      */
-    public abstract Inclusion getInclusionForClass(Class<Annotation> annotationType);
+    public abstract AnnotationInclusion getInclusionForClass(Class<? extends Annotation> annotationType);
 
     /**
      * Method called to figure out how to handle instances of specified annotation
-     * type when used as method annotation.
+     * type when used as constructor annotation.
+     *<p>
+     * Note that constructor annotations can never be inherited so this just determines
+     * between inclusion or non-inclusion.
      */
-    public abstract Inclusion getInclusionForMethod(Class<Annotation> annotationType);
+    public abstract AnnotationInclusion getInclusionForConstructor(Class<? extends Annotation> annotationType);
+    
+    /**
+     * Method called to figure out how to handle instances of specified annotation
+     * type when used as field annotation.
+     *<p>
+     * Note that field annotations can never be inherited so this just determines
+     * between inclusion or non-inclusion.
+     */
+    public abstract AnnotationInclusion getInclusionForField(Class<? extends Annotation> annotationType);
+    
+    /**
+     * Method called to figure out how to handle instances of specified annotation
+     * type when used as method annotation.
+     *<p>
+     * Note that method annotations can be inherited for member methods, but not for static
+     * methods; for static methods thereby this just determines between inclusion and
+     * non-inclusion.
+     */
+    public abstract AnnotationInclusion getInclusionForMethod(Class<? extends Annotation> annotationType);
+
     
     /**
      * Simple implementation that can be configured with default behavior
@@ -61,31 +55,45 @@ public abstract class AnnotationConfiguration
      */
     public static class StdConfiguration extends AnnotationConfiguration
     {
-        protected final Inclusion _defaultInclusion;
+        protected final AnnotationInclusion _defaultInclusion;
 
-        protected HashMap<ClassKey,Inclusion> _inclusions = new HashMap<ClassKey,Inclusion>();
+        protected HashMap<ClassKey,AnnotationInclusion> _inclusions = new HashMap<ClassKey,AnnotationInclusion>();
         
-        public StdConfiguration(Inclusion defaultBehavior)
+        public StdConfiguration(AnnotationInclusion defaultBehavior)
         {
             _defaultInclusion = defaultBehavior;
         }
         
         @Override
-        public Inclusion getInclusionForClass(Class<Annotation> annotationType)
-        {
-            ClassKey key = new ClassKey(annotationType);
-            Inclusion beh = _inclusions.get(key);
-            return (beh == null) ? _defaultInclusion : beh;
+        public AnnotationInclusion getInclusionForClass(Class<? extends Annotation> annotationType) {
+            return _inclusionFor(annotationType);
         }
 
         @Override
-        public Inclusion getInclusionForMethod(Class<Annotation> annotationType) {
+        public AnnotationInclusion getInclusionForConstructor(Class<? extends Annotation> annotationType) {
+            return _inclusionFor(annotationType);
+        }
+
+        @Override
+        public AnnotationInclusion getInclusionForField(Class<? extends Annotation> annotationType) {
             return getInclusionForClass(annotationType);
         }
         
-        public void setInclusion(Class<Annotation> annotationType, Inclusion incl)
+        @Override
+        public AnnotationInclusion getInclusionForMethod(Class<? extends Annotation> annotationType) {
+            return getInclusionForClass(annotationType);
+        }
+        
+        public void setInclusion(Class<? extends Annotation> annotationType, AnnotationInclusion incl)
         {
             _inclusions.put(new ClassKey(annotationType), incl);
+        }
+
+        protected AnnotationInclusion _inclusionFor(Class<? extends Annotation> annotationType)
+        {
+            ClassKey key = new ClassKey(annotationType);
+            AnnotationInclusion beh = _inclusions.get(key);
+            return (beh == null) ? _defaultInclusion : beh;
         }
     }
 }

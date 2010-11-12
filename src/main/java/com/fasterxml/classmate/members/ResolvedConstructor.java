@@ -23,6 +23,8 @@ public final class ResolvedConstructor extends ResolvedMember
     public Constructor<?> getRawMember() {
         return _constructor;
     }
+
+    public ResolvedType getType() { return null; }
     
     /*
     /**********************************************************************

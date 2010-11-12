@@ -8,10 +8,13 @@ public class ResolvedMethod extends ResolvedMember
 {
     protected final Method _method;
 
-    public ResolvedMethod(ResolvedType context, Method method)
+    protected final ResolvedType _returnType;
+    
+    public ResolvedMethod(ResolvedType context, Method method, ResolvedType returnType)
     {
         super(context);
         _method = method;
+        _returnType = returnType;
     }
 
     /*
@@ -23,6 +26,8 @@ public class ResolvedMethod extends ResolvedMember
     public Method getRawMember() {
         return _method;
     }
+
+    public ResolvedType getType() { return _returnType; }
     
     /*
     /**********************************************************************

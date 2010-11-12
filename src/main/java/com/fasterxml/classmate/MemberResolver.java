@@ -11,24 +11,12 @@ import com.fasterxml.classmate.util.ClassKey;
  */
 public class MemberResolver
 {
-    /**
-     * Default annotation configuration is to ignore all annotations types.
-     */
-    protected final static AnnotationConfiguration DEFAULT_ANNOTATION_CONFIG
-        = new AnnotationConfiguration.StdConfiguration(AnnotationConfiguration.Inclusion.DONT_INCLUDE);
     
     /**
      * Type resolved needed for resolving types of member objects
      * (method argument and return; field types; constructor argument types)
      */
     protected final TypeResolver _typeResolver;
-
-    /**
-     * Type of bean to resolve.
-     */
-    protected final ResolvedType _beanType;
-
-    protected final AnnotationConfiguration _annotationConfig;
     
     /*
     /**********************************************************************
@@ -50,26 +38,12 @@ public class MemberResolver
      */
 
     /**
-     * Constructor that will use defaults for annotation configuration
-     * (which is to ignore all annotations) and mix-ins (no mix-ins added)
+     * Constructor for resolver that does not include <code>java.lang.Object</code>
+     * in type hierarchy
      */
-    public MemberResolver(TypeResolver typeResolver, ResolvedType beanType)
-    {
-        this(typeResolver, beanType, null);
-    }
-
-    /**
-     * Constructor that will use defaults mix-ins (no mix-ins added)
-     */
-    public MemberResolver(TypeResolver typeResolver, ResolvedType beanType,
-            AnnotationConfiguration annotationConfig)
+    public MemberResolver(TypeResolver typeResolver)
     {
         _typeResolver = typeResolver;
-        _beanType = beanType;
-        if (annotationConfig == null) {
-            annotationConfig = DEFAULT_ANNOTATION_CONFIG;
-        }
-        _annotationConfig = annotationConfig;
     }
 
     /**
@@ -77,8 +51,9 @@ public class MemberResolver
      * are to be included in resolution; if false, no members from {@link java.lang.Object}
      * are to be included; if true, will be included.
      */
-    public void setIncludeLangObject(boolean state) {
+    public MemberResolver setIncludeLangObject(boolean state) {
         _cfgIncludeLangObject = state;
+        return this;
     }
     
     /*
@@ -88,29 +63,18 @@ public class MemberResolver
      */
 
     /**
-     * Method used to find out full type hierarchy for given starting point.
-     * Resulting will contain passed type as the first element, followed by
-     * supertypes in order; starting with most immediate super-interfaces
-     * (and their super-interfaces)
-     * followed by super-classes, recursively.
-     */
-    public List<ResolvedType> flattenTypes(ResolvedType mainType)
-    {
-        HashSet<ClassKey> seenTypes = new HashSet<ClassKey>();
-        ArrayList<ResolvedType> types = new ArrayList<ResolvedType>();
-        _gatherTypes(mainType, seenTypes, types);
-        return types;
-    }
-    
-    /**
      * Method for constructing hierarchy object needed to fully resolve
      * member information, including basic type flattening as well as
      * addition of mix-in types in appropriate positions.
      * 
      * @param mainType Resolved type that is the starting point (i.e. the leaf class)
      *    for member resolution.
+     * @param annotationConfig Configuration of annotation types; which ones to include, how to inherit
+     * @param annotationOverrides Definitions of annotation overrides to use, if any (may be null)
      */
-    public TypeHierarchy resolveTypeHierarchy(final ResolvedType mainType, final MixInProvider mixins)
+    public TypeHierarchy resolveTypeHierarchy(final ResolvedType mainType,
+            AnnotationConfiguration annotationConfig,
+            AnnotationOverrides annotationOverrides)
     {
         // First: flatten basic type hierarchy
         HashSet<ClassKey> seenTypes = new HashSet<ClassKey>();
@@ -122,7 +86,7 @@ public class MemberResolver
         HierarchicType mainHierarchicType = null;
 
         // Third step: add mix-ins (if any), reverse order (lowest to highest precedence)
-        if (mixins == null) { // just copy, reorder
+        if (annotationOverrides == null) { // just copy, reorder
             int len = types.size();
             htypes = new HierarchicType[len];
             for (int i = 0; i < len; ++i) {
@@ -139,7 +103,7 @@ public class MemberResolver
                 HierarchicType ht = new HierarchicType(type, false, typesWithMixins.size());
                 typesWithMixins.add(ht);
                 mainHierarchicType = ht;
-                List<Class<?>> m = mixins.mixInsFor(type.getErasedType());
+                List<Class<?>> m = annotationOverrides.mixInsFor(type.getErasedType());
                 if (m != null) {
                     for (Class<?> mixinClass : m) {
                         ClassKey key = new ClassKey(mixinClass);
@@ -153,7 +117,7 @@ public class MemberResolver
             htypes = typesWithMixins.toArray(new HierarchicType[typesWithMixins.size()]);
         }
         // And that's about all we need at this point
-        return new TypeHierarchy(_typeResolver, _annotationConfig, mainHierarchicType, htypes);
+        return new TypeHierarchy(_typeResolver, annotationConfig, mainHierarchicType, htypes);
     }
 
     /*
