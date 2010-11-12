@@ -82,12 +82,23 @@ public class TestSubtypeResolution extends BaseTest
                 subtype.getFullDescription());
     }
 
+    /**
+     * Unit test for verifying that we can "sub-class" from rather low-level secondary
+     * interfaces, too
+     */
     public void testValidGenericSubInterface()
     {
-        ResolvedType supertype = typeResolver.resolve(Collection.class, Byte.class);
+        ResolvedType supertype = typeResolver.resolve(Iterable.class, Byte.class);
         ResolvedType subtype = typeResolver.resolveSubtype(supertype, LinkedHashSet.class);
         assertSame(LinkedHashSet.class, subtype.getErasedType());
         assertEquals("java.util.LinkedHashSet<java.lang.Byte>", subtype.getBriefDescription());
+
+        ResolvedType collectionType = subtype.findSupertype(Collection.class);
+        assertNotNull(collectionType);
+        assertEquals("java.util.Collection<java.lang.Byte>", collectionType.getBriefDescription());
+        ResolvedType setType = subtype.findSupertype(Set.class);
+        assertNotNull(setType);
+        assertEquals("java.util.Set<java.lang.Byte>", setType.getBriefDescription());    
     }
 
     public void testValidGenericSubInterfaceWithMap()
