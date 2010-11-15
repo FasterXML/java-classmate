@@ -1,8 +1,10 @@
 package com.fasterxml.classmate.members;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Member;
 import java.lang.reflect.Modifier;
 
+import com.fasterxml.classmate.Annotations;
 import com.fasterxml.classmate.ResolvedType;
 
 /**
@@ -18,17 +20,25 @@ public abstract class ResolvedMember
      */
     protected final ResolvedType _declaringType;
 
+    protected final Annotations _annotations;
+    
     /*
     /**********************************************************************
     /* Life cycle
     /**********************************************************************
      */
     
-    protected ResolvedMember(ResolvedType context)
+    protected ResolvedMember(ResolvedType context, Annotations ann)
     {
         _declaringType = context;
+        _annotations = ann;
     }
 
+    public void applyOverride(Annotation override)
+    {
+        _annotations.add(override);
+    }
+    
     /*
     /**********************************************************************
     /* Simple accessors

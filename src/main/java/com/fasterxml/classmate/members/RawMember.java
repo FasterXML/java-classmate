@@ -1,5 +1,7 @@
 package com.fasterxml.classmate.members;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Member;
 import java.lang.reflect.Modifier;
 
@@ -55,6 +57,10 @@ public abstract class RawMember
         return Modifier.isStatic(getModifiers());
     }
 
+    public Annotation[] getAnnotations() {
+        return ((AnnotatedElement) getRawMember()).getAnnotations();
+    }
+    
     /*
     /**********************************************************************
     /* Standard method overrides

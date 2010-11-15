@@ -2,16 +2,21 @@ package com.fasterxml.classmate.members;
 
 import java.lang.reflect.Constructor;
 
+import com.fasterxml.classmate.Annotations;
 import com.fasterxml.classmate.ResolvedType;
 
 public final class ResolvedConstructor extends ResolvedMember
 {
     protected final Constructor<?> _constructor;
 
-    public ResolvedConstructor(ResolvedType context, Constructor<?> constructor)
+    protected final ResolvedType[] _argumentTypes;
+    
+    public ResolvedConstructor(ResolvedType context, Annotations ann, Constructor<?> constructor,
+            ResolvedType[] argumentTypes)            
     {
-        super(context);
+        super(context, ann);
         _constructor = constructor;
+        _argumentTypes = argumentTypes;
     }
 
     /*

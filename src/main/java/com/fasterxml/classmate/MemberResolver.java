@@ -30,6 +30,30 @@ public class MemberResolver
      * false meaning that they are not.
      */
     protected boolean _cfgIncludeLangObject;
+
+    /**
+     * Filter used for determining whether given
+     * field (static or member)
+     * is to be included in aggregation of all
+     * fields.
+     */
+    protected Filter<RawField> _fieldFilter;
+
+    /**
+     * Filter used for determining whether given
+     * method (static or member)
+     * is to be included in aggregation of all
+     * methods.
+     */
+    protected Filter<RawMethod> _methodFilter;
+
+    /**
+     * Filter used for determining whether given
+     * constructor
+     * is to be included in aggregation of all
+     * constructors.
+     */
+    protected Filter<RawConstructor> _constructorFilter;
     
     /*
     /**********************************************************************
@@ -53,6 +77,21 @@ public class MemberResolver
      */
     public MemberResolver setIncludeLangObject(boolean state) {
         _cfgIncludeLangObject = state;
+        return this;
+    }
+
+    public MemberResolver setFieldFilter(Filter<RawField> f) {
+        _fieldFilter = f;
+        return this;
+    }
+
+    public MemberResolver setMethodFilter(Filter<RawMethod> f) {
+        _methodFilter = f;
+        return this;
+    }
+
+    public MemberResolver setConstructorFilter(Filter<RawConstructor> f) {
+        _constructorFilter = f;
         return this;
     }
     
@@ -118,7 +157,8 @@ public class MemberResolver
             htypes = typesWithMixins.toArray(new HierarchicType[typesWithMixins.size()]);
         }
         // And that's about all we need to do; rest computed lazily
-        return new ResolvedTypeWithMembers(_typeResolver, annotationConfig, mainHierarchicType, htypes);
+        return new ResolvedTypeWithMembers(_typeResolver, annotationConfig, mainHierarchicType, htypes,
+                _constructorFilter, _fieldFilter, _methodFilter);
     }
 
     /*

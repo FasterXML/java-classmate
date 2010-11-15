@@ -3,6 +3,7 @@ package com.fasterxml.classmate.members;
 import java.lang.reflect.Method;
 
 import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.util.MethodKey;
 
 public class RawMethod extends RawMember
 {
@@ -22,6 +23,16 @@ public class RawMethod extends RawMember
 
     public Method getRawMember() {
         return _method;
+    }
+
+    public MethodKey createKey()
+    {
+        String name = _method.getName();
+        Class<?>[] argTypes = _method.getParameterTypes();
+        if (argTypes == null) {
+            return new MethodKey(name);
+        }
+        return new MethodKey(name, argTypes);
     }
     
     /*

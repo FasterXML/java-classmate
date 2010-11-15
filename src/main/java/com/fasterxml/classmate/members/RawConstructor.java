@@ -3,6 +3,7 @@ package com.fasterxml.classmate.members;
 import java.lang.reflect.Constructor;
 
 import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.util.MethodKey;
 
 public final class RawConstructor extends RawMember
 {
@@ -22,6 +23,20 @@ public final class RawConstructor extends RawMember
 
     public Constructor<?> getRawMember() {
         return _constructor;
+    }
+
+    /**
+     * Although constructors are different from other methods, we can use
+     * {@link MethodKey} easily.
+     */
+    public MethodKey createKey()
+    {
+        String name = _constructor.getName();
+        Class<?>[] argTypes = _constructor.getParameterTypes();
+        if (argTypes == null) {
+            return new MethodKey(name);
+        }
+        return new MethodKey(name, argTypes);
     }
     
     /*

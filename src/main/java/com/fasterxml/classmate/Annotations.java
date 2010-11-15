@@ -13,7 +13,31 @@ public class Annotations
 {
     protected HashMap<Class<? extends Annotation>,Annotation> _annotations;
 
+    /*
+    /**********************************************************************
+    /* Life-cycle
+    /**********************************************************************
+     */
+    
     public Annotations() { }
+
+    public void add(Annotation override)
+    {
+        if (_annotations == null) {
+            _annotations = new HashMap<Class<? extends Annotation>,Annotation>();
+        }
+        _annotations.put(override.annotationType(), override);
+    }
+
+    /*
+    /**********************************************************************
+    /* Accessors
+    /**********************************************************************
+     */
+    
+    public int size() {
+        return (_annotations == null) ? 0 : _annotations.size();
+    }
 
     @SuppressWarnings("unchecked")
     public <A extends Annotation> A get(Class<A> cls)
@@ -23,22 +47,7 @@ public class Annotations
         }
         return (A) _annotations.get(cls);
     }
-
-    public int size() {
-        return (_annotations == null) ? 0 : _annotations.size();
-    }
-
-    /**
-     * Method called to add specified annotation in the Map.
-     */
-    public void add(Annotation ann)
-    {
-        if (_annotations == null) {
-            _annotations = new HashMap<Class<? extends Annotation>,Annotation>();
-        }
-        _annotations.put(ann.annotationType(), ann);
-    }
-
+    
     /*
     /**********************************************************************
     /* Standard method overrides

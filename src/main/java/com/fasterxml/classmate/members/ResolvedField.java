@@ -6,33 +6,18 @@ import java.lang.reflect.Field;
 import com.fasterxml.classmate.Annotations;
 import com.fasterxml.classmate.ResolvedType;
 
-import com.fasterxml.classmate.TypeResolver;
-
 public class ResolvedField extends ResolvedMember
 {
     protected final Field _field;
 
     protected final ResolvedType _type;
-
-    protected final Annotations _annotations;
     
-    private ResolvedField(ResolvedType context, Field field, ResolvedType type,
-            Annotations annotations)
+    public ResolvedField(ResolvedType context, Annotations ann,
+            Field field, ResolvedType type)
     {
-        super(context);
+        super(context, ann);
         _field = field;
         _type = type;
-        _annotations = annotations;
-    }
-
-    public static ResolvedField construct(RawField field, TypeResolver typeResolver,
-            Annotations annotations)
-    {
-        ResolvedType context = field.getDeclaringType();
-        Field rawField = field.getRawMember();
-        ResolvedType type = typeResolver.resolve(rawField.getGenericType(), context.getTypeBindings());
-        // Ok, after basics, 
-        return new ResolvedField(context, rawField, type, annotations);
     }
 
     public void addAnnotation(Annotation ann) {

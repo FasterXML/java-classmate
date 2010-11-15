@@ -1,11 +1,14 @@
 package com.fasterxml.classmate;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.*;
 
-import com.fasterxml.classmate.members.HierarchicType;
-import com.fasterxml.classmate.members.RawField;
-import com.fasterxml.classmate.members.ResolvedField;
+import com.fasterxml.classmate.members.*;
+import com.fasterxml.classmate.util.MethodKey;
 
 /**
  * Class that contains information about fully resolved members of a
@@ -13,9 +16,18 @@ import com.fasterxml.classmate.members.ResolvedField;
  * all inheritable annotations are flattened using optional overrides
  * as well ("mix-in annotations").
  * Instances are created by {@link com.fasterxml.classmate.MemberResolver}.
+ *<p>
+ * Note that instances are not thread-safe, as the expectation is that instances
+ * will not be shared (unlike raw members or resolved types)
  */
 public class ResolvedTypeWithMembers
 {
+    private final static ResolvedType[] NO_RESOLVED_TYPES = new ResolvedType[0];
+
+    private final static ResolvedMethod[] NO_RESOLVED_METHODS = new ResolvedMethod[0];
+    private final static ResolvedField[] NO_RESOLVED_FIELDS = new ResolvedField[0];
+    private final static ResolvedConstructor[] NO_RESOLVED_CONSTRUCTORS = new ResolvedConstructor[0];
+    
     /**
      * Default annotation configuration is to ignore all annotations types.
      */
@@ -26,6 +38,11 @@ public class ResolvedTypeWithMembers
      * Need to be able to resolve member types still
      */
     protected final TypeResolver _typeResolver;
+
+    /**
+     * Handler for resolving annotation information
+     */
+    protected final AnnotationHandler _annotationHandler;
     
     /**
      * Leaf of the type hierarchy, i.e. type from which this hierarchy
@@ -39,6 +56,35 @@ public class ResolvedTypeWithMembers
      */
     protected final HierarchicType[] _types;
 
+    /**
+     * Filter to use for selecting fields to include
+     */
+    protected Filter<RawField> _fieldFilter;
+
+    /**
+     * Filter to use for selecting constructors to include
+     */
+    protected Filter<RawConstructor> _constructorFilter;
+    
+    /**
+     * Filter to use for selecting methods to include
+     */
+    protected Filter<RawMethod> _methodFilter;
+    
+    /*
+    /**********************************************************************
+    /* Lazily constructed members
+    /**********************************************************************
+     */
+
+    protected ResolvedMethod[] _staticMethods = null;
+
+    protected ResolvedMethod[] _memberMethods = null;
+
+    protected ResolvedField[] _memberFields = null;
+
+    protected ResolvedConstructor[] _constructors = null;
+
     /*
     /**********************************************************************
     /* Life cycle at this point
@@ -46,16 +92,20 @@ public class ResolvedTypeWithMembers
      */
     
     public ResolvedTypeWithMembers(TypeResolver typeResolver, AnnotationConfiguration annotationConfig,
-            HierarchicType mainType, HierarchicType[] types)
+            HierarchicType mainType, HierarchicType[] types,
+            Filter<RawConstructor> constructorFilter, Filter<RawField> fieldFilter, Filter<RawMethod> methodFilter)
     {
         _typeResolver = typeResolver;
         _mainType = mainType;
         _types = types;
+        if (annotationConfig == null) {
+            annotationConfig = DEFAULT_ANNOTATION_CONFIG;
+        }
+        _annotationHandler = new AnnotationHandler(annotationConfig);
+        _constructorFilter = constructorFilter;
+        _fieldFilter = fieldFilter;
+        _methodFilter = methodFilter;
     }
-
-
-//    protected final AnnotationConfiguration _annotationConfig;
-//    _annotationConfig = annotationConfig;
     
     /*
     /**********************************************************************
@@ -74,19 +124,32 @@ public class ResolvedTypeWithMembers
     }
 
     /**
-     * Access for getting subset of type hierarchy which only contains main type
-     * and possible overrides (mix-ins) it has.
+     * Accessor for getting subset of type hierarchy which only contains main type
+     * and possible overrides (mix-ins) it has, but not supertypes or their overrides.
      */
     public List<HierarchicType> mainTypeAndOverrides()
     {
         List<HierarchicType> l = Arrays.asList(_types);
-        int index = _mainType.getPriority();
-        if (index > 0) {
-            l = l.subList(index, l.size());
+        int end = _mainType.getPriority() + 1;
+        if (end < l.size()) {
+            l = l.subList(0, end);
         }
         return l;
     }
 
+    /**
+     * Accessor for finding just overrides for the main type (if any).
+     */
+    public List<HierarchicType> overridesOnly()
+    {
+        int index = _mainType.getPriority();
+        if (index == 0) {
+            return Collections.emptyList();
+        }
+        List<HierarchicType> l = Arrays.asList(_types);
+        return l.subList(0, index);
+    }
+    
     /*
     /**********************************************************************
     /* Public API, actual resolution of members
@@ -94,53 +157,250 @@ public class ResolvedTypeWithMembers
      */
 
     /**
+     * Method for finding all static methods of the main type (except for ones
+     * possibly filtered out by filter) and applying annotation overrides, if any,
+     * to annotations.
+     */
+    public ResolvedMethod[] getStaticMethods()
+    {
+        if (_staticMethods == null) {
+            _staticMethods = resolveStaticMethods();
+        }
+        return _staticMethods;
+    }
+
+    public ResolvedField[] getMemberFields()
+    {
+        if (_memberFields == null) {
+            _memberFields = resolveMemberFields();
+        }
+        return _memberFields;
+    }
+    
+    public ResolvedMethod[] getMemberMethods()
+    {
+        if (_memberMethods == null) {
+            _memberMethods = resolveMemberMethods();
+        }
+        return _memberMethods;
+    }
+
+    public ResolvedConstructor[] getConstructors()
+    {
+        if (_constructors == null) {
+            _constructors = resolveConstructors();
+        }
+        return _constructors;
+    }
+    
+    /*
+    /**********************************************************************
+    /* Internal methods: actual resolution
+    /**********************************************************************
+     */
+    
+    /**
+     * Method that will actually resolve full information (types, annotations)
+     * for constructors of the main type.
+     */
+    protected ResolvedConstructor[] resolveConstructors()
+    {
+        // First get static methods for main type, filter
+        LinkedHashMap<MethodKey, ResolvedConstructor> constructors = new LinkedHashMap<MethodKey, ResolvedConstructor>();
+        for (RawConstructor constructor : _mainType.getType().getConstructors()) {
+            // no filter for constructors (yet?)
+            if (_constructorFilter == null || _constructorFilter.include(constructor)) {
+                constructors.put(constructor.createKey(), resolveConstructor(constructor));
+            }
+        }
+        // then apply overrides (mix-ins):
+        for (HierarchicType type : overridesOnly()) {
+            for (RawConstructor raw : type.getType().getConstructors()) {
+                ResolvedConstructor constructor = constructors.get(raw.createKey()); 
+                // must override something, otherwise to ignore
+                if (constructor != null) {
+                    for (Annotation ann : raw.getAnnotations()) {
+                        if (_annotationHandler.includeMethodAnnotation(ann)) {
+                            constructor.applyOverride(ann);
+                        }
+                    }
+                }
+            }
+        }
+        if (constructors.size() == 0) {
+            return NO_RESOLVED_CONSTRUCTORS;
+        }
+        return constructors.values().toArray(new ResolvedConstructor[constructors.size()]);
+    }
+
+    /**
      * Method for fully resolving field definitions and associated annotations.
      * Neither field definitions nor associated annotations inherit, but we may
      * still need to add annotation overrides, as well as filter out filters
      * and annotations that caller is not interested in.
      */
-    public Collection<ResolvedField> resolveMemberFields(AnnotationConfiguration annotationConfig,
-            Filter<RawField> fieldFilter)
+    protected ResolvedField[] resolveMemberFields()
     {
-        if (annotationConfig == null) {
-            annotationConfig = DEFAULT_ANNOTATION_CONFIG;
-        }
-        final AnnotationHandler annotationHandler = new AnnotationHandler(annotationConfig);
-        
-        // Fields are easy; find fields that main type has; check for annotation overrides
         LinkedHashMap<String, ResolvedField> fields = new LinkedHashMap<String, ResolvedField>();
-        List<HierarchicType> types = mainTypeAndOverrides();
-        // First actual fields from main type:
-        for (RawField f : types.get(0).getType().getMemberFields()) {
-            // want to filter it out?
-            if (fieldFilter != null && !fieldFilter.include(f)) {
-                continue;
-            }
-            Annotations annotations = new Annotations();
-            for (Annotation ann : f.getRawMember().getAnnotations()) {
-                if (annotationHandler.includeFieldAnnotation(ann)) {
-                    annotations.add(ann);
-                }
-            }
-            fields.put(f.getName(), ResolvedField.construct(f, _typeResolver, annotations));
-        }
-        // then annotation overrides, if any
-        for (int i = 1, len = types.size(); i < len; ++i) {
-            for (RawField f : types.get(i).getType().getMemberFields()) {
-                ResolvedField base = fields.get(f.getName());
-                if (base != null) {
-                    for (Annotation ann : f.getRawMember().getAnnotations()) {
-                        if (annotationHandler.includeFieldAnnotation(ann)) {
-                            base.addAnnotation(ann);
+
+        /* Fields need different handling: must start from bottom; and annotations only get added
+         * as overrides, never as defaults. And sub-classes fully mask fields. This makes
+         * handling bit simpler than that of member methods.
+         */
+        for (int typeIndex = _types.length; --typeIndex >= 0; ) {
+            HierarchicType thisType = _types[typeIndex];
+            // If it's just a mix-in, add annotations as overrides
+            if (thisType.isMixin()) {
+                for (RawField raw : thisType.getType().getMemberFields()) {
+                    ResolvedField field = fields.get(raw.getName());
+                    if (field != null) {
+                        for (Annotation ann : raw.getAnnotations()) {
+                            if (_annotationHandler.includeMethodAnnotation(ann)) {
+                                field.applyOverride(ann);
+                            }
                         }
                     }
                 }
-            }            
+            } else { // If actual type, add fields, masking whatever might have existed before:
+                for (RawField field : thisType.getType().getMemberFields()) {
+                    fields.put(field.getName(), resolveField(field));
+                }
+            }
         }
-        // And that's it!
-        return new ArrayList<ResolvedField>(fields.values());
+        // and that's it?
+        if (fields.size() == 0) {
+            return NO_RESOLVED_FIELDS;
+        }
+        return fields.values().toArray(new ResolvedField[fields.size()]);
+    }
+    
+    /**
+     * Method that will actually resolve full information (types, annotations)
+     * for static methods, using configured filter.
+     */
+    protected ResolvedMethod[] resolveStaticMethods()
+    {
+        // First get static methods for main type, filter
+        LinkedHashMap<MethodKey, ResolvedMethod> methods = new LinkedHashMap<MethodKey, ResolvedMethod>();
+        for (RawMethod method : _mainType.getType().getStaticMethods()) {
+            if (_methodFilter == null || _methodFilter.include(method)) {
+                methods.put(method.createKey(), resolveMethod(method));
+            }
+        }
+        // then apply overrides (mix-ins):
+        for (HierarchicType type : overridesOnly()) {
+            for (RawMethod raw : type.getType().getStaticMethods()) {
+                ResolvedMethod method = methods.get(raw.createKey()); 
+                // must override something, otherwise to ignore
+                if (method != null) {
+                    for (Annotation ann : raw.getAnnotations()) {
+                        if (_annotationHandler.includeMethodAnnotation(ann)) {
+                            method.applyOverride(ann);
+                        }
+                    }
+                }
+            }
+        }
+        if (methods.size() == 0) {
+            return NO_RESOLVED_METHODS;
+        }
+        return methods.values().toArray(new ResolvedMethod[methods.size()]);
     }
 
+    protected ResolvedMethod[] resolveMemberMethods()
+    {
+        LinkedHashMap<MethodKey, ResolvedMethod> methods = new LinkedHashMap<MethodKey, ResolvedMethod>();
+
+        // !!!! TBI
+
+        if (methods.size() == 0) {
+            return NO_RESOLVED_METHODS;
+        }
+        return methods.values().toArray(new ResolvedMethod[methods.size()]);
+    }
+
+    /*
+    /**********************************************************************
+    /* Helper methods
+    /**********************************************************************
+     */
+
+    /**
+     * Method for resolving individual constructor completely
+     */
+    protected ResolvedConstructor resolveConstructor(RawConstructor raw)
+    {
+        final ResolvedType context = raw.getDeclaringType();
+        final TypeBindings bindings = context.getTypeBindings();
+        Constructor<?> ctor = raw.getRawMember();
+        Type[] rawTypes = ctor.getGenericParameterTypes();
+        ResolvedType[] argTypes;
+        if (rawTypes == null || rawTypes.length == 0) {
+            argTypes = NO_RESOLVED_TYPES;
+        } else {
+            argTypes = new ResolvedType[rawTypes.length];
+            for (int i = 0, len = rawTypes.length; i < len; ++i) {
+                argTypes[i] = _typeResolver.resolve(rawTypes[i], bindings);
+            }
+        }
+        // And then annotations
+        Annotations anns = new Annotations();
+        for (Annotation ann : ctor.getAnnotations()) {
+            if (_annotationHandler.includeConstructorAnnotation(ann)) {
+                anns.add(ann);
+            }
+        }
+        return new ResolvedConstructor(context, anns, ctor, argTypes);
+    }
+
+    /**
+     * Method for resolving individual field completely
+     */
+    protected ResolvedField resolveField(RawField raw)
+    {
+        final ResolvedType context = raw.getDeclaringType();
+        Field field = raw.getRawMember();
+        ResolvedType type = _typeResolver.resolve(field.getGenericType(), context.getTypeBindings());
+        // And then annotations
+        Annotations anns = new Annotations();
+        for (Annotation ann : field.getAnnotations()) {
+            if (_annotationHandler.includeFieldAnnotation(ann)) {
+                anns.add(ann);
+            }
+        }
+        return new ResolvedField(context, anns, field, type);
+    }
+    
+    /**
+     * Method for resolving individual method completely
+     */
+    protected ResolvedMethod resolveMethod(RawMethod raw)
+    {
+        final ResolvedType context = raw.getDeclaringType();
+        final TypeBindings bindings = context.getTypeBindings();
+        Method m = raw.getRawMember();
+        Type rawType = m.getGenericReturnType();
+        ResolvedType rt = (rawType == Void.TYPE) ? null : _typeResolver.resolve(rawType, bindings);
+        Type[] rawTypes = m.getGenericParameterTypes();
+        ResolvedType[] argTypes;
+        if (rawTypes == null || rawTypes.length == 0) {
+            argTypes = NO_RESOLVED_TYPES;
+        } else {
+            argTypes = new ResolvedType[rawTypes.length];
+            for (int i = 0, len = rawTypes.length; i < len; ++i) {
+                argTypes[i] = _typeResolver.resolve(rawTypes[i], bindings);
+            }
+        }
+        // And then annotations
+        Annotations anns = new Annotations();
+        for (Annotation ann : m.getAnnotations()) {
+            if (_annotationHandler.includeMethodAnnotation(ann)) {
+                anns.add(ann);
+            }
+        }
+        return new ResolvedMethod(context, anns, m, rt, argTypes);
+    }
+    
     /*
     /**********************************************************************
     /* Helper types
@@ -155,26 +415,61 @@ public class ResolvedTypeWithMembers
     {
         private final AnnotationConfiguration _annotationConfig;
 
-        private HashMap<Class<? extends Annotation>, AnnotationInclusion> _inclusions;
+        private HashMap<Class<? extends Annotation>, AnnotationInclusion> _fieldInclusions;
+        private HashMap<Class<? extends Annotation>, AnnotationInclusion> _constructorInclusions;
+        private HashMap<Class<? extends Annotation>, AnnotationInclusion> _methodInclusions;
         
         public AnnotationHandler(AnnotationConfiguration annotationConfig) {
             _annotationConfig = annotationConfig;
         }
 
+        public boolean includeConstructorAnnotation(Annotation ann)
+        {
+            Class<? extends Annotation> annType = ann.annotationType();
+            if (_constructorInclusions == null) {
+                _constructorInclusions = new HashMap<Class<? extends Annotation>, AnnotationInclusion>();
+            } else {
+                AnnotationInclusion incl = _constructorInclusions.get(annType);
+                if (incl != null) {
+                    return (incl != AnnotationInclusion.DONT_INCLUDE);
+                }
+            }
+            AnnotationInclusion incl = _annotationConfig.getInclusionForConstructor(annType);
+            _constructorInclusions.put(annType, incl);
+            return (incl != AnnotationInclusion.DONT_INCLUDE);
+        }
+        
         public boolean includeFieldAnnotation(Annotation ann)
         {
             Class<? extends Annotation> annType = ann.annotationType();
-            if (_inclusions == null) {
-                _inclusions = new HashMap<Class<? extends Annotation>, AnnotationInclusion>();
+            if (_fieldInclusions == null) {
+                _fieldInclusions = new HashMap<Class<? extends Annotation>, AnnotationInclusion>();
             } else {
-                AnnotationInclusion incl = _inclusions.get(annType);
+                AnnotationInclusion incl = _fieldInclusions.get(annType);
                 if (incl != null) {
                     return (incl != AnnotationInclusion.DONT_INCLUDE);
                 }
             }
             AnnotationInclusion incl = _annotationConfig.getInclusionForField(annType);
-            _inclusions.put(annType, incl);
+            _fieldInclusions.put(annType, incl);
             return (incl != AnnotationInclusion.DONT_INCLUDE);
         }
+
+        public boolean includeMethodAnnotation(Annotation ann)
+        {
+            Class<? extends Annotation> annType = ann.annotationType();
+            if (_methodInclusions == null) {
+                _methodInclusions = new HashMap<Class<? extends Annotation>, AnnotationInclusion>();
+            } else {
+                AnnotationInclusion incl = _methodInclusions.get(annType);
+                if (incl != null) {
+                    return (incl != AnnotationInclusion.DONT_INCLUDE);
+                }
+            }
+            AnnotationInclusion incl = _annotationConfig.getInclusionForField(annType);
+            _methodInclusions.put(annType, incl);
+            return (incl != AnnotationInclusion.DONT_INCLUDE);
+        }
+    
     }
 }
