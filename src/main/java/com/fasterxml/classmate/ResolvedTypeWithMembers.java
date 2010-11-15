@@ -310,8 +310,63 @@ public class ResolvedTypeWithMembers
     protected ResolvedMethod[] resolveMemberMethods()
     {
         LinkedHashMap<MethodKey, ResolvedMethod> methods = new LinkedHashMap<MethodKey, ResolvedMethod>();
+        LinkedHashMap<MethodKey, Annotations> overrides = new LinkedHashMap<MethodKey, Annotations>();
 
-        // !!!! TBI
+        /* Member methods are handled from top to bottom; and annotations are tracked
+         * alongside (for overrides), as well as "merged down" for inheritable
+         * annotations.
+         */
+        for (HierarchicType type : allTypesAndOverrides()) {
+            for (RawMethod method : type.getType().getMemberMethods()) {
+                // First: ignore methods caller is not interested
+                if (_methodFilter != null && !_methodFilter.include(method)) {
+                    continue;
+                }
+
+                MethodKey key = method.createKey();
+                ResolvedMethod old = methods.get(key);
+                
+                // Ok, now, mix-ins only contribute annotations; whereas 'real' types methods
+                if (type.isMixin()) { // mix-in: only get annotations
+                    for (Annotation ann : method.getAnnotations()) {
+                        // If already have a method, must be inheritable to include
+                        if (old != null) {
+                            if (_annotationHandler.methodInclusion(ann) != AnnotationInclusion.INCLUDE_AND_INHERIT) {
+                                continue;
+                            }
+                            // and if so, apply as default (i.e. do not override)
+                            old.applyDefault(ann);
+                        } else { // If no method, need to add to annotation override map
+                            Annotations oldAnn = overrides.get(key);
+                            if (oldAnn == null) {
+                                oldAnn = new Annotations();
+                                oldAnn.add(ann);
+                                overrides.put(key, oldAnn);
+                            } else {
+                                oldAnn.addAsDefault(ann);
+                            }
+                        }
+                    }
+                } else { // "real" methods; add if not present, possibly add defaults as well
+                    for (Annotation ann : method.getAnnotations()) {
+                        if (old != null) { // method masked by something else? can only contribute annotations
+                            if (_annotationHandler.methodInclusion(ann) != AnnotationInclusion.INCLUDE_AND_INHERIT) {
+                                continue;
+                            }
+                            old.applyDefault(ann);
+                        } else { // otherwise add method
+                            ResolvedMethod newMethod = resolveMethod(method);
+                            methods.put(key, newMethod);
+                            // But we may also have annotation overrides, so:
+                            Annotations overrideAnn = overrides.get(key);
+                            if (overrideAnn != null) {
+                                newMethod.applyOverrides(overrideAnn);
+                            }
+                        }
+                    }                    
+                }
+            }
+        }
 
         if (methods.size() == 0) {
             return NO_RESOLVED_METHODS;
@@ -457,19 +512,24 @@ public class ResolvedTypeWithMembers
 
         public boolean includeMethodAnnotation(Annotation ann)
         {
+            return methodInclusion(ann) != AnnotationInclusion.DONT_INCLUDE;
+        }
+
+        public AnnotationInclusion methodInclusion(Annotation ann)
+        {
             Class<? extends Annotation> annType = ann.annotationType();
             if (_methodInclusions == null) {
                 _methodInclusions = new HashMap<Class<? extends Annotation>, AnnotationInclusion>();
             } else {
                 AnnotationInclusion incl = _methodInclusions.get(annType);
                 if (incl != null) {
-                    return (incl != AnnotationInclusion.DONT_INCLUDE);
+                    return incl;
                 }
             }
             AnnotationInclusion incl = _annotationConfig.getInclusionForField(annType);
             _methodInclusions.put(annType, incl);
-            return (incl != AnnotationInclusion.DONT_INCLUDE);
+            return incl;
         }
-    
+        
     }
 }

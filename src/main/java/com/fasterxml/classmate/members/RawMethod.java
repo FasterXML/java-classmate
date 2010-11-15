@@ -8,13 +8,15 @@ import com.fasterxml.classmate.util.MethodKey;
 public class RawMethod extends RawMember
 {
     protected final Method _method;
-
+    
     public RawMethod(ResolvedType context, Method method)
     {
         super(context);
         _method = method;
     }
 
+    
+    
     /*
     /**********************************************************************
     /* Simple accessors

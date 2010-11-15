@@ -38,6 +38,16 @@ public abstract class ResolvedMember
     {
         _annotations.add(override);
     }
+
+    public void applyOverrides(Annotations overrides)
+    {
+        _annotations.addAll(overrides);
+    }
+
+    public void applyDefault(Annotation override)
+    {
+        _annotations.addAsDefault(override);
+    }
     
     /*
     /**********************************************************************

@@ -21,12 +21,45 @@ public class Annotations
     
     public Annotations() { }
 
+    /**
+     * Method for adding specified annotation, overriding existing value
+     * for the annotation type.
+     */
     public void add(Annotation override)
     {
         if (_annotations == null) {
             _annotations = new HashMap<Class<? extends Annotation>,Annotation>();
         }
         _annotations.put(override.annotationType(), override);
+    }
+
+    /**
+     * Method for adding all annotations from specified set, as overrides
+     * to annotations this set has
+     */
+    public void addAll(Annotations overrides)
+    {
+        if (_annotations == null) {
+            _annotations = new HashMap<Class<? extends Annotation>,Annotation>();
+        }
+        for (Annotation override : overrides._annotations.values()) {
+            _annotations.put(override.annotationType(), override);
+        }
+    }
+    
+    /**
+     * Method for adding specified annotation if and only if no value
+     * exists for the annotation type.
+     */
+    public void addAsDefault(Annotation defValue)
+    {
+        Class<? extends Annotation> type = defValue.annotationType();
+        if (_annotations == null) {
+            _annotations = new HashMap<Class<? extends Annotation>,Annotation>();
+            _annotations.put(type, defValue);
+        } else if (!_annotations.containsKey(type)) {
+            _annotations.put(type, defValue);
+        }
     }
 
     /*
@@ -61,11 +94,4 @@ public class Annotations
         }
         return _annotations.toString();
     }
-
-    /*
-    /**********************************************************************
-    /* Internal methods
-    /**********************************************************************
-     */
-
 }
