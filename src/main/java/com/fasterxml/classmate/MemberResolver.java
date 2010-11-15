@@ -72,11 +72,11 @@ public class MemberResolver
      * @param annotationConfig Configuration of annotation types; which ones to include, how to inherit
      * @param annotationOverrides Definitions of annotation overrides to use, if any (may be null)
      */
-    public TypeHierarchy resolveTypeHierarchy(final ResolvedType mainType,
+    public ResolvedTypeWithMembers resolveTypeHierarchy(final ResolvedType mainType,
             AnnotationConfiguration annotationConfig,
             AnnotationOverrides annotationOverrides)
     {
-        // First: flatten basic type hierarchy
+        // First: flatten basic type hierarchy (highest to lowest precedence)
         HashSet<ClassKey> seenTypes = new HashSet<ClassKey>();
         ArrayList<ResolvedType> types = new ArrayList<ResolvedType>();
         _gatherTypes(mainType, seenTypes, types);
@@ -86,23 +86,18 @@ public class MemberResolver
         HierarchicType mainHierarchicType = null;
 
         // Third step: add mix-ins (if any), reverse order (lowest to highest precedence)
-        if (annotationOverrides == null) { // just copy, reorder
+        if (annotationOverrides == null) { // just create hierarchich instances:
             int len = types.size();
             htypes = new HierarchicType[len];
             for (int i = 0; i < len; ++i) {
                 // false -> not a mix-in
-                htypes[i] = new HierarchicType(types.get(len-i), false, i);
+                htypes[i] = new HierarchicType(types.get(i), false, i);
             }
-            mainHierarchicType = htypes[len-1];
+            mainHierarchicType = htypes[0];
         } else { // need to add mix-ins, reorder
-            int len = types.size();
             ArrayList<HierarchicType> typesWithMixins = new ArrayList<HierarchicType>();
-            for (int i = 0; i < len; ++i) {
-                // First add type itself (lower precedence)
-                ResolvedType type = types.get(len-i);
-                HierarchicType ht = new HierarchicType(type, false, typesWithMixins.size());
-                typesWithMixins.add(ht);
-                mainHierarchicType = ht;
+            for (ResolvedType type : types) {
+                // First add mix-ins (which override type itself)
                 List<Class<?>> m = annotationOverrides.mixInsFor(type.getErasedType());
                 if (m != null) {
                     for (Class<?> mixinClass : m) {
@@ -113,11 +108,17 @@ public class MemberResolver
                         }
                     }
                 }
+                // Then actual type:
+                HierarchicType ht = new HierarchicType(type, false, typesWithMixins.size());
+                if (mainHierarchicType == null) {
+                    mainHierarchicType = ht;
+                }
+                typesWithMixins.add(ht);
             }
             htypes = typesWithMixins.toArray(new HierarchicType[typesWithMixins.size()]);
         }
-        // And that's about all we need at this point
-        return new TypeHierarchy(_typeResolver, annotationConfig, mainHierarchicType, htypes);
+        // And that's about all we need to do; rest computed lazily
+        return new ResolvedTypeWithMembers(_typeResolver, annotationConfig, mainHierarchicType, htypes);
     }
 
     /*

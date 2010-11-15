@@ -1,10 +1,11 @@
 package com.fasterxml.classmate.members;
 
 import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.ResolvedTypeWithMembers;
 
 /**
  * Container class used to enclose information about a single {@link ResolvedType}
- * that is part of {@link TypeHierarchy}.
+ * that is part of {@link ResolvedTypeWithMembers}.
  */
 public final class HierarchicType
 {

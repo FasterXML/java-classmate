@@ -1,16 +1,20 @@
-package com.fasterxml.classmate.members;
+package com.fasterxml.classmate;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
 
-import com.fasterxml.classmate.*;
+import com.fasterxml.classmate.members.HierarchicType;
+import com.fasterxml.classmate.members.RawField;
+import com.fasterxml.classmate.members.ResolvedField;
 
 /**
- * Class that contains information about full hierarchy of a type
- * resolved by {@link com.fasterxml.classmate.MemberResolver}, used for
- * resolving member information, including annotations.
+ * Class that contains information about fully resolved members of a
+ * type; resolution meaning that masking is handled for methods, and
+ * all inheritable annotations are flattened using optional overrides
+ * as well ("mix-in annotations").
+ * Instances are created by {@link com.fasterxml.classmate.MemberResolver}.
  */
-public class TypeHierarchy
+public class ResolvedTypeWithMembers
 {
     /**
      * Default annotation configuration is to ignore all annotations types.
@@ -37,11 +41,11 @@ public class TypeHierarchy
 
     /*
     /**********************************************************************
-    /* Life cycle
+    /* Life cycle at this point
     /**********************************************************************
      */
     
-    public TypeHierarchy(TypeResolver typeResolver, AnnotationConfiguration annotationConfig,
+    public ResolvedTypeWithMembers(TypeResolver typeResolver, AnnotationConfiguration annotationConfig,
             HierarchicType mainType, HierarchicType[] types)
     {
         _typeResolver = typeResolver;
