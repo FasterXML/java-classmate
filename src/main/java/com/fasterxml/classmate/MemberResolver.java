@@ -125,7 +125,7 @@ public class MemberResolver
         HierarchicType mainHierarchicType = null;
 
         // Third step: add mix-ins (if any), reverse order (lowest to highest precedence)
-        if (annotationOverrides == null) { // just create hierarchich instances:
+        if (annotationOverrides == null) { // just create hierarchic instances:
             int len = types.size();
             htypes = new HierarchicType[len];
             for (int i = 0; i < len; ++i) {
@@ -140,13 +140,10 @@ public class MemberResolver
                 List<Class<?>> m = annotationOverrides.mixInsFor(type.getErasedType());
                 if (m != null) {
                     for (Class<?> mixinClass : m) {
-                        ClassKey key = new ClassKey(mixinClass);
-                        if (!seenTypes.contains(key)) {
-                            ResolvedType mixinType = _typeResolver.resolve(mixinClass);
-                            typesWithMixins.add(new HierarchicType(mixinType, true, typesWithMixins.size()));
-                        }
+                        _addOverrides(typesWithMixins, seenTypes, mixinClass);
                     }
                 }
+
                 // Then actual type:
                 HierarchicType ht = new HierarchicType(type, false, typesWithMixins.size());
                 if (mainHierarchicType == null) {
@@ -161,6 +158,41 @@ public class MemberResolver
                 _constructorFilter, _fieldFilter, _methodFilter);
     }
 
+    private void _addOverrides(List<HierarchicType> typesWithOverrides, Set<ClassKey> seenTypes, Class<?> override)
+    {
+        ClassKey key = new ClassKey(override);
+        if (!seenTypes.contains(key)) {
+            seenTypes.add(key);
+            ResolvedType resolvedOverride = _typeResolver.resolve(override);
+            typesWithOverrides.add(new HierarchicType(resolvedOverride, true, typesWithOverrides.size()));
+            for (ResolvedType r : resolvedOverride.getImplementedInterfaces()) { // interfaces?
+                _addOverrides(typesWithOverrides, seenTypes, r);
+            }
+            ResolvedType superClass = resolvedOverride.getParentClass();
+            _addOverrides(typesWithOverrides, seenTypes, superClass);
+        }
+    }
+
+    private void _addOverrides(List<HierarchicType> typesWithOverrides, Set<ClassKey> seenTypes, ResolvedType override)
+    {
+        if (override == null) return;
+        // first: may need to exclude Object.class:
+        Class<?> raw = override.getErasedType();
+        if (!_cfgIncludeLangObject && Object.class == raw) return;
+        ClassKey key = new ClassKey(raw);
+        if (!seenTypes.contains(key)) {
+            seenTypes.add(key);
+            typesWithOverrides.add(new HierarchicType(override, true, typesWithOverrides.size()));
+            for (ResolvedType r : override.getImplementedInterfaces()) { // interfaces?
+                _addOverrides(typesWithOverrides, seenTypes, r);
+            }
+            ResolvedType superClass = override.getParentClass();
+            if (superClass != null) {
+                _addOverrides(typesWithOverrides, seenTypes, superClass);
+            }
+        }
+    }
+    
     /*
     /**********************************************************************
     /* Internal methods

@@ -115,7 +115,6 @@ public class TestMemberResolver extends BaseTest
             .build();
         bean = mr.resolveType(mainType, null, overrides);
         types = bean.allTypesAndOverrides();
-System.out.println("TYpes == "+types);        
         assertEquals(4, types.size());
         assertSame(SubClass.class, types.get(0).getErasedType());
         assertSame(DummyMixIn2.class, types.get(1).getErasedType());
