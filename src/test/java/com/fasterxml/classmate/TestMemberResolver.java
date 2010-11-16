@@ -161,6 +161,31 @@ public class TestMemberResolver extends BaseTest
         MemberResolver mr = new MemberResolver(typeResolver);
         ResolvedType mainType = typeResolver.resolve(SubClass.class);
         ResolvedTypeWithMembers bean = mr.resolve(mainType, null, null);
+        
+        verifySubtypeAggregate(bean);
+    }
+
+    public void testAggregationForSubtypeAndDummyMixin()
+    {
+        MemberResolver mr = new MemberResolver(typeResolver);
+        // Add "dummy" override/mix-in, which has nothing relevant to add; ensure nothing is added:
+        AnnotationOverrides overrides = AnnotationOverrides.builder()
+            .add(SubClass.class, DummyMixIn.class)
+            .build();
+        ResolvedType mainType = typeResolver.resolve(SubClass.class);
+        ResolvedTypeWithMembers bean = mr.resolve(mainType, null, overrides);
+
+        verifySubtypeAggregate(bean);
+    }
+
+    /*
+    /**********************************************************************
+    /* Helper methods
+    /**********************************************************************
+     */
+    
+    private void verifySubtypeAggregate(ResolvedTypeWithMembers bean)
+    {
         ResolvedMethod[] statics = bean.getStaticMethods();
         assertEquals(0, statics.length);
         
@@ -173,4 +198,6 @@ public class TestMemberResolver extends BaseTest
         ResolvedConstructor[] ctors = bean.getConstructors();
         assertEquals(1, ctors.length);
     }
+    
+    
 }

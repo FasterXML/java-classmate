@@ -24,15 +24,40 @@ public class ResolvedMethod extends ResolvedMember
     
     /*
     /**********************************************************************
-    /* Simple accessors
+    /* Simple accessors from base class
     /**********************************************************************
      */
 
+    @Override
     public Method getRawMember() {
         return _method;
     }
 
+    @Override
     public ResolvedType getType() { return _returnType; }
+
+    /*
+    /**********************************************************************
+    /* Extended API
+    /**********************************************************************
+     */
+
+    public ResolvedType getReturnType() { return _returnType; }
+
+    /**
+     * Returns number of arguments method takes.
+     */
+    public int getArgumentCount() {
+        return _argumentTypes.length;
+    }
+    
+    public ResolvedType getArgumentType(int index)
+    {
+        if (index < 0 || index >= _argumentTypes.length) {
+            return null;
+        }
+        return _argumentTypes[index];
+    }
     
     /*
     /**********************************************************************

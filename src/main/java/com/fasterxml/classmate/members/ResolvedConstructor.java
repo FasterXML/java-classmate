@@ -5,6 +5,10 @@ import java.lang.reflect.Constructor;
 import com.fasterxml.classmate.Annotations;
 import com.fasterxml.classmate.ResolvedType;
 
+/**
+ * Class that represents a constructor that has fully resolved generic
+ * type information and annotation information.
+ */
 public final class ResolvedConstructor extends ResolvedMember
 {
     protected final Constructor<?> _constructor;
@@ -25,11 +29,34 @@ public final class ResolvedConstructor extends ResolvedMember
     /**********************************************************************
      */
 
+    @Override
     public Constructor<?> getRawMember() {
         return _constructor;
     }
 
+    @Override
     public ResolvedType getType() { return null; }
+
+    /*
+    /**********************************************************************
+    /* Extended API
+    /**********************************************************************
+     */
+
+    /**
+     * Returns number of arguments method takes.
+     */
+    public int getArgumentCount() {
+        return _argumentTypes.length;
+    }
+    
+    public ResolvedType getArgumentType(int index)
+    {
+        if (index < 0 || index >= _argumentTypes.length) {
+            return null;
+        }
+        return _argumentTypes[index];
+    }
     
     /*
     /**********************************************************************

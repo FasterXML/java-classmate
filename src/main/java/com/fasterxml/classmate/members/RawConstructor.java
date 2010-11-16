@@ -15,16 +15,6 @@ public final class RawConstructor extends RawMember
         _constructor = constructor;
     }
 
-    /*
-    /**********************************************************************
-    /* Simple accessors
-    /**********************************************************************
-     */
-
-    public Constructor<?> getRawMember() {
-        return _constructor;
-    }
-
     /**
      * Although constructors are different from other methods, we can use
      * {@link MethodKey} easily.
@@ -37,6 +27,17 @@ public final class RawConstructor extends RawMember
             return new MethodKey(name);
         }
         return new MethodKey(name, argTypes);
+    }
+    
+    /*
+    /**********************************************************************
+    /* Simple accessors
+    /**********************************************************************
+     */
+
+    @Override
+    public Constructor<?> getRawMember() {
+        return _constructor;
     }
     
     /*
