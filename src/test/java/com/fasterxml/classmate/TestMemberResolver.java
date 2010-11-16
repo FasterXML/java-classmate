@@ -132,7 +132,29 @@ public class TestMemberResolver extends BaseTest
      */
 
     /**
-     * Test for most basic thing; type hierarchy resolution 
+     * Test for checking basic member detection for super type.
+     */
+    public void testMembersForSupertype()
+    {
+        MemberResolver mr = new MemberResolver(typeResolver);
+        ResolvedType mainType = typeResolver.resolve(BaseClass.class);
+        ResolvedTypeWithMembers bean = mr.resolve(mainType, null, null);
+        ResolvedMethod[] statics = bean.getStaticMethods();
+        assertEquals(1, statics.length);
+        
+        ResolvedMethod[] members = bean.getMemberMethods();
+        assertEquals(2, members.length);
+
+        ResolvedField[] fields = bean.getMemberFields();
+        assertEquals(1, fields.length);
+
+        ResolvedConstructor[] ctors = bean.getConstructors();
+        assertEquals(2, ctors.length);
+    }
+    
+    /**
+     * Test for checking basic aggregation with two types (subtype that
+     * extends supertype)
      */
     public void testAggregationForSubtype()
     {
