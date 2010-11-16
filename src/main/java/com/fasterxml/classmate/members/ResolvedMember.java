@@ -84,6 +84,20 @@ public abstract class ResolvedMember
     
     /*
     /**********************************************************************
+    /* Standard method overrides
+    /**********************************************************************
+     */
+    
+    @Override public int hashCode() {
+        return getName().hashCode();
+    }
+    
+    @Override public String toString() {
+        return getName();
+    }
+    
+    /*
+    /**********************************************************************
     /* Package methods
     /**********************************************************************
      */

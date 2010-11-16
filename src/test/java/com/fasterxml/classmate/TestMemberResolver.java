@@ -1,8 +1,9 @@
 package com.fasterxml.classmate;
 
+import java.util.Arrays;
 import java.util.List;
 
-import com.fasterxml.classmate.members.HierarchicType;
+import com.fasterxml.classmate.members.*;
 
 public class TestMemberResolver extends BaseTest
 {
@@ -20,6 +21,8 @@ public class TestMemberResolver extends BaseTest
 
         public BaseClass(String arg) { }
 
+        public BaseClass(String arg, boolean b) { }
+        
         public static BaseClass factory1(String arg) { return null; }
 
         public void member1() { }
@@ -31,11 +34,11 @@ public class TestMemberResolver extends BaseTest
     {
         public int intField2;
 
+        protected String stringField;
+
         protected static int staticIntField2;
         
         public SubClass() { super(""); }
-
-        protected String stringField;
 
         @Override public void member2() { }
     }
@@ -70,7 +73,7 @@ public class TestMemberResolver extends BaseTest
 
     /*
     /**********************************************************************
-    /* Unit tests
+    /* Unit tests, type hierarchy handling
     /**********************************************************************
      */
 
@@ -82,7 +85,7 @@ public class TestMemberResolver extends BaseTest
         MemberResolver mr = new MemberResolver(typeResolver);
         ResolvedType mainType = typeResolver.resolve(SubClass.class);
         // for now, use default annotation settings (== ignore), overrides (none), filtering (none)
-        ResolvedTypeWithMembers bean = mr.resolveType(mainType, null, null);
+        ResolvedTypeWithMembers bean = mr.resolve(mainType, null, null);
         assertNotNull(bean);
 
         // by default will NOT include Object.class, so should have just 2 types
@@ -100,7 +103,7 @@ public class TestMemberResolver extends BaseTest
         AnnotationOverrides overrides = AnnotationOverrides.builder()
             .add(SubClass.class, DummyMixIn.class)
             .build();
-        ResolvedTypeWithMembers bean = mr.resolveType(mainType, null, overrides);
+        ResolvedTypeWithMembers bean = mr.resolve(mainType, null, overrides);
         assertNotNull(bean);
         // with one mix-in/override, 3 classes
         List<HierarchicType> types = bean.allTypesAndOverrides();
@@ -113,12 +116,39 @@ public class TestMemberResolver extends BaseTest
         overrides = AnnotationOverrides.builder()
             .add(BaseClass.class, DummyMixIn2.class)
             .build();
-        bean = mr.resolveType(mainType, null, overrides);
+        bean = mr.resolve(mainType, null, overrides);
         types = bean.allTypesAndOverrides();
         assertEquals(4, types.size());
         assertSame(SubClass.class, types.get(0).getErasedType());
         assertSame(DummyMixIn2.class, types.get(1).getErasedType());
         assertSame(DummyMixIn.class, types.get(2).getErasedType());
         assertSame(BaseClass.class, types.get(3).getErasedType());
+    }
+
+    /*
+    /**********************************************************************
+    /* Unit tests, basic aggregation of fields, methods and constructors
+    /**********************************************************************
+     */
+
+    /**
+     * Test for most basic thing; type hierarchy resolution 
+     */
+    public void testAggregationForSubtype()
+    {
+        MemberResolver mr = new MemberResolver(typeResolver);
+        ResolvedType mainType = typeResolver.resolve(SubClass.class);
+        ResolvedTypeWithMembers bean = mr.resolve(mainType, null, null);
+        ResolvedMethod[] statics = bean.getStaticMethods();
+        assertEquals(0, statics.length);
+        
+        ResolvedMethod[] members = bean.getMemberMethods();
+        assertEquals(2, members.length);
+
+        ResolvedField[] fields = bean.getMemberFields();
+        assertEquals(3, fields.length);
+
+        ResolvedConstructor[] ctors = bean.getConstructors();
+        assertEquals(1, ctors.length);
     }
 }

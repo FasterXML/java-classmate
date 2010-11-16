@@ -348,22 +348,21 @@ public class ResolvedTypeWithMembers
                         }
                     }
                 } else { // "real" methods; add if not present, possibly add defaults as well
-                    for (Annotation ann : method.getAnnotations()) {
-                        if (old != null) { // method masked by something else? can only contribute annotations
-                            if (_annotationHandler.methodInclusion(ann) != AnnotationInclusion.INCLUDE_AND_INHERIT) {
-                                continue;
-                            }
-                            old.applyDefault(ann);
-                        } else { // otherwise add method
-                            ResolvedMethod newMethod = resolveMethod(method);
-                            methods.put(key, newMethod);
-                            // But we may also have annotation overrides, so:
-                            Annotations overrideAnn = overrides.get(key);
-                            if (overrideAnn != null) {
-                                newMethod.applyOverrides(overrideAnn);
+                    if (old == null) { // new one to add
+                        ResolvedMethod newMethod = resolveMethod(method);
+                        methods.put(key, newMethod);
+                        // But we may also have annotation overrides, so:
+                        Annotations overrideAnn = overrides.get(key);
+                        if (overrideAnn != null) {
+                            newMethod.applyOverrides(overrideAnn);
+                        }
+                    } else { // method masked by something else? can only contribute annotations
+                        for (Annotation ann : method.getAnnotations()) {
+                            if (_annotationHandler.methodInclusion(ann) == AnnotationInclusion.INCLUDE_AND_INHERIT) {
+                                old.applyDefault(ann);
                             }
                         }
-                    }                    
+                    }
                 }
             }
         }

@@ -370,7 +370,9 @@ public abstract class ResolvedType
         for (Method m : _erasedType.getDeclaredMethods()) {
             // Only skip synthetic fields, which should not really be exposed
             if (!m.isSynthetic()) {
-                methods.add(new RawMethod(this, m));
+                if (Modifier.isStatic(m.getModifiers()) == statics) {
+                    methods.add(new RawMethod(this, m));
+                }
             }
         }
         if (methods.isEmpty()) {

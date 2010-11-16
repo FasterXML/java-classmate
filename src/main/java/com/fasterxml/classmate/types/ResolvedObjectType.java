@@ -124,7 +124,7 @@ public class ResolvedObjectType extends ResolvedType
     public synchronized List<RawField> getMemberFields()
     {
         if (_memberFields == null) {
-            _memberFields = _getFields(true);
+            _memberFields = _getFields(false);
         }
         if (_memberFields.length == 0) {
             return Collections.emptyList();
@@ -157,7 +157,7 @@ public class ResolvedObjectType extends ResolvedType
     public synchronized List<RawMethod> getStaticMethods()
     {
         if (_staticMethods == null) {
-            _staticMethods = _getMethods(false);
+            _staticMethods = _getMethods(true);
         }
         if (_staticMethods.length == 0) {
             return Collections.emptyList();
