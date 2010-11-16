@@ -44,6 +44,7 @@ public final class HierarchicType
      */
 
     public ResolvedType getType() { return _type; }
+    public Class<?> getErasedType() { return _type.getErasedType(); }
     public boolean isMixin() { return _isMixin; }
     public int getPriority() { return _priority; }
     
@@ -54,6 +55,7 @@ public final class HierarchicType
      */
 
     @Override public String toString() { return _type.toString(); }
+    @Override public int hashCode() { return _type.hashCode(); }
 
     public boolean equals(Object o)
     {

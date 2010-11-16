@@ -111,7 +111,7 @@ public class MemberResolver
      * @param annotationConfig Configuration of annotation types; which ones to include, how to inherit
      * @param annotationOverrides Definitions of annotation overrides to use, if any (may be null)
      */
-    public ResolvedTypeWithMembers resolveTypeHierarchy(final ResolvedType mainType,
+    public ResolvedTypeWithMembers resolveType(final ResolvedType mainType,
             AnnotationConfiguration annotationConfig,
             AnnotationOverrides annotationOverrides)
     {

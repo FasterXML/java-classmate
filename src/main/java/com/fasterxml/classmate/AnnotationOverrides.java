@@ -9,6 +9,12 @@ import com.fasterxml.classmate.util.ClassKey;
  */
 public abstract class AnnotationOverrides
 {
+    /*
+    /**********************************************************************
+    /* Public API
+    /**********************************************************************
+     */
+
     /**
      * Method called to find out which class(es) are to be used as source
      * for annotations to mix in for given type.
@@ -21,6 +27,55 @@ public abstract class AnnotationOverrides
     }
 
     public abstract List<Class<?>> mixInsFor(ClassKey beanClass);
+
+    /**
+     * Method for constructing builder for creating simple overrides provider
+     * that just uses direct assignments (target-to-override classes)
+     */
+    public static StdBuilder builder() {
+        return new StdBuilder();
+    }
+
+    /*
+    /**********************************************************************
+    /* Helper types
+    /**********************************************************************
+     */
+    
+    /**
+     * To make it easy to use simple override implementation (where overrides
+     * are direct and explicit), here is a build that allow constructing
+     * such override instance.
+     */
+    public static class StdBuilder
+    {
+        protected final HashMap<ClassKey,List<Class<?>>> _targetsToOverrides = new HashMap<ClassKey,List<Class<?>>>();
+
+        public StdBuilder() { }
+
+        public StdBuilder add(Class<?> target, Class<?> mixin) {
+            return add(new ClassKey(target), mixin);
+        }
+
+        public StdBuilder add(ClassKey target, Class<?> mixin)
+        {
+            List<Class<?>> mixins = _targetsToOverrides.get(target);
+            if (mixins == null) {
+                mixins = new ArrayList<Class<?>>();
+                _targetsToOverrides.put(target, mixins);
+            }
+            mixins.add(mixin);
+            return this;
+        }
+        
+        /**
+         * Method that will construct a {@link AnnotationOverrides} instance using
+         * mappings that have been added using this builder
+         */
+        public AnnotationOverrides build() {
+            return new StdImpl(_targetsToOverrides);
+        }
+    }
     
     /**
      * Simple implementation configured with explicit associations with
@@ -29,27 +84,15 @@ public abstract class AnnotationOverrides
      */
     public static class StdImpl extends AnnotationOverrides
     {
-        protected HashMap<ClassKey,List<Class<?>>> _targetsToMixins
-            = new HashMap<ClassKey,List<Class<?>>>();
+        protected final HashMap<ClassKey,List<Class<?>>> _targetsToOverrides;
         
-        public StdImpl() { }
+        public StdImpl(HashMap<ClassKey,List<Class<?>>> overrides) {
+            _targetsToOverrides = new HashMap<ClassKey,List<Class<?>>>(overrides);
+        }
 
         @Override
         public List<Class<?>> mixInsFor(ClassKey target) {
-            return _targetsToMixins.get(target);
-        }
-
-        public void addMixIn(Class<?> target, Class<?> mixin) {
-            addMixIn(new ClassKey(target), mixin);
-        }
-        
-        public void addMixIn(ClassKey target, Class<?> mixin) {
-            List<Class<?>> mixins = _targetsToMixins.get(target);
-            if (mixins == null) {
-                mixins = new ArrayList<Class<?>>();
-                _targetsToMixins.put(target, mixins);
-            }
-            mixins.add(mixin);
+            return _targetsToOverrides.get(target);
         }
     }
 }
