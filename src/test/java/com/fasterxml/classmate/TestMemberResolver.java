@@ -1,7 +1,6 @@
 package com.fasterxml.classmate;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import com.fasterxml.classmate.members.*;
 
