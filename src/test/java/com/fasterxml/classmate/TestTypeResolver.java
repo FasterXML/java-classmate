@@ -39,6 +39,20 @@ public class TestTypeResolver extends BaseTest
 
     // and recursive types...
     static abstract class SelfRefType implements Comparable<SelfRefType> { }
+
+    // Also: need to ensure that fields and methods get resolved
+
+    @SuppressWarnings("serial")
+    public static class LongValuedMap<K> extends HashMap<K, Long> { }
+
+    static class StringLongMapBean {
+        public LongValuedMap<String> value;
+    }
+
+    abstract static class IntermediateList<E> implements List<E> { }
+    static class StringListBean {
+        public IntermediateList<String> value;
+    }
     
     /*
     /**********************************************************************
@@ -206,6 +220,29 @@ public class TestTypeResolver extends BaseTest
         assertNull(compParam.getParentClass());
         // but we should be able to find what it really is, too:
         assertSame(type, compParam.getSelfReferencedType());
+    }
+
+    public void testTypesFromMapField() throws Exception
+    {
+        ResolvedType type = typeResolver.resolve(StringLongMapBean.class);
+        Field field = StringLongMapBean.class.getDeclaredField("value");
+        ResolvedType fieldType = typeResolver.resolve(field.getGenericType(), type.getTypeBindings());
+        assertSame(LongValuedMap.class, fieldType.getErasedType());
+        List<ResolvedType> mapTypes = fieldType.typeParametersFor(Map.class);
+        assertEquals(2, mapTypes.size());
+        assertSame(String.class, mapTypes.get(0).getErasedType());
+        assertSame(Long.class, mapTypes.get(1).getErasedType());
+    }
+
+    public void testTypesFromListField() throws Exception
+    {
+        ResolvedType type = typeResolver.resolve(StringListBean.class);
+        Field field = StringListBean.class.getDeclaredField("value");
+        ResolvedType fieldType = typeResolver.resolve(field.getGenericType(), type.getTypeBindings());
+        assertSame(IntermediateList.class, fieldType.getErasedType());
+        List<ResolvedType> listType = fieldType.typeParametersFor(List.class);
+        assertEquals(1, listType.size());
+        assertSame(String.class, listType.get(0).getErasedType());
     }
     
     /*
