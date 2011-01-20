@@ -1,8 +1,10 @@
 ClassMate is a zero-dependency Java library for accurately introspecting type information, including reliable resolution of generic type declarations for both classes ("types") and members (fields, methods and constructors).
 
-[https://github.com/cowtowncoder/java-classmate/wiki | project Wiki] is the first thing to check out after reading this README.
+Project wiki (https://github.com/cowtowncoder/java-classmate/wiki)
+is the first thing to check out after reading this README.
 
-Old project home page -- [http://cowtowncoder.github.com/java-classmate/] -- also has some useful information.
+Old project home page -- (http://cowtowncoder.github.com/java-classmate/)
+-- also has some useful information.
 
 ## Resolving Class type information
 
