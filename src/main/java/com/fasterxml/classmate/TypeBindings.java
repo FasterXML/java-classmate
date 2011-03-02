@@ -20,6 +20,9 @@ public final class TypeBindings
      */
     private final String[] _names;
 
+    /**
+     * Types matching names
+     */
     private final ResolvedType[] _types;
 
     private final int _hashCode;
@@ -84,6 +87,20 @@ public final class TypeBindings
         return new TypeBindings(names, types);
     }
 
+    /**
+     * Method for creating an instance that has same bindings as this object,
+     * plus one additional binding
+     */
+    public TypeBindings withAdditionalBinding(String name, ResolvedType type)
+    {
+        int len = _names.length;
+        String[] newNames = Arrays.copyOf(_names, len+1);
+        newNames[len] = name;
+        ResolvedType[] newTypes = Arrays.copyOf(_types, len+1);
+        newTypes[len] = type;
+        return new TypeBindings(newNames, newTypes);
+    }
+    
     /*
     /**********************************************************************
     /* Accessors

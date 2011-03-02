@@ -1,0 +1,4 @@
+
+0.5.4:
+
+* Fixed issue#4: problems with self-referential type variables

@@ -310,6 +310,8 @@ public class TypeResolver
     /**********************************************************************
      */
 
+    int depth = 0;
+    
     private ResolvedType _fromAny(ClassStack context, Type mainType, TypeBindings typeBindings)
     {
         if (mainType instanceof Class<?>) {
@@ -450,15 +452,19 @@ public class TypeResolver
     private ResolvedType _fromVariable(ClassStack context, TypeVariable<?> variable, TypeBindings typeBindings)
     {
         // ideally should find it via bindings:
-        ResolvedType type = typeBindings.findBoundType(variable.getName());
+        String name = variable.getName();
+        ResolvedType type = typeBindings.findBoundType(name);
         if (type != null) {
             return type;
         }
         /* but if not, use bounds... note that approach here is simplistics; not taking
          * into account possible multiple bounds, nor consider upper bounds.
          */
+        /* 02-Mar-2011, tatu: As per issue#4, need to avoid self-reference cycles here;
+         *   can be handled by (temporarily) adding binding:
+         */
+        typeBindings = typeBindings.withAdditionalBinding(name, sJavaLangObject);
         Type[] bounds = variable.getBounds();
-        //context._addPlaceholder(name);        
         return _fromAny(context, bounds[0], typeBindings);
     }
 
@@ -518,12 +524,13 @@ public class TypeResolver
     
     /**
      * Simple helper class used to keep track of 'call stack' for classes being referenced
+     * (as well as unbound variables)
      */
     private final static class ClassStack
     {
         private final ClassStack _parent;
         private final Class<?> _current;
-
+        
         private ArrayList<ResolvedRecursiveType> _selfRefs;
         
         public ClassStack(Class<?> rootType) {
@@ -542,7 +549,7 @@ public class TypeResolver
         {
             return new ClassStack(this, cls);
         }
-
+        
         /**
          * Method called to indicate that there is a self-reference from
          * deeper down in stack pointing into type this stack frame represents.
