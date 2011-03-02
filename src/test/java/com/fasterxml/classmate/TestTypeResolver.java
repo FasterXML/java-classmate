@@ -42,7 +42,6 @@ public class TestTypeResolver extends BaseTest
 
     // Also: need to ensure that fields and methods get resolved
 
-    @SuppressWarnings("serial")
     public static class LongValuedMap<K> extends HashMap<K, Long> { }
 
     static class StringLongMapBean {

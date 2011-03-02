@@ -1,5 +1,6 @@
 package com.fasterxml.classmate;
 
+import java.io.Serializable;
 import java.util.List;
 
 import com.fasterxml.classmate.members.ResolvedConstructor;
@@ -33,6 +34,13 @@ public class TestMemberGenericTypes extends BaseTest
     static class ListWrapper<T> extends Wrapper<List<T>> { }
 
     static class StringListWrapper extends ListWrapper<String> { }
+
+    // To test issue #3, local declarations
+    static class WithLocals {
+        public <T extends Serializable> T memberValue() { return null; }
+
+        public static <T extends Serializable> void staticValue(T value) { }
+    }
     
     /*
     /**********************************************************************
@@ -202,4 +210,29 @@ public class TestMemberGenericTypes extends BaseTest
         }
     }
 
+    /**
+     * Unit test for Issue#3; ensuring that we can handle "local" declarations
+     */
+    public void testLocalGenerics()
+    {
+        MemberResolver mr = new MemberResolver(typeResolver);
+        ResolvedType mainType = typeResolver.resolve(WithLocals.class);
+        ResolvedTypeWithMembers bean = mr.resolve(mainType, null, null);
+
+        // should have one static, one member method
+        ResolvedMethod[] statics = bean.getStaticMethods();
+        assertEquals(1, statics.length);
+        ResolvedMethod[] members = bean.getMemberMethods();
+        assertEquals(1, members.length);
+
+        assertEquals("memberValue", members[0].getName());
+        ResolvedType returnType = members[0].getReturnType();
+        assertEquals(Serializable.class, returnType.getErasedType());
+        assertEquals(0, members[0].getArgumentCount());
+
+        assertEquals("staticValue", statics[0].getName());
+        assertEquals(1, statics[0].getArgumentCount());
+        ResolvedType arg = statics[0].getArgumentType(0);
+        assertEquals(Serializable.class, arg.getErasedType());
+    }
 }

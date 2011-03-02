@@ -197,6 +197,4 @@ public class TestMemberResolver extends BaseTest
         ResolvedConstructor[] ctors = bean.getConstructors();
         assertEquals(1, ctors.length);
     }
-    
-    
 }
