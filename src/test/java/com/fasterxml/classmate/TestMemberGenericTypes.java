@@ -41,6 +41,15 @@ public class TestMemberGenericTypes extends BaseTest
 
         public static <T extends Serializable> void staticValue(T value) { }
     }
+
+    // And issue #4 with somewhat complex self-reference(s)
+    static class ComplexSelfType<T, V extends ComplexSelfType<T, V>> { }
+
+    static class ClassUsingComplexSelfType {
+      public <T, V extends ComplexSelfType<T, V>> V complexMap(V input) {
+        return null;
+      }
+    }
     
     /*
     /**********************************************************************
@@ -234,5 +243,39 @@ public class TestMemberGenericTypes extends BaseTest
         assertEquals(1, statics[0].getArgumentCount());
         ResolvedType arg = statics[0].getArgumentType(0);
         assertEquals(Serializable.class, arg.getErasedType());
+    }
+
+    /**
+     * Unit test for Issue#4, bit more complex self references.
+     */
+    public void testSelfReferences()
+    {
+          TypeResolver typeResolver = new TypeResolver();
+          MemberResolver memberResolver = new MemberResolver(typeResolver);
+
+          ResolvedType t = typeResolver.resolve(ClassUsingComplexSelfType.class);
+          ResolvedMethod[] resolvedMethods = memberResolver.resolve(t, null, null).getMemberMethods();
+          assertEquals(1, resolvedMethods.length);
+          ResolvedMethod m = resolvedMethods[0];
+          assertEquals("complexMap", m.getName());
+
+          assertEquals(1, m.getArgumentCount());
+          ResolvedType argType = m.getArgumentType(0);
+
+          ResolvedType returnType = m.getReturnType();
+
+          // All right... hmmh. Actually, due to lack of bindings, they are just Objects
+          assertEquals(Object.class, argType.getErasedType());
+          assertEquals(Object.class, returnType.getErasedType());
+          
+          /*
+    static class ComplexSelfType<T, V extends ComplexSelfType<T, V>> { }
+
+    static class ClassUsingComplexSelfType {
+      public <T, V extends ComplexSelfType<T, V>> V complexMap(V input) {
+        return null;
+      }
+    }
+           */
     }
 }
