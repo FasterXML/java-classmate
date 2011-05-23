@@ -3,10 +3,13 @@ ClassMate is a zero-dependency Java library for accurately introspecting type in
 Project wiki (https://github.com/cowtowncoder/java-classmate/wiki)
 is the first thing to check out after reading this README.
 
+Project is licensed under Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0.txt)
+
 Old project home page -- (http://cowtowncoder.github.com/java-classmate/)
 -- also has some useful information.
 
-## Resolving Class type information
+
+# Resolving Class type information
 
 Main class used for fully resolving type information for classes is `com.fasterxml.classmate.TypeResolver`.
 TypeResolver does simple caching for resolved supertypes (since many subtypes resolve to smaller set of supertypes, typically). Since all access to shared data is synchronized, a single `TypeResolver` instance is typically shared for a single system (as a plain old static singleton): there are no benefits to instantiating more instances.
