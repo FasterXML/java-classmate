@@ -28,6 +28,12 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     static class ListWrapper<E> extends Wrapper<List<E>> { }
+
+    abstract static class OuterType<K, V> extends AbstractMap<K, Collection<V>>
+    {
+        public abstract class Inner extends AbstractMap<K, Collection<V>> {
+        }
+    }
     
     /*
     /**********************************************************************
@@ -153,6 +159,25 @@ public class TestSubtypeResolution extends BaseTest
         assertSame(Long.class, bindings.getBoundType(1).getErasedType());
     }
 
+    // inspired by [JACKSON-677]
+    public void testValidInnerType()
+    {
+        ResolvedType type = typeResolver.resolve(OuterType.Inner.class);
+        assertSame(OuterType.Inner.class, type.getErasedType());
+        ResolvedType mapType = type.findSupertype(Map.class);
+        assertSame(Map.class, mapType.getErasedType());
+        TypeBindings bindings = mapType.getTypeBindings();
+        assertEquals(2, bindings.size());
+        assertSame(Object.class, bindings.getBoundType(0).getErasedType());
+        // value should be "Collection<V>", which resolves to "Collection<Object>"
+        ResolvedType valueType = bindings.getBoundType(1);
+        assertSame(Collection.class, valueType.getErasedType());
+        // directly Collection, no need to find, just get:
+        bindings = valueType.getTypeBindings();
+        assertEquals(1, bindings.size());
+        assertSame(Object.class, bindings.getBoundType(0).getErasedType());
+    }
+    
     /*
     /**********************************************************************
     /* Unit tests, failure cases
