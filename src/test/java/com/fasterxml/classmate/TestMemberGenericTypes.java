@@ -42,6 +42,20 @@ public class TestMemberGenericTypes extends BaseTest
         public static <T extends Serializable> void staticValue(T value) { }
     }
 
+    // Verify that we can handle issue from Jackson [JACKSON-743]
+    
+    public static abstract class BaseJackson743<T> {
+        public T inconsequential = null;
+    }
+
+    public static abstract class BaseDataJackson743<T> {
+        public T dataObj;
+    }
+
+    public static class Child743 extends BaseJackson743<Long> {
+        public static class Data extends BaseDataJackson743<List<String>> { }
+    }
+    
     /*
     /**********************************************************************
     /* setup
@@ -234,5 +248,22 @@ public class TestMemberGenericTypes extends BaseTest
         assertEquals(1, statics[0].getArgumentCount());
         ResolvedType arg = statics[0].getArgumentType(0);
         assertEquals(Serializable.class, arg.getErasedType());
+    }
+
+    public void testAliasingWithLocalType()
+    {
+        MemberResolver mr = new MemberResolver(typeResolver);
+        ResolvedType mainType = typeResolver.resolve(Child743.Data.class);
+        ResolvedTypeWithMembers bean = mr.resolve(mainType, null, null);
+
+        // should have one static, one member method
+        ResolvedField[] fields = bean.getMemberFields();
+        assertEquals(1, fields.length);
+        ResolvedField f = fields[0];
+        // expected: public List<String> dataObj;
+        assertEquals("dataObj", f.getName());
+        ResolvedType type = f.getType();
+        assertEquals(List.class, type.getErasedType());
+        assertEquals(String.class, type.getTypeParameters().get(0).getErasedType());
     }
 }
