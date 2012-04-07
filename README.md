@@ -1,15 +1,23 @@
+## Overview
+
 ClassMate is a zero-dependency Java library for accurately introspecting type information, including reliable resolution of generic type declarations for both classes ("types") and members (fields, methods and constructors).
 
-Project wiki (https://github.com/cowtowncoder/java-classmate/wiki)
-is the first thing to check out after reading this README.
+Project is licensed under [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
-Project is licensed under Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0.txt)
+## Documentation
 
-Old project home page -- (http://cowtowncoder.github.com/java-classmate/)
--- also has some useful information.
+[Project wiki](https://github.com/cowtowncoder/java-classmate/wiki) has Javadocs.
 
+External links that may help include:
 
-# Resolving Class type information
+* [Resolving Generic Types with Classmate](http://www.cowtowncoder.com/blog/archives/2012/04/entry_471.html) (some simple usage examples)
+* [Problem with java.lang.reflect.Type](http://www.cowtowncoder.com/blog/archives/2010/12/entry_436.html) (explanation of issues ClassMate was written to solve)
+
+-----
+
+## Usage
+
+### Resolving Class type information
 
 Main class used for fully resolving type information for classes is `com.fasterxml.classmate.TypeResolver`.
 TypeResolver does simple caching for resolved supertypes (since many subtypes resolve to smaller set of supertypes, typically). Since all access to shared data is synchronized, a single `TypeResolver` instance is typically shared for a single system (as a plain old static singleton): there are no benefits to instantiating more instances.
@@ -22,7 +30,7 @@ Its main resolution methods are:
 
 Result in all these cases is an instance of `ResolvedType`, which you can think of as generic type information containing replacement for `java.lang.Class`. It is also the starting point for resolving member (constructor, field, method) information.
 
-## Resolving Member information
+### Resolving Member information
 
 Member information resolution is done by `com.fasterxml.classmate.MemberResolver`, which takes a `ResolvedType` and produces `ResolvedTypeWithMembers`. As with `TypeResolver`, a single instance is typically shared by all code; but since no reuse of information is done, creating new instances is cheap and need not be avoided.
 
