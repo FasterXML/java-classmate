@@ -6,7 +6,7 @@ Project is licensed under [Apache License 2.0](http://www.apache.org/licenses/LI
 
 ## Documentation
 
-[Project wiki](https://github.com/cowtowncoder/java-classmate/wiki) has Javadocs.
+[Project wiki](/cowtowncoder/java-classmate/wiki) has Javadocs.
 
 External links that may help include:
 
@@ -16,6 +16,20 @@ External links that may help include:
 -----
 
 ## Usage
+
+### Maven dep
+
+To use ClassMate via Maven, include following dependency:
+
+    <dependency>
+      <groupId>com.fasterxml</groupId>
+      <artifactId>classmate</artifactId>
+      <version>0.5.5</version>
+    </dependency>
+
+### Non-Maven
+
+Downloads available from [Project wiki](/cowtowncoder/java-classmate/wiki).
 
 ### Resolving Class type information
 
