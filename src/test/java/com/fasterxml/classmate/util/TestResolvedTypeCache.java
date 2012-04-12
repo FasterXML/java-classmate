@@ -2,13 +2,22 @@ package com.fasterxml.classmate.util;
 
 import java.util.*;
 
+import com.fasterxml.classmate.types.ResolvedObjectType;
 import junit.framework.TestCase;
 
 import com.fasterxml.classmate.*;
 import com.fasterxml.classmate.types.ResolvedInterfaceType;
+import org.junit.Test;
 
 public class TestResolvedTypeCache extends TestCase
 {
+
+    private static class KeySubclass extends ResolvedTypeCache.Key {
+        private KeySubclass(Class<?> simpleType) {
+            super(simpleType);
+        }
+    }
+
     public void testSimpleCaching()
     {
         ResolvedTypeCache cache = new ResolvedTypeCache(2);
@@ -34,5 +43,68 @@ public class TestResolvedTypeCache extends TestCase
         assertNull(found1);
         assertSame(type2, found2);
         assertSame(type3, found3);
+    }
+
+    public void testKeyEquals() {
+
+        try {
+            new ResolvedTypeCache.Key(null);
+            fail("Expecting a NullPointerException.");
+        } catch (NullPointerException npe) {
+            // expected
+        }
+
+        ResolvedTypeCache.Key key = new ResolvedTypeCache.Key(String.class);
+
+        // test referential equality
+        assertTrue(key.equals(key));
+
+        // test null
+        assertFalse(key.equals(null));
+
+        // test unequal class
+        assertFalse(key.equals("test"));
+
+        // test subclass
+        assertFalse(key.equals(new KeySubclass(String.class)));
+
+        // test unequal resolve-class
+        ResolvedTypeCache.Key key1 = new ResolvedTypeCache.Key(Object.class);
+        assertFalse(key.equals(key1));
+
+        // test equal resolve-class
+        ResolvedTypeCache.Key key2 = new ResolvedTypeCache.Key(String.class);
+        assertTrue(key.equals(key2));
+
+        // test equal, 0-length resolved-type array change to null
+        ResolvedTypeCache.Key key3 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] {  });
+        assertTrue(key.equals(key3));
+
+        // test unequal, null other type-parameters
+        ResolvedTypeCache.Key key4 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] { new ResolvedObjectType(String.class, null, null, (ResolvedType[]) null)} );
+        assertFalse(key.equals(key4));
+        assertFalse(key4.equals(key));
+
+        // test unequal, type-parameters length
+        ResolvedTypeCache.Key key5 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] {
+                new ResolvedObjectType(String.class, null, null, (ResolvedType[]) null),
+                new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null)
+        });
+        assertFalse(key4.equals(key5));
+
+        // test unequal type-parameters
+        ResolvedTypeCache.Key key6 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] {
+                new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null),
+                new ResolvedObjectType(String.class, null, null, (ResolvedType[]) null)
+        });
+        assertFalse(key5.equals(key6));
+
+        // test equal type-parameters
+        ResolvedTypeCache.Key key7 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] {
+                new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null),
+                new ResolvedObjectType(String.class, null, null, (ResolvedType[]) null)
+        });
+        assertTrue(key6.equals(key7));
+
     }
 }
