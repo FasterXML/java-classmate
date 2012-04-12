@@ -7,9 +7,9 @@ target
 .settings
 
 # plus intellij files
-.ipr
-.iws
-.iml
+*.ipr
+*.iws
+*.iml
 
 # and emacs temp save files
 *.~
