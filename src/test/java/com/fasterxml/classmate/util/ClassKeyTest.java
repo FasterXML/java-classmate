@@ -48,6 +48,9 @@ public class ClassKeyTest {
 
         // test equal classes
         assertTrue(key.equals(new ClassKey(String.class)));
+
+        // classes loaded by different class-loaders are not equal!
+        // TODO
     }
 
     @Test
