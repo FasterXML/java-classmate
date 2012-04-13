@@ -58,7 +58,8 @@ public class ResolvedObjectTypeTest {
 
         ResolvedObjectType stringType = new ResolvedObjectType(String.class, null, objectType, Collections.<ResolvedType>emptyList());
         staticFields = stringType.getStaticFields();
-        assertEquals(1, staticFields.size());
+        // serialVersionUID & serialPersistentFields & CASE_INSENSITIVE_ORDER
+        assertEquals(3, staticFields.size());
     }
 
     @Test

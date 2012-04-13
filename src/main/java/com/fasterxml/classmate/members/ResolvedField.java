@@ -20,10 +20,6 @@ public class ResolvedField extends ResolvedMember
         _type = type;
     }
 
-    public void addAnnotation(Annotation ann) {
-        _annotations.add(ann);
-    }
-    
     /*
     /**********************************************************************
     /* Simple accessors
@@ -43,7 +39,7 @@ public class ResolvedField extends ResolvedMember
     {
         if (o == this) return true;
         if (o == null || o.getClass() != getClass()) return false;
-        RawField other = (RawField) o;
+        ResolvedField other = (ResolvedField) o;
         return (other._field == _field);
     }
 }

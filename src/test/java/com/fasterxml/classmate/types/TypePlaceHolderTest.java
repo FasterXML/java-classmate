@@ -50,7 +50,7 @@ public class TypePlaceHolderTest {
     @Test
     public void isAbstract() {
         TypePlaceHolder placeHolder = new TypePlaceHolder(0);
-        assertFalse(placeHolder.isAbstract());
+        assertTrue(placeHolder.isAbstract());
     }
 
     @Test

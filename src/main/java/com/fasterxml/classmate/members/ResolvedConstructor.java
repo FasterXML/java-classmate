@@ -72,7 +72,7 @@ public final class ResolvedConstructor extends ResolvedMember
     {
         if (o == this) return true;
         if (o == null || o.getClass() != getClass()) return false;
-        RawConstructor other = (RawConstructor) o;
+        ResolvedConstructor other = (ResolvedConstructor) o;
         return (other._constructor == _constructor);
     }
 
