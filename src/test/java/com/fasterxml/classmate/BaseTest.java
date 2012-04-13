@@ -18,4 +18,8 @@ public abstract class BaseTest extends TestCase
         }
         fail("Expected an exception with one of substrings ("+Arrays.asList(matches)+"): got one with message \""+msg+"\"");
     }
+
+    protected void verify(Throwable throwable, String format, Object ... args) {
+        verifyException(throwable, String.format(format, args));
+    }
 }

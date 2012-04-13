@@ -4,6 +4,8 @@ import java.util.*;
 import java.lang.reflect.*;
 
 import com.fasterxml.classmate.types.*;
+import com.fasterxml.classmate.util.ClassKey;
+import com.fasterxml.classmate.util.ResolvedTypeCache;
 
 @SuppressWarnings("serial")
 public class TestTypeResolver extends BaseTest
@@ -72,6 +74,55 @@ public class TestTypeResolver extends BaseTest
     /* Unit tests, normal operation
     /**********************************************************************
      */
+
+    public void testResolveWithEmptyTypeParameters()
+    {
+        ResolvedType reference = typeResolver.resolve(List.class);
+
+        ResolvedType type = typeResolver.resolve(List.class, (Class[]) null);
+        assertSame(reference, type);
+
+        Class<?>[] typeParameters = new Class[0];
+        type = typeResolver.resolve(List.class, typeParameters);
+        assertSame(reference, type);
+
+        type = typeResolver.resolve(List.class, (ResolvedType[]) null);
+        assertSame(reference, type);
+
+        ResolvedType[] resolvedTypeParameters = new ResolvedType[0];
+        type = typeResolver.resolve(List.class, resolvedTypeParameters);
+        assertSame(reference, type);
+    }
+
+    public void testResolveGenericWithFailures()
+    {
+        final GenericType<String> type = new GenericType<String>() { };
+        // force failure
+        TypeResolver._primitiveTypes.put(new ClassKey(type.getClass()), new ResolvedObjectType(type.getClass(), null, null, ResolvedType.NO_TYPES) {
+            @Override public ResolvedType findSupertype(Class<?> erasedSupertype) {
+                return null;
+            }
+        });
+        try {
+            typeResolver.resolve(type);
+            fail("Should have thrown an IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+            // expected
+        }
+
+        // now force failure on getting generic's parameterized type
+        TypeResolver._primitiveTypes.put(new ClassKey(type.getClass()), new ResolvedObjectType(type.getClass(), null, null, ResolvedType.NO_TYPES) {
+            @Override public ResolvedType findSupertype(Class<?> erasedSupertype) {
+                return new ResolvedObjectType(type.getClass(), null, null, ResolvedType.NO_TYPES);
+            }
+        });
+        try {
+            typeResolver.resolve(type);
+            fail("Should have thrown an IllegalArgumentException when getting the generic's parameterized types.");
+        } catch (IllegalArgumentException iae) {
+            // expected
+        }
+    }
     
     public void testSimpleTypes()
     {
@@ -281,6 +332,54 @@ public class TestTypeResolver extends BaseTest
         } catch (IllegalArgumentException e) {
             verifyException(e, "Can not sub-class java.lang.String into java.util.ArrayList");
         }
+        supertype = typeResolver.resolve(boolean.class);
+        try {
+            typeResolver.resolveSubtype(supertype, Boolean.class); // autoboxing, clearly, isn't sub-classing
+            fail("Expecting an UnsupportedOperationException as boolean.class cannot be subclassed.");
+        } catch (UnsupportedOperationException uoe) {
+            verify(uoe, "Can not subtype primitive or array types (type %s)", supertype.getFullDescription());
+        }
+        // add a mock class to force 'internal-error' case
+        Object subclass = new Object() { };
+        typeResolver._resolvedTypes.put(new ResolvedTypeCache.Key(subclass.getClass()), new ResolvedObjectType(subclass.getClass(), null, null, ResolvedType.NO_TYPES) {
+            @Override public ResolvedType findSupertype(Class<?> erasedSupertype) {
+                return null;
+            }
+        });
+        supertype = typeResolver.resolve(Object.class);
+        try {
+            typeResolver.resolveSubtype(supertype, subclass.getClass());
+            fail("Expecting an IllegalArgumentException as supertype should not have been found for subtype.");
+        } catch (IllegalArgumentException iae) {
+            verify(iae, "Internal error: unable to locate supertype (%s) for type %s", subclass.getClass().getName(),
+                    supertype.getBriefDescription());
+        }
+        // add a mock class to force a failure of finding a type's parameters
+        subclass = new Object() { };
+        final ResolvedType finalSuperType = supertype;
+        typeResolver._resolvedTypes.put(new ResolvedTypeCache.Key(subclass.getClass()), new ResolvedObjectType(subclass.getClass(), TypeBindings.create(String.class, ResolvedType.NO_TYPES), null, ResolvedType.NO_TYPES) {
+            @Override public ResolvedType findSupertype(Class<?> erasedSupertype) {
+                return finalSuperType;
+            }
+        });
+//        try {
+//            typeResolver.resolveSubtype(supertype, subclass.getClass());
+//            fail("Expecting an IllegalArgumentException as boolean.class cannot be subclassed.");
+//        } catch (IllegalArgumentException iae) {
+//            verify(iae, "Internal error: unable to locate supertype (%s) for type %s", subclass.getClass().getName(), supertype.getBriefDescription());
+//        }
+    }
+
+    public void testResolveOfSelfReferencedType()
+    {
+        ResolvedType supertype = typeResolver.resolve(SelfRefType.class);
+        ResolvedType self = typeResolver.resolveSubtype(supertype, SelfRefType.class);
+        assertSame(self, supertype);
+
+        ResolvedRecursiveType selfSuperType = new ResolvedRecursiveType(SelfRefType.class, null);
+        selfSuperType.setReference(supertype);
+        self = typeResolver.resolveSubtype(selfSuperType, SelfRefType.class);
+        assertSame(self, supertype);
     }
     
     /*
