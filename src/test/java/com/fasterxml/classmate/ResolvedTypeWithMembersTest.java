@@ -31,6 +31,7 @@ public class ResolvedTypeWithMembersTest {
     private static class MixinCandidate {
         private static void staticOverride() { }
         private String shadowed;
+        private MixinCandidate() { }
         protected String getShadowed() { return shadowed; }
     }
 
@@ -40,6 +41,9 @@ public class ResolvedTypeWithMembersTest {
 
         @Marker
         private String shadowed;
+
+        @Marker
+        private MixinA() { }
 
         @Marker
         protected String getShadowed() { return shadowed; }
@@ -103,7 +107,7 @@ public class ResolvedTypeWithMembersTest {
     }
 
     @Test
-    public void resolveConstructors() {
+    public void resolveConstructors() throws NoSuchFieldException, IllegalAccessException {
         TypeResolver typeResolver = new TypeResolver();
         ResolvedType string = typeResolver.resolve(String.class);
         HierarchicType stringHierarchicType = new HierarchicType(string, true, 0);
@@ -115,8 +119,37 @@ public class ResolvedTypeWithMembersTest {
         }, null, null);
         assertEquals(0, members.resolveConstructors().length);
 
+        // test, adding annotation from constructor on class but without an annotation-handler which
+        // allows for mix-ins (i.e., AnnotationInclusion.DONT_INCLUDE)
+        ResolvedType mixinCandidateResolved = typeResolver.resolve(MixinCandidate.class);
+        ResolvedType mixinAResolved = typeResolver.resolve(MixinA.class);
+        HierarchicType mixinCandidateHierarchicType = new HierarchicType(mixinCandidateResolved, false, 1);
+        HierarchicType mixinAHierarchicType = new HierarchicType(mixinAResolved, true, 0);
+
+        members = new ResolvedTypeWithMembers(typeResolver, null, mixinCandidateHierarchicType,
+                new HierarchicType[] { mixinAHierarchicType, mixinCandidateHierarchicType }, null, null, null);
+        ResolvedConstructor[] resolvedConstructors = members.resolveConstructors();
+        assertEquals(1, resolvedConstructors.length);
+        ResolvedConstructor resolvedConstructor = resolvedConstructors[0];
+        // TODO - need way of accessing Annotations on ResolvedMember objects
+        Field annotationsField = ResolvedMember.class.getDeclaredField("_annotations");
+        annotationsField.setAccessible(true);
+
+        Annotations annotations = (Annotations) annotationsField.get(resolvedConstructor);
+        assertEquals(0, annotations.size());
+
         // TODO - there's no way of making a mix-in constructor unless the key used for constructor is changed
         // TODO - to disregard the name as constructor's are not overridden
+
+//        members = new ResolvedTypeWithMembers(typeResolver,
+//                new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT), mixinCandidateHierarchicType,
+//                new HierarchicType[] { mixinAHierarchicType, mixinCandidateHierarchicType }, null, null, null);
+//        resolvedConstructors = members.resolveConstructors();
+//        assertEquals(1, resolvedConstructors.length);
+//        resolvedConstructor = resolvedConstructors[0];
+//        annotations = (Annotations) annotationsField.get(resolvedConstructor);
+//        assertEquals(1, annotations.size());
+//        assertNotNull(annotations.get(Marker.class));
     }
 
     @Test
@@ -179,7 +212,7 @@ public class ResolvedTypeWithMembersTest {
         ResolvedMethod[] resolvedMethods = members.resolveStaticMethods();
         assertEquals(0, resolvedMethods.length);
 
-        // test, adding annotation from shadowed field on super-class but without an annotation-handler which
+        // test, adding annotation from method on class but without an annotation-handler which
         // allows for mix-ins (i.e., AnnotationInclusion.DONT_INCLUDE)
         members = new ResolvedTypeWithMembers(typeResolver, null, mixinCandidateHierarchicType,
                 new HierarchicType[] { mixinAHierarchicType, mixinCandidateHierarchicType }, null, null, null);
@@ -222,7 +255,7 @@ public class ResolvedTypeWithMembersTest {
         ResolvedMethod[] resolvedMethods = members.resolveMemberMethods();
         assertEquals(0, resolvedMethods.length);
 
-        // test, adding annotation from shadowed field on super-class but without an annotation-handler which
+        // test, adding annotation from class but without an annotation-handler which
         // allows for mix-ins (i.e., AnnotationInclusion.DONT_INCLUDE)
         members = new ResolvedTypeWithMembers(typeResolver, null, mixinCandidateHierarchicType,
                 new HierarchicType[] { mixinCandidateHierarchicType, mixinAHierarchicType }, null, null, null);
