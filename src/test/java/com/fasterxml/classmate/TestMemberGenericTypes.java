@@ -3,8 +3,8 @@ package com.fasterxml.classmate;
 import java.io.Serializable;
 import java.util.List;
 
-import com.fasterxml.classmate.members.ResolvedConstructor;
 import com.fasterxml.classmate.members.ResolvedField;
+import com.fasterxml.classmate.members.ResolvedConstructor;
 import com.fasterxml.classmate.members.ResolvedMethod;
 
 /**

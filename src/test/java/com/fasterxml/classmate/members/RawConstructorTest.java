@@ -6,7 +6,6 @@ import com.fasterxml.classmate.util.MethodKey;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 
 import static junit.framework.Assert.*;
 

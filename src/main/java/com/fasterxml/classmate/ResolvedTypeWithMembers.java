@@ -252,6 +252,9 @@ public class ResolvedTypeWithMembers
             // If it's just a mix-in, add annotations as overrides
             if (thisType.isMixin()) {
                 for (RawField raw : thisType.getType().getMemberFields()) {
+                    if ((_fieldFilter != null) && !_fieldFilter.include(raw)) {
+                        continue;
+                    }
                     ResolvedField field = fields.get(raw.getName());
                     if (field != null) {
                         for (Annotation ann : raw.getAnnotations()) {
@@ -263,6 +266,9 @@ public class ResolvedTypeWithMembers
                 }
             } else { // If actual type, add fields, masking whatever might have existed before:
                 for (RawField field : thisType.getType().getMemberFields()) {
+                    if ((_fieldFilter != null) && !_fieldFilter.include(field)) {
+                        continue;
+                    }
                     fields.put(field.getName(), resolveField(field));
                 }
             }

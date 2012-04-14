@@ -1,13 +1,13 @@
 package com.fasterxml.classmate.util;
 
-import java.util.*;
-
+import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.types.ResolvedInterfaceType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
 import junit.framework.TestCase;
 
-import com.fasterxml.classmate.*;
-import com.fasterxml.classmate.types.ResolvedInterfaceType;
-import org.junit.Test;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class TestResolvedTypeCache extends TestCase
 {

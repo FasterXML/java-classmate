@@ -1,13 +1,11 @@
 package com.fasterxml.classmate.members;
 
-import com.fasterxml.classmate.Annotations;
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
 
-import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 

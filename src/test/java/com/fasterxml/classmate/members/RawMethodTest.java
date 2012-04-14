@@ -7,9 +7,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Method;
 
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.*;
 
 /**
  * User: blangel

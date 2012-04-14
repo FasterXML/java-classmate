@@ -1,8 +1,12 @@
 package com.fasterxml.classmate;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 import com.fasterxml.classmate.members.*;
+import com.fasterxml.classmate.types.ResolvedObjectType;
+import com.fasterxml.classmate.util.ClassKey;
 
 public class TestMemberResolver extends BaseTest
 {
@@ -55,6 +59,19 @@ public class TestMemberResolver extends BaseTest
     } 
 
     static class DummyMixIn2 extends DummyMixIn { }
+
+    // simple class extending from Object for config tests (includeObject, filtering, etc)
+    static class SimpleClass
+    {
+        private String test;
+
+        SimpleClass(String test) {
+            this.test = test;
+        }
+        SimpleClass() { }
+
+        private String getTest() { return test; }
+    }
     
     /*
     /**********************************************************************
@@ -175,6 +192,157 @@ public class TestMemberResolver extends BaseTest
         ResolvedTypeWithMembers bean = mr.resolve(mainType, null, overrides);
 
         verifySubtypeAggregate(bean);
+    }
+
+    public void testIncludeObject()
+    {
+        ResolvedType simpleResolvedType = typeResolver.resolve(SimpleClass.class);
+        MemberResolver mr = new MemberResolver(typeResolver);
+        mr.setIncludeLangObject(false);
+
+        ResolvedTypeWithMembers simpleResolvedTypeWithMembers = mr.resolve(simpleResolvedType, null, null);
+        assertEquals(1, simpleResolvedTypeWithMembers.getMemberMethods().length);
+        assertEquals(1, simpleResolvedTypeWithMembers.getMemberFields().length);
+
+        mr = new MemberResolver(typeResolver);
+        mr.setIncludeLangObject(true);
+
+        simpleResolvedTypeWithMembers = mr.resolve(simpleResolvedType, null, null);
+        assertEquals(12, simpleResolvedTypeWithMembers.getMemberMethods().length);
+        assertEquals(1, simpleResolvedTypeWithMembers.getMemberFields().length);
+    }
+
+    public void testFilters()
+    {
+        ResolvedType simpleResolvedType = typeResolver.resolve(SimpleClass.class);
+        MemberResolver mr = new MemberResolver(typeResolver);
+        mr.setIncludeLangObject(true);
+
+        ResolvedTypeWithMembers simpleResolvedTypeWithMembers = mr.resolve(simpleResolvedType, null, null);
+        assertEquals(12, simpleResolvedTypeWithMembers.getMemberMethods().length);
+        assertEquals(1, simpleResolvedTypeWithMembers.getMemberFields().length);
+        assertEquals(2, simpleResolvedTypeWithMembers.getConstructors().length);
+
+        // now filter methods
+        mr = new MemberResolver(typeResolver);
+        mr.setIncludeLangObject(true);
+        mr.setMethodFilter(new Filter<RawMethod>() {
+            @Override public boolean include(RawMethod element) {
+                return "notify".equals(element.getName());
+            }
+        });
+
+        simpleResolvedTypeWithMembers = mr.resolve(simpleResolvedType, null, null);
+        assertEquals(1, simpleResolvedTypeWithMembers.getMemberMethods().length);
+        assertEquals(1, simpleResolvedTypeWithMembers.getMemberFields().length);
+        assertEquals(2, simpleResolvedTypeWithMembers.getConstructors().length);
+
+        // now filter fields
+        mr = new MemberResolver(typeResolver);
+        mr.setIncludeLangObject(true);
+        mr.setFieldFilter(new Filter<RawField>() {
+            @Override public boolean include(RawField element) {
+                return "DNE".equals(element.getName());
+            }
+        });
+
+        simpleResolvedTypeWithMembers = mr.resolve(simpleResolvedType, null, null);
+        assertEquals(12, simpleResolvedTypeWithMembers.getMemberMethods().length);
+        assertEquals(0, simpleResolvedTypeWithMembers.getMemberFields().length);
+        assertEquals(2, simpleResolvedTypeWithMembers.getConstructors().length);
+
+        // now filter constructors
+        mr = new MemberResolver(typeResolver);
+        mr.setIncludeLangObject(true);
+        mr.setConstructorFilter(new Filter<RawConstructor>() {
+            @Override public boolean include(RawConstructor element) {
+                return element.getRawMember().getParameterTypes().length > 0;
+            }
+        });
+
+        simpleResolvedTypeWithMembers = mr.resolve(simpleResolvedType, null, null);
+        assertEquals(12, simpleResolvedTypeWithMembers.getMemberMethods().length);
+        assertEquals(1, simpleResolvedTypeWithMembers.getMemberFields().length);
+        assertEquals(1, simpleResolvedTypeWithMembers.getConstructors().length);
+    }
+
+    public void testAddOverridesFromInterfaces() throws IllegalAccessException, InvocationTargetException
+    {
+        ResolvedType resolvedType = typeResolver.resolve(MemberResolver.class);
+        MemberResolver memberResolver = new MemberResolver(typeResolver);
+        memberResolver.setMethodFilter(new Filter<RawMethod>() {
+            @Override public boolean include(RawMethod element) {
+                return "_addOverrides".equals(element.getName()) && element.getRawMember().getParameterTypes()[2].equals(Class.class);
+            }
+        });
+        ResolvedTypeWithMembers resolvedTypeWithMembers = memberResolver.resolve(resolvedType, null, null);
+        ResolvedMethod addOverridesResolvedMethod = resolvedTypeWithMembers.getMemberMethods()[0];
+        Method addOverridesMethod = addOverridesResolvedMethod.getRawMember();
+        addOverridesMethod.setAccessible(true);
+
+        List<HierarchicType> typesWithOverrides = new ArrayList<HierarchicType>();
+        Set<ClassKey> seenTypes = new HashSet<ClassKey>();
+        addOverridesMethod.invoke(memberResolver, typesWithOverrides, seenTypes, String.class);
+        assertEquals(4, seenTypes.size());
+        assertEquals(4, typesWithOverrides.size());
+
+        memberResolver = new MemberResolver(typeResolver);
+        memberResolver.setMethodFilter(new Filter<RawMethod>() {
+            @Override public boolean include(RawMethod element) {
+                return "_addOverrides".equals(element.getName()) && element.getRawMember().getParameterTypes()[2].equals(ResolvedType.class);
+            }
+        });
+        resolvedTypeWithMembers = memberResolver.resolve(resolvedType, null, null);
+        addOverridesResolvedMethod = resolvedTypeWithMembers.getMemberMethods()[0];
+        addOverridesMethod = addOverridesResolvedMethod.getRawMember();
+        addOverridesMethod.setAccessible(true);
+
+        typesWithOverrides = new ArrayList<HierarchicType>();
+        seenTypes = new HashSet<ClassKey>();
+        // first test null case.
+        addOverridesMethod.invoke(memberResolver, typesWithOverrides, seenTypes, null);
+        assertEquals(0, seenTypes.size());
+        assertEquals(0, typesWithOverrides.size());
+        // now test case with interfaces
+        ResolvedType comparator = typeResolver.resolve(Comparator.class);
+        ResolvedObjectType stringType = new ResolvedObjectType(String.class, TypeBindings.emptyBindings(), null, new ResolvedType[] { comparator });
+        addOverridesMethod.invoke(memberResolver, typesWithOverrides, seenTypes, stringType);
+        assertEquals(2, seenTypes.size());
+        assertEquals(2, typesWithOverrides.size());
+    }
+
+    public void testGatherTypesWithInterfaces() throws IllegalAccessException, InvocationTargetException
+    {
+        ResolvedType resolvedType = typeResolver.resolve(MemberResolver.class);
+        MemberResolver memberResolver = new MemberResolver(typeResolver);
+        memberResolver.setMethodFilter(new Filter<RawMethod>() {
+            @Override public boolean include(RawMethod element) {
+                return "_gatherTypes".equals(element.getName());
+            }
+        });
+        ResolvedTypeWithMembers resolvedTypeWithMembers = memberResolver.resolve(resolvedType, null, null);
+        ResolvedMethod gatherTypesResolvedMethod = resolvedTypeWithMembers.getMemberMethods()[0];
+        Method gatherTypesMethod = gatherTypesResolvedMethod.getRawMember();
+        gatherTypesMethod.setAccessible(true);
+
+        // test that the value within the seenTypes cache short-circuits execution
+        ResolvedType currentType;
+        Set<ClassKey> seenTypes = new HashSet<ClassKey>();
+        List<ResolvedType> types = new ArrayList<ResolvedType>();
+        currentType = new ResolvedObjectType(String.class, TypeBindings.emptyBindings(), null, ResolvedType.NO_TYPES);
+        seenTypes.add(new ClassKey(String.class));
+
+        gatherTypesMethod.invoke(memberResolver, currentType, seenTypes, types);
+        assertEquals(1, seenTypes.size());
+        assertEquals(0, types.size());
+
+        // now test that a type with interfaces has its interfaces gathered
+        ResolvedType comparator = typeResolver.resolve(Comparator.class);
+        currentType = new ResolvedObjectType(String.class, TypeBindings.emptyBindings(), null, new ResolvedType[] { comparator });
+        seenTypes.clear();
+        gatherTypesMethod.invoke(memberResolver, currentType, seenTypes, types);
+        assertEquals(2, seenTypes.size());
+        assertEquals(2, types.size());
     }
 
     /*
