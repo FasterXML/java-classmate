@@ -1,92 +1,94 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion> 
-  <parent>
-    <groupId>org.sonatype.oss</groupId>
-    <artifactId>oss-parent</artifactId>
-    <version>5</version>
-  </parent>
-  <groupId>com.fasterxml</groupId>
-  <artifactId>classmate</artifactId>
-  <name>ClassMate</name>
-  <version>0.5.5-SNAPSHOT</version>
-  <packaging>bundle</packaging>
-  <description>Library for introspecting types with full generic information
-including resolving of field and method types.
-  </description>
-  <url>http://github.com/cowtowncoder/java-classmate</url>
-  <scm>
-    <connection>scm:git:git@github.com:cowtowncoder/java-classmate.git</connection>
-    <developerConnection>scm:git:git@github.com:cowtowncoder/java-classmate.git</developerConnection>
-    <url>http://github.com/cowtowncoder/java-classmate</url>    
-  </scm>
-  <developers>
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>5</version>
+    </parent>
+    <groupId>com.fasterxml</groupId>
+    <artifactId>classmate</artifactId>
+    <name>ClassMate</name>
+    <version>0.5.5-SNAPSHOT</version>
+    <packaging>bundle</packaging>
+    <description>Library for introspecting types with full generic information
+        including resolving of field and method types.
+    </description>
+    <url>http://github.com/cowtowncoder/java-classmate</url>
+    <scm>
+        <connection>scm:git:git@github.com:cowtowncoder/java-classmate.git</connection>
+        <developerConnection>scm:git:git@github.com:cowtowncoder/java-classmate.git</developerConnection>
+        <url>http://github.com/cowtowncoder/java-classmate</url>
+    </scm>
+    <developers>
         <developer>
             <id>tatu</id>
             <name>Tatu Saloranta</name>
             <email>tatu@fasterxml.com</email>
         </developer>
-  </developers>
+    </developers>
 
-  <prerequisites>
-    <maven>2.2.1</maven>
-  </prerequisites>
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+    <prerequisites>
+        <maven>2.2.1</maven>
+    </prerequisites>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
-  <!-- Licensing -->
-  <licenses>
-    <license>
-      <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
-  <organization>
-    <name>fasterxml.com</name>
-    <url>http://fasterxml.com</url>
-  </organization>
+    <!-- Licensing -->
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <organization>
+        <name>fasterxml.com</name>
+        <url>http://fasterxml.com</url>
+    </organization>
 
-  <dependencies>
-     <!-- and for testing, JUnit is needed -->
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.8.1</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+    <dependencies>
+        <!-- and for testing, JUnit is needed -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
-        </configuration>
-      </plugin>
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-release-plugin</artifactId>
-            <version>2.0</version>
-            <configuration>
-                <mavenExecutorId>forked-path</mavenExecutorId>
-            </configuration>
-        </plugin>
-        <plugin><!-- plug-in to attach source bundle in repo -->
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-source-plugin</artifactId>
-          <executions>
-            <execution>
-              <id>attach-sources</id>
-              <goals>
-                <goal>jar</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.0</version>
+                <configuration>
+                    <mavenExecutorId>forked-path</mavenExecutorId>
+                </configuration>
+            </plugin>
+            <plugin><!-- plug-in to attach source bundle in repo -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.1.2</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>2.6</version>
@@ -108,33 +110,34 @@ including resolving of field and method types.
                         </goals>
                     </execution>
                 </executions>
-        </plugin>
+            </plugin>
 
-        <!-- Plus, let's make jars OSGi bundles as well  -->
-        <plugin>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>maven-bundle-plugin</artifactId>
-          <extensions>true</extensions>
-          <configuration>
-            <instructions>
-              <Bundle-SymbolicName>${pom.artifactId}</Bundle-SymbolicName>
-              <Bundle-Vendor>fasterml.com</Bundle-Vendor>
-              <Import-Package>
-</Import-Package>
-              <Private-Package>
-com.fasterxml.classmate.util
-</Private-Package>
-              <Export-Package>
-com.fasterxml.classmate,
-com.fasterxml.classmate.members,
-com.fasterxml.classmate.types
-</Export-Package>
-            </instructions>
-          </configuration>
-        </plugin>
-    </plugins>
-  </build>
-  <profiles>
+            <!-- Plus, let's make jars OSGi bundles as well  -->
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.3.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Vendor>fasterml.com</Bundle-Vendor>
+                        <Import-Package>
+                        </Import-Package>
+                        <Private-Package>
+                            com.fasterxml.classmate.util
+                        </Private-Package>
+                        <Export-Package>
+                            com.fasterxml.classmate,
+                            com.fasterxml.classmate.members,
+                            com.fasterxml.classmate.types
+                        </Export-Package>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    <profiles>
         <profile>
             <id>release-sign-artifacts</id>
             <activation>
@@ -162,6 +165,6 @@ com.fasterxml.classmate.types
                 </plugins>
             </build>
         </profile>
-  </profiles>
-  <!-- NOTE: repositories from parent POM -->
+    </profiles>
+    <!-- NOTE: repositories from parent POM -->
 </project>

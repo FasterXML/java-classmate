@@ -9,6 +9,8 @@ import com.fasterxml.classmate.members.RawMethod;
 
 public class ResolvedInterfaceType extends ResolvedType
 {
+
+
     /**
      * List of interfaces this type implements; may be empty but never null
      */
@@ -34,7 +36,7 @@ public class ResolvedInterfaceType extends ResolvedType
             ResolvedType[] superInterfaces)
     {
         super(erased, bindings);
-        _superInterfaces = superInterfaces;
+        _superInterfaces = (superInterfaces == null ? NO_TYPES : superInterfaces);
     }
 
     @Override

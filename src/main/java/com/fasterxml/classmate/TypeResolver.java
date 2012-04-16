@@ -216,7 +216,7 @@ public class TypeResolver
      * be extended.
      *
      * @param supertype Type to subtype (extend)
-     * @param subclass Type-erased sub-class or sub-interface 
+     * @param subtype Type-erased sub-class or sub-interface
      * 
      * @return Resolved subtype
      * 

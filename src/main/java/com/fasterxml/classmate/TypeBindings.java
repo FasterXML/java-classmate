@@ -41,8 +41,8 @@ public final class TypeBindings
             throw new IllegalArgumentException("Mismatching names ("+_names.length+"), types ("+_types.length+")");
         }
         int h = 1;
-        for (int i = 0, len = types.length; i < len; ++i) {
-            h += types[i].hashCode();
+        for (int i = 0, len = _types.length; i < len; ++i) {
+            h += _types[i].hashCode();
         }
         _hashCode = h;
     }

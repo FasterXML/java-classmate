@@ -3,7 +3,11 @@ package com.fasterxml.classmate;
 import java.util.*;
 import java.lang.reflect.*;
 
+import com.fasterxml.classmate.members.RawMethod;
+import com.fasterxml.classmate.members.ResolvedMethod;
 import com.fasterxml.classmate.types.*;
+import com.fasterxml.classmate.util.ClassKey;
+import com.fasterxml.classmate.util.ResolvedTypeCache;
 
 @SuppressWarnings("serial")
 public class TestTypeResolver extends BaseTest
@@ -52,6 +56,20 @@ public class TestTypeResolver extends BaseTest
     static class StringListBean {
         public IntermediateList<String> value;
     }
+
+    // For testing failure in subtype resolution with generic parameters
+
+    static class Params<T> { }
+
+    // For testing wildcards
+
+    static interface Wild<T extends List<? extends Collection>, S extends List<? super Collection>> { }
+
+    // For testing type-parameters matching
+
+    static interface MatchA<T extends Collection<?>, S extends Comparator<T>> { }
+
+    static interface MatchB<T extends List<?>> { }
     
     /*
     /**********************************************************************
@@ -72,6 +90,55 @@ public class TestTypeResolver extends BaseTest
     /* Unit tests, normal operation
     /**********************************************************************
      */
+
+    public void testResolveWithEmptyTypeParameters()
+    {
+        ResolvedType reference = typeResolver.resolve(List.class);
+
+        ResolvedType type = typeResolver.resolve(List.class, (Class[]) null);
+        assertSame(reference, type);
+
+        Class<?>[] typeParameters = new Class[0];
+        type = typeResolver.resolve(List.class, typeParameters);
+        assertSame(reference, type);
+
+        type = typeResolver.resolve(List.class, (ResolvedType[]) null);
+        assertSame(reference, type);
+
+        ResolvedType[] resolvedTypeParameters = new ResolvedType[0];
+        type = typeResolver.resolve(List.class, resolvedTypeParameters);
+        assertSame(reference, type);
+    }
+
+    public void testResolveGenericWithFailures()
+    {
+        final GenericType<String> type = new GenericType<String>() { };
+        // force failure
+        TypeResolver._primitiveTypes.put(new ClassKey(type.getClass()), new ResolvedObjectType(type.getClass(), null, null, ResolvedType.NO_TYPES) {
+            @Override public ResolvedType findSupertype(Class<?> erasedSupertype) {
+                return null;
+            }
+        });
+        try {
+            typeResolver.resolve(type);
+            fail("Should have thrown an IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+            // expected
+        }
+
+        // now force failure on getting generic's parameterized type
+        TypeResolver._primitiveTypes.put(new ClassKey(type.getClass()), new ResolvedObjectType(type.getClass(), null, null, ResolvedType.NO_TYPES) {
+            @Override public ResolvedType findSupertype(Class<?> erasedSupertype) {
+                return new ResolvedObjectType(type.getClass(), null, null, ResolvedType.NO_TYPES);
+            }
+        });
+        try {
+            typeResolver.resolve(type);
+            fail("Should have thrown an IllegalArgumentException when getting the generic's parameterized types.");
+        } catch (IllegalArgumentException iae) {
+            // expected
+        }
+    }
     
     public void testSimpleTypes()
     {
@@ -281,6 +348,134 @@ public class TestTypeResolver extends BaseTest
         } catch (IllegalArgumentException e) {
             verifyException(e, "Can not sub-class java.lang.String into java.util.ArrayList");
         }
+        supertype = typeResolver.resolve(boolean.class);
+        try {
+            typeResolver.resolveSubtype(supertype, Boolean.class); // autoboxing, clearly, isn't sub-classing
+            fail("Expecting an UnsupportedOperationException as boolean.class cannot be subclassed.");
+        } catch (UnsupportedOperationException uoe) {
+            verify(uoe, "Can not subtype primitive or array types (type %s)", supertype.getFullDescription());
+        }
+        // add a mock class to force 'internal-error' case
+        Object subclass = new Object() { };
+        typeResolver._resolvedTypes.put(new ResolvedTypeCache.Key(subclass.getClass()), new ResolvedObjectType(subclass.getClass(), null, null, ResolvedType.NO_TYPES) {
+            @Override public ResolvedType findSupertype(Class<?> erasedSupertype) {
+                return null;
+            }
+        });
+        supertype = typeResolver.resolve(Object.class);
+        try {
+            typeResolver.resolveSubtype(supertype, subclass.getClass());
+            fail("Expecting an IllegalArgumentException as supertype should not have been found for subtype.");
+        } catch (IllegalArgumentException iae) {
+            verify(iae, "Internal error: unable to locate supertype (%s) for type %s", subclass.getClass().getName(),
+                    supertype.getBriefDescription());
+        }
+        // add a mock class to force a failure of finding a type's parameters
+        subclass = new Params<Object>();
+        final ResolvedType finalSuperType = supertype;
+        TypeBindings typeBindings = TypeBindings.emptyBindings(); // force failure of parameter resolution
+        typeResolver._resolvedTypes.put(new ResolvedTypeCache.Key(subclass.getClass()), new ResolvedObjectType(subclass.getClass(),
+                typeBindings, null, ResolvedType.NO_TYPES) {
+            @Override public ResolvedType findSupertype(Class<?> erasedSupertype) {
+                return finalSuperType;
+            }
+        });
+        try {
+            typeResolver.resolveSubtype(supertype, subclass.getClass());
+            fail("Expecting an IllegalArgumentException as boolean.class cannot be subclassed.");
+        } catch (IllegalArgumentException iae) {
+            verify(iae, "Failed to find type parameter #1/1 for %s", subclass.getClass().getName());
+        }
+    }
+
+    public void testResolveOfSelfReferencedType()
+    {
+        ResolvedType supertype = typeResolver.resolve(SelfRefType.class);
+        ResolvedType self = typeResolver.resolveSubtype(supertype, SelfRefType.class);
+        assertSame(self, supertype);
+
+        assertFalse(TypeResolver.isSelfReference(self));
+        assertFalse(TypeResolver.isSelfReference(supertype));
+
+        ResolvedRecursiveType selfSuperType = new ResolvedRecursiveType(SelfRefType.class, null);
+        selfSuperType.setReference(supertype);
+        self = typeResolver.resolveSubtype(selfSuperType, SelfRefType.class);
+        assertSame(self, supertype);
+
+        assertTrue(TypeResolver.isSelfReference(selfSuperType));
+    }
+
+    public void testWildcardType()
+    {
+        GenericType<Wild<List<? extends Collection>, List<? super Collection>>> genericType =
+                new GenericType<Wild<List<? extends Collection>, List<? super Collection>>>() { };
+        ResolvedType resolvedType = typeResolver.resolve(genericType);
+        List<ResolvedType> typeParameters = resolvedType.getTypeParameters();
+        assertEquals(2, typeParameters.size());
+        // the wildcard gets collapsed to it's upper-bound
+        assertEquals(List.class, typeParameters.get(0).getErasedType());
+        assertEquals(List.class, typeParameters.get(1).getErasedType());
+    }
+
+    public void testUnknownJdkType()
+    {
+        Type type = new Type() { };
+        try {
+            typeResolver.resolve(type, TypeBindings.emptyBindings());
+            fail("Expected an IllegalArgumentException as concrete type of Type is unknown.");
+        } catch (IllegalArgumentException iae) {
+            verify(iae, "Unrecognized type class: %s", type.getClass().getName());
+        }
+    }
+
+    public void testMissingSuperclass() throws IllegalAccessException, InvocationTargetException
+    {
+        ResolvedType resolvedType = typeResolver.resolve(TypeResolver.class);
+        MemberResolver memberResolver = new MemberResolver(typeResolver);
+        memberResolver.setMethodFilter(new Filter<RawMethod>() {
+            @Override public boolean include(RawMethod element) {
+                return "_resolveSuperClass".equals(element.getName());
+            }
+        });
+        ResolvedTypeWithMembers resolvedTypeWithMembers = memberResolver.resolve(resolvedType, null, null);
+        ResolvedMethod resolveSuperClassResolvedMethod = resolvedTypeWithMembers.getMemberMethods()[0];
+        Method resolveSuperClassMethod = resolveSuperClassResolvedMethod.getRawMember();
+        resolveSuperClassMethod.setAccessible(true);
+        assertNull(resolveSuperClassMethod.invoke(typeResolver, null, Comparator.class, null));
+    }
+
+    public void testTypesMatch() throws IllegalAccessException, InvocationTargetException
+    {
+        ResolvedType resolvedType = typeResolver.resolve(TypeResolver.class);
+        MemberResolver memberResolver = new MemberResolver(typeResolver);
+        memberResolver.setMethodFilter(new Filter<RawMethod>() {
+            @Override public boolean include(RawMethod element) {
+                return "_typesMatch".equals(element.getName());
+            }
+        });
+        ResolvedTypeWithMembers resolvedTypeWithMembers = memberResolver.resolve(resolvedType, null, null);
+        ResolvedMethod typesMatchResolvedMethod = resolvedTypeWithMembers.getMemberMethods()[0];
+        Method typesMatchMethod = typesMatchResolvedMethod.getRawMember();
+        typesMatchMethod.setAccessible(true);
+
+        // first test equality
+        GenericType<MatchB<List<?>>> matchBList = new GenericType<MatchB<List<?>>>() { };
+        ResolvedType matchBListResolved = typeResolver.resolve(matchBList);
+        assertTrue((Boolean) typesMatchMethod.invoke(typeResolver, matchBListResolved, matchBListResolved));
+        GenericType<MatchA<Set<?>, Comparator<Set<?>>>> matchASet = new GenericType<MatchA<Set<?>, Comparator<Set<?>>>>() { };
+        GenericType<MatchA<Set<?>, Comparator<Set<?>>>> matchASet1 = new GenericType<MatchA<Set<?>, Comparator<Set<?>>>>() { };
+        ResolvedType matchASetResolved = typeResolver.resolve(matchASet);
+        ResolvedType matchASetResolved1 = typeResolver.resolve(matchASet1);
+        assertTrue((Boolean) typesMatchMethod.invoke(typeResolver, matchASetResolved, matchASetResolved1));
+
+        // now check inequality
+        GenericType<MatchA<List<?>, Comparator<List<?>>>> matchAList = new GenericType<MatchA<List<?>, Comparator<List<?>>>>() { };
+        ResolvedType matchAListResolved = typeResolver.resolve(matchAList);
+        assertFalse((Boolean) typesMatchMethod.invoke(typeResolver, matchAListResolved, matchASetResolved));
+
+        // now ensure different number of type-parameters are handled correctly
+        assertFalse((Boolean) typesMatchMethod.invoke(typeResolver, matchAListResolved, matchBListResolved));
+        assertFalse((Boolean) typesMatchMethod.invoke(typeResolver, matchBListResolved, matchAListResolved));
     }
     
     /*

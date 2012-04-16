@@ -10,7 +10,7 @@ import com.fasterxml.classmate.members.*;
 
 public abstract class ResolvedType
 {
-    protected final static ResolvedType[] NO_TYPES = new ResolvedType[0];
+    public final static ResolvedType[] NO_TYPES = new ResolvedType[0];
 
     protected final static RawConstructor[] NO_CONSTRUCTORS = new RawConstructor[0];
     protected final static RawField[] NO_FIELDS = new RawField[0];
