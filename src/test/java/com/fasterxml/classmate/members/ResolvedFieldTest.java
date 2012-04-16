@@ -16,12 +16,6 @@ import static junit.framework.Assert.assertTrue;
  */
 public class ResolvedFieldTest {
 
-    private static class ResolvedFieldSubclass extends ResolvedField {
-        private ResolvedFieldSubclass() {
-            super(null, null, null, null);
-        }
-    }
-
     private static class HasStaticField {
         private static String test;
     }
@@ -48,9 +42,6 @@ public class ResolvedFieldTest {
 
         // invalid class
         assertFalse(resolvedField.equals("not a ResolvedField"));
-
-        // subclass case
-        assertFalse(resolvedField.equals(new ResolvedFieldSubclass()));
 
         // test inequality of field
         ResolvedField resolvedField1 = new ResolvedField(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), null, testField, null);

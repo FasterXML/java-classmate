@@ -15,12 +15,6 @@ import static junit.framework.Assert.*;
  */
 public class ResolvedMethodTest {
 
-    private static class ResolvedMethodSubclass extends ResolvedMethod {
-        private ResolvedMethodSubclass() {
-            super(null, null, null, null, null);
-        }
-    }
-
     private static final Method toStringMethod;
     static {
         try {
@@ -67,9 +61,6 @@ public class ResolvedMethodTest {
 
         // test unequal class
         assertFalse(resolvedMethod.equals("not a ResolvedMethod"));
-
-        // test subclass unequal
-        assertFalse(resolvedMethod.equals(new ResolvedMethodSubclass()));
 
         ResolvedObjectType object = new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null);
         ResolvedMethod resolvedMethod1 = new ResolvedMethod(object, null, toStringMethod, string, null);

@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.util.MethodKey;
 
-public class RawMethod extends RawMember
+public final class RawMethod extends RawMember
 {
     protected final Method _method;
     

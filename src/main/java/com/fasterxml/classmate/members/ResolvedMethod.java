@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 import com.fasterxml.classmate.Annotations;
 import com.fasterxml.classmate.ResolvedType;
 
-public class ResolvedMethod extends ResolvedMember
+public final class ResolvedMethod extends ResolvedMember
 {
     protected final Method _method;
 

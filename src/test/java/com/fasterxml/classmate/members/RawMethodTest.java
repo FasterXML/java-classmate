@@ -16,12 +16,6 @@ import static junit.framework.Assert.*;
  */
 public class RawMethodTest {
 
-    private static class RawMethodSubclass extends RawMethod {
-        private RawMethodSubclass() {
-            super(null, null);
-        }
-    }
-
     private static final Method toStringMethod;
     static {
         try {
@@ -49,9 +43,6 @@ public class RawMethodTest {
 
         // unequal class
         assertFalse(rawMethod.equals("not a RawMethod"));
-
-        // unequal sub-classing
-        assertFalse(rawMethod.equals(new RawMethodSubclass()));
 
         // equality via delegation to Method
         RawMethod rawMethod1 = new RawMethod(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), toStringMethod);

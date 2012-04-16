@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 
 import com.fasterxml.classmate.ResolvedType;
 
-public class RawField extends RawMember
+public final class RawField extends RawMember
 {
     protected final Field _field;
 

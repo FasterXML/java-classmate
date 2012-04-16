@@ -173,8 +173,7 @@ public class TypeResolver
         // Arrays are cumbersome for some reason:
         Object emptyArray = Array.newInstance(elementType.getErasedType(), 0);
         // Should we try to use cache? It's bit tricky, so let's not bother yet
-        return new ResolvedArrayType(emptyArray.getClass(), TypeBindings.emptyBindings(),
-                sJavaLangObject, elementType);
+        return new ResolvedArrayType(emptyArray.getClass(), TypeBindings.emptyBindings(), elementType);
     }
 
     /**
@@ -373,7 +372,7 @@ public class TypeResolver
         // Ok: no easy shortcut, let's figure out type of type...
         if (rawType.isArray()) {
             ResolvedType elementType = _fromAny(context, rawType.getComponentType(), typeBindings);
-            return new ResolvedArrayType(rawType, typeBindings, sJavaLangObject, elementType);
+            return new ResolvedArrayType(rawType, typeBindings, elementType);
         }
         // For other types super interfaces are needed...
         if (rawType.isInterface()) {
@@ -435,8 +434,7 @@ public class TypeResolver
         ResolvedType elementType = _fromAny(context, arrayType.getGenericComponentType(), typeBindings);
         // Figuring out raw class for generic array is actually bit tricky...
         Object emptyArray = Array.newInstance(elementType.getErasedType(), 0);
-        return new ResolvedArrayType(emptyArray.getClass(), typeBindings,
-                sJavaLangObject, elementType);
+        return new ResolvedArrayType(emptyArray.getClass(), typeBindings, elementType);
     }
 
     private ResolvedType _fromWildcard(ClassStack context, WildcardType wildType, TypeBindings typeBindings)

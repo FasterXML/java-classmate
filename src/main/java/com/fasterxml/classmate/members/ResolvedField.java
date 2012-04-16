@@ -1,12 +1,11 @@
 package com.fasterxml.classmate.members;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
 import com.fasterxml.classmate.Annotations;
 import com.fasterxml.classmate.ResolvedType;
 
-public class ResolvedField extends ResolvedMember
+public final class ResolvedField extends ResolvedMember
 {
     protected final Field _field;
 

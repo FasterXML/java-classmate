@@ -20,12 +20,6 @@ public class RawFieldTest {
         private static String test;
     }
 
-    private static class RawFieldSubclass extends RawField {
-        private RawFieldSubclass() {
-            super(null, null);
-        }
-    }
-
     private static final Field serialVersionUIDField;
     private static final Field testField;
     static {
@@ -48,9 +42,6 @@ public class RawFieldTest {
 
         // test different class
         assertFalse(rawField.equals("not a RawField"));
-
-        // test subclass
-        assertFalse(rawField.equals(new RawFieldSubclass()));
 
         // test unequal fields
         RawField rawField1 = new RawField(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), testField);
