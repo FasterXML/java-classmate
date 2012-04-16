@@ -11,9 +11,7 @@ import java.lang.reflect.Method;
 import java.util.Comparator;
 import java.util.List;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.*;
 
 /**
  * User: blangel
@@ -107,7 +105,7 @@ public class ResolvedTypeWithMembersTest {
     }
 
     @Test
-    public void resolveConstructors() throws NoSuchFieldException, IllegalAccessException {
+    public void resolveConstructors() {
         TypeResolver typeResolver = new TypeResolver();
         ResolvedType string = typeResolver.resolve(String.class);
         HierarchicType stringHierarchicType = new HierarchicType(string, true, 0);
@@ -131,12 +129,7 @@ public class ResolvedTypeWithMembersTest {
         ResolvedConstructor[] resolvedConstructors = members.resolveConstructors();
         assertEquals(1, resolvedConstructors.length);
         ResolvedConstructor resolvedConstructor = resolvedConstructors[0];
-        // TODO - need way of accessing Annotations on ResolvedMember objects
-        Field annotationsField = ResolvedMember.class.getDeclaredField("_annotations");
-        annotationsField.setAccessible(true);
-
-        Annotations annotations = (Annotations) annotationsField.get(resolvedConstructor);
-        assertEquals(0, annotations.size());
+        assertNull(resolvedConstructor.get(Marker.class));
 
         // TODO - there's no way of making a mix-in constructor unless the key used for constructor is changed
         // TODO - to disregard the name as constructor's are not overridden
@@ -153,7 +146,7 @@ public class ResolvedTypeWithMembersTest {
     }
 
     @Test
-    public void resolveMemberFields() throws NoSuchFieldException, IllegalAccessException {
+    public void resolveMemberFields() {
         // first, test by filtering all fields; including mix-ins
         TypeResolver typeResolver = new TypeResolver();
         ResolvedType mixinCandidateResolved = typeResolver.resolve(MixinCandidate.class);
@@ -176,12 +169,7 @@ public class ResolvedTypeWithMembersTest {
         resolvedFields = members.resolveMemberFields();
         assertEquals(1, resolvedFields.length);
         ResolvedField resolvedField = resolvedFields[0];
-        // TODO - need way of accessing Annotations on ResolvedMember objects
-        Field annotationsField = ResolvedMember.class.getDeclaredField("_annotations");
-        annotationsField.setAccessible(true);
-
-        Annotations annotations = (Annotations) annotationsField.get(resolvedField);
-        assertEquals(0, annotations.size());
+        assertNull(resolvedField.get(Marker.class));
 
         // test, changing annotation-handler to allow for mix-in
         members = new ResolvedTypeWithMembers(typeResolver,
@@ -190,13 +178,11 @@ public class ResolvedTypeWithMembersTest {
         resolvedFields = members.resolveMemberFields();
         assertEquals(1, resolvedFields.length);
         resolvedField = resolvedFields[0];
-        annotations = (Annotations) annotationsField.get(resolvedField);
-        assertEquals(1, annotations.size());
-        assertNotNull(annotations.get(Marker.class));
+        assertNotNull(resolvedField.get(Marker.class));
     }
 
     @Test
-    public void resolveStaticMethods() throws NoSuchFieldException, IllegalAccessException {
+    public void resolveStaticMethods() {
         // first, test by filtering all fields; including mix-ins
         TypeResolver typeResolver = new TypeResolver();
         ResolvedType mixinCandidateResolved = typeResolver.resolve(MixinCandidate.class);
@@ -219,12 +205,7 @@ public class ResolvedTypeWithMembersTest {
         resolvedMethods = members.resolveStaticMethods();
         assertEquals(1, resolvedMethods.length);
         ResolvedMethod resolvedMethod = resolvedMethods[0];
-        // TODO - need way of accessing Annotations on ResolvedMember objects
-        Field annotationsField = ResolvedMember.class.getDeclaredField("_annotations");
-        annotationsField.setAccessible(true);
-
-        Annotations annotations = (Annotations) annotationsField.get(resolvedMethod);
-        assertEquals(0, annotations.size());
+        assertNull(resolvedMethod.get(Marker.class));
 
         // test, changing annotation-handler to allow for mix-in
         members = new ResolvedTypeWithMembers(typeResolver,
@@ -233,13 +214,11 @@ public class ResolvedTypeWithMembersTest {
         resolvedMethods = members.resolveStaticMethods();
         assertEquals(1, resolvedMethods.length);
         resolvedMethod = resolvedMethods[0];
-        annotations = (Annotations) annotationsField.get(resolvedMethod);
-        assertEquals(1, annotations.size());
-        assertNotNull(annotations.get(Marker.class));
+        assertNotNull(resolvedMethod.get(Marker.class));
     }
 
     @Test
-    public void resolveMemberMethods() throws NoSuchFieldException, IllegalAccessException {
+    public void resolveMemberMethods() {
         // first, test by filtering all fields; including mix-ins
         TypeResolver typeResolver = new TypeResolver();
         ResolvedType mixinCandidateResolved = typeResolver.resolve(MixinCandidate.class);
@@ -262,12 +241,8 @@ public class ResolvedTypeWithMembersTest {
         resolvedMethods = members.resolveMemberMethods();
         assertEquals(1, resolvedMethods.length);
         ResolvedMethod resolvedMethod = resolvedMethods[0];
-        // TODO - need way of accessing Annotations on ResolvedMember objects
-        Field annotationsField = ResolvedMember.class.getDeclaredField("_annotations");
-        annotationsField.setAccessible(true);
-
-        Annotations annotations = (Annotations) annotationsField.get(resolvedMethod);
-        assertEquals(0, annotations.size());
+        assertNull(resolvedMethod.get(Marker.class));
+        assertNull(resolvedMethod.get(MarkerB.class));
 
         // test, changing annotation-handler to allow for mix-in
         ResolvedType mixinBResolved = typeResolver.resolve(MixinB.class);
@@ -278,10 +253,8 @@ public class ResolvedTypeWithMembersTest {
         resolvedMethods = members.resolveMemberMethods();
         assertEquals(1, resolvedMethods.length);
         resolvedMethod = resolvedMethods[0];
-        annotations = (Annotations) annotationsField.get(resolvedMethod);
-        assertEquals(2, annotations.size());
-        assertNotNull(annotations.get(Marker.class));
-        assertNotNull(annotations.get(MarkerB.class));
+        assertNotNull(resolvedMethod.get(Marker.class));
+        assertNotNull(resolvedMethod.get(MarkerB.class));
 
         // test, adding non-mixin-only into the hierarchy-type list
         ResolvedType mixinCResolved = typeResolver.resolve(MixinC.class);
@@ -294,16 +267,13 @@ public class ResolvedTypeWithMembersTest {
         resolvedMethods = members.resolveMemberMethods();
         assertEquals(1, resolvedMethods.length);
         resolvedMethod = resolvedMethods[0];
-        annotations = (Annotations) annotationsField.get(resolvedMethod);
-        assertEquals(2, annotations.size());
-        assertNotNull(annotations.get(Marker.class));
-        assertNotNull(annotations.get(MarkerB.class));
+        assertNotNull(resolvedMethod.get(Marker.class));
+        assertNotNull(resolvedMethod.get(MarkerB.class));
 
     }
 
     @Test
-    public void resolveConstructor() throws NoSuchMethodException, NoSuchFieldException,
-            IllegalAccessException, InvocationTargetException {
+    public void resolveConstructor() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         // test where annotation is 'masked' via the annotation-config handler
         TypeResolver typeResolver = new TypeResolver();
         ResolvedType mixinDResolved = typeResolver.resolve(MixinD.class);
@@ -324,35 +294,25 @@ public class ResolvedTypeWithMembersTest {
         resolveConstructorMethod.setAccessible(true);
 
         ResolvedConstructor resolvedConstructor = (ResolvedConstructor) resolveConstructorMethod.invoke(members, rawConstructor);
-        // TODO - need way of accessing Annotations on ResolvedMember objects
-        Field annotationsField = ResolvedMember.class.getDeclaredField("_annotations");
-        annotationsField.setAccessible(true);
-
-        Annotations annotations = (Annotations) annotationsField.get(resolvedConstructor);
-        assertEquals(0, annotations.size());
+        assertNull(resolvedConstructor.get(Marker.class));
         // do again, now that annotation-handler's cache is primed.
         resolvedConstructor = (ResolvedConstructor) resolveConstructorMethod.invoke(members, rawConstructor);
-        annotations = (Annotations) annotationsField.get(resolvedConstructor);
-        assertEquals(0, annotations.size());
+        assertNull(resolvedConstructor.get(Marker.class));
 
         // test with annotation-handler which allows for annotations
         members = new ResolvedTypeWithMembers(typeResolver,
                 new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT), mixinDHierarchicType,
                 new HierarchicType[] { mixinDHierarchicType }, null, null, null);
         resolvedConstructor = (ResolvedConstructor) resolveConstructorMethod.invoke(members, rawConstructor);
-        annotations = (Annotations) annotationsField.get(resolvedConstructor);
-        assertEquals(1, annotations.size());
-        assertNotNull(annotations.get(Marker.class));
+        assertNotNull(resolvedConstructor.get(Marker.class));
         // do again, now that annotation-handler's cache is primed.
         resolvedConstructor = (ResolvedConstructor) resolveConstructorMethod.invoke(members, rawConstructor);
-        annotations = (Annotations) annotationsField.get(resolvedConstructor);
-        assertEquals(1, annotations.size());
-        assertNotNull(annotations.get(Marker.class));
+        assertNotNull(resolvedConstructor.get(Marker.class));
     }
 
     @Test
-    public void resolveField() throws NoSuchMethodException, NoSuchFieldException,
-            IllegalAccessException, InvocationTargetException {
+    public void resolveField() throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException,
+            InvocationTargetException {
         // test where annotation is 'masked' via the annotation-config handler
         TypeResolver typeResolver = new TypeResolver();
         ResolvedType mixinDResolved = typeResolver.resolve(MixinD.class);
@@ -373,35 +333,24 @@ public class ResolvedTypeWithMembersTest {
         resolveFieldMethod.setAccessible(true);
 
         ResolvedField resolvedField = (ResolvedField) resolveFieldMethod.invoke(members, rawField);
-        // TODO - need way of accessing Annotations on ResolvedMember objects
-        Field annotationsField = ResolvedMember.class.getDeclaredField("_annotations");
-        annotationsField.setAccessible(true);
-
-        Annotations annotations = (Annotations) annotationsField.get(resolvedField);
-        assertEquals(0, annotations.size());
+        assertNull(resolvedField.get(Marker.class));
         // do it again now that the annotation-handler's cache has been primed
         resolvedField = (ResolvedField) resolveFieldMethod.invoke(members, rawField);
-        annotations = (Annotations) annotationsField.get(resolvedField);
-        assertEquals(0, annotations.size());
+        assertNull(resolvedField.get(Marker.class));
 
         // test with annotation-handler which allows for annotations
         members = new ResolvedTypeWithMembers(typeResolver,
                 new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT), mixinDHierarchicType,
                 new HierarchicType[] { mixinDHierarchicType }, null, null, null);
         resolvedField = (ResolvedField) resolveFieldMethod.invoke(members, rawField);
-        annotations = (Annotations) annotationsField.get(resolvedField);
-        assertEquals(1, annotations.size());
-        assertNotNull(annotations.get(Marker.class));
+        assertNotNull(resolvedField.get(Marker.class));
         // do it again now that the annotation-handler's cache has been primed
         resolvedField = (ResolvedField) resolveFieldMethod.invoke(members, rawField);
-        annotations = (Annotations) annotationsField.get(resolvedField);
-        assertEquals(1, annotations.size());
-        assertNotNull(annotations.get(Marker.class));
+        assertNotNull(resolvedField.get(Marker.class));
     }
 
     @Test
-    public void resolveMethod() throws NoSuchMethodException, NoSuchFieldException,
-            IllegalAccessException, InvocationTargetException {
+    public void resolveMethod() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         // test where annotation is 'masked' via the annotation-config handler
         TypeResolver typeResolver = new TypeResolver();
         ResolvedType mixinDResolved = typeResolver.resolve(MixinD.class);
@@ -422,29 +371,19 @@ public class ResolvedTypeWithMembersTest {
         resolveMethodMethod.setAccessible(true);
 
         ResolvedMethod resolvedMethod = (ResolvedMethod) resolveMethodMethod.invoke(members, rawMethod);
-        // TODO - need way of accessing Annotations on ResolvedMember objects
-        Field annotationsField = ResolvedMember.class.getDeclaredField("_annotations");
-        annotationsField.setAccessible(true);
-
-        Annotations annotations = (Annotations) annotationsField.get(resolvedMethod);
-        assertEquals(0, annotations.size());
+        assertNull(resolvedMethod.get(MarkerB.class));
         // do it again now that the annotation-handler's cache has been primed
         resolvedMethod = (ResolvedMethod) resolveMethodMethod.invoke(members, rawMethod);
-        annotations = (Annotations) annotationsField.get(resolvedMethod);
-        assertEquals(0, annotations.size());
+        assertNull(resolvedMethod.get(MarkerB.class));
 
         // test with annotation-handler which allows for annotations
         members = new ResolvedTypeWithMembers(typeResolver,
                 new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT), mixinDHierarchicType,
                 new HierarchicType[] { mixinDHierarchicType }, null, null, null);
         resolvedMethod = (ResolvedMethod) resolveMethodMethod.invoke(members, rawMethod);
-        annotations = (Annotations) annotationsField.get(resolvedMethod);
-        assertEquals(1, annotations.size());
-        assertNotNull(annotations.get(MarkerB.class));
+        assertNotNull(resolvedMethod.get(MarkerB.class));
         // do it again now that the annotation-handler's cache has been primed
         resolvedMethod = (ResolvedMethod) resolveMethodMethod.invoke(members, rawMethod);
-        annotations = (Annotations) annotationsField.get(resolvedMethod);
-        assertEquals(1, annotations.size());
-        assertNotNull(annotations.get(MarkerB.class));
+        assertNotNull(resolvedMethod.get(MarkerB.class));
     }
 }

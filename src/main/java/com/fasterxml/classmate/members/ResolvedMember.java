@@ -48,6 +48,11 @@ public abstract class ResolvedMember
     {
         _annotations.addAsDefault(override);
     }
+
+    public <A extends Annotation> A get(Class<A> cls)
+    {
+        return _annotations.get(cls);
+    }
     
     /*
     /**********************************************************************

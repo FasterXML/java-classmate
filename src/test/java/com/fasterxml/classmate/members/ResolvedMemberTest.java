@@ -181,4 +181,41 @@ public class ResolvedMemberTest {
         assertEquals(testField.getModifiers(), resolvedStaticField.getModifiers());
     }
 
+    @Test
+    public void get() throws NoSuchMethodException {
+        // test NPE first
+        try {
+            ResolvedMethod npeMethod = new ResolvedMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), null, toStringMethod, null, null);
+            npeMethod.get(Test.class);
+            fail("Expecting a NullPointerException; haven't passed in an Annotations object reference to the constructor.");
+        } catch (NullPointerException npe) {
+            // expected
+        }
+
+        Annotations annotations = new Annotations();
+        ResolvedMethod resolvedMethod = new ResolvedMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), annotations, toStringMethod, null, null);
+        ResolvedMethod resolvedMethod1 = new ResolvedMethod(new ResolvedObjectType(RawMember.class, null, null, ResolvedType.NO_TYPES), annotations, getRawMemberMethod, null, null);
+        ResolvedMethod resolvedStaticMethod = new ResolvedMethod(new ResolvedObjectType(HasStaticFieldMethod.class, null, null, ResolvedType.NO_TYPES), annotations, getTestMethod, null, null);
+
+        ResolvedField resolvedField = new ResolvedField(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), annotations, serialVersionUIDField, null);
+        ResolvedField resolvedStaticField = new ResolvedField(new ResolvedObjectType(HasStaticFieldMethod.class, null, null, ResolvedType.NO_TYPES), annotations, testField, null);
+
+        assertNull(resolvedMethod.get(Test.class));
+        assertNull(resolvedMethod1.get(Test.class));
+        assertNull(resolvedStaticMethod.get(Test.class));
+        assertNull(resolvedField.get(Test.class));
+        assertNull(resolvedStaticField.get(Test.class));
+
+        Method thisMethod = ResolvedMemberTest.class.getDeclaredMethod("get");
+        Annotation testAnnotation = thisMethod.getAnnotation(Test.class);
+
+        annotations.add(testAnnotation);
+
+        assertSame(testAnnotation, resolvedMethod.get(Test.class));
+        assertSame(testAnnotation, resolvedMethod1.get(Test.class));
+        assertSame(testAnnotation, resolvedStaticMethod.get(Test.class));
+        assertSame(testAnnotation, resolvedField.get(Test.class));
+        assertSame(testAnnotation, resolvedStaticField.get(Test.class));
+    }
+
 }
