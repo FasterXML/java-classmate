@@ -30,10 +30,7 @@ public class RawMethod extends RawMember
     public MethodKey createKey()
     {
         String name = _method.getName();
-        Class<?>[] argTypes = _method.getParameterTypes();
-        if (argTypes == null) {
-            return new MethodKey(name);
-        }
+        Class<?>[] argTypes = _method.getParameterTypes(); // return of Method#getParameterTypes will never be null
         return new MethodKey(name, argTypes);
     }
     

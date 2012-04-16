@@ -19,7 +19,7 @@ public class ResolvedMethod extends ResolvedMember
         super(context, ann);
         _method = method;
         _returnType = returnType;
-        _argumentTypes = argumentTypes;
+        _argumentTypes = (argumentTypes == null ? ResolvedType.NO_TYPES : argumentTypes);
     }
     
     /*
@@ -69,7 +69,7 @@ public class ResolvedMethod extends ResolvedMember
     {
         if (o == this) return true;
         if (o == null || o.getClass() != getClass()) return false;
-        RawMethod other = (RawMethod) o;
+        ResolvedMethod other = (ResolvedMethod) o;
         return (other._method == _method);
     }
 

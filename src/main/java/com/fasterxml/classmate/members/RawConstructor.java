@@ -22,10 +22,7 @@ public final class RawConstructor extends RawMember
     public MethodKey createKey()
     {
         String name = _constructor.getName();
-        Class<?>[] argTypes = _constructor.getParameterTypes();
-        if (argTypes == null) {
-            return new MethodKey(name);
-        }
+        Class<?>[] argTypes = _constructor.getParameterTypes();  // return of Constructor#getParameterTypes will never be null
         return new MethodKey(name, argTypes);
     }
     
