@@ -79,12 +79,24 @@ public abstract class ResolvedMember
         return getRawMember().getName();
     }
 
-    public boolean isAbstract() {
-        return Modifier.isAbstract(getModifiers());
-    }
-    
     public boolean isStatic() {
         return Modifier.isStatic(getModifiers());
+    }
+
+    public boolean isFinal() {
+        return Modifier.isFinal(getModifiers());
+    }
+
+    public boolean isPrivate() {
+        return Modifier.isPrivate(getModifiers());
+    }
+
+    public boolean isProtected() {
+        return Modifier.isProtected(getModifiers());
+    }
+
+    public boolean isPublic() {
+        return Modifier.isPublic(getModifiers());
     }
     
     /*
@@ -92,10 +104,6 @@ public abstract class ResolvedMember
     /* Standard method overrides
     /**********************************************************************
      */
-    
-    @Override public int hashCode() {
-        return getName().hashCode();
-    }
     
     @Override public String toString() {
         return getName();

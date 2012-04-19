@@ -27,6 +27,15 @@ public class ResolvedConstructorTest {
     }
 
     @Test
+    public void init() {
+        try {
+            new ResolvedConstructor(null, null, null, null);
+        } catch (NullPointerException npe) {
+            fail(npe.getMessage());
+        }
+    }
+
+    @Test
     public void getRawMember() {
         ResolvedConstructor resolvedConstructor = new ResolvedConstructor(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES),
                                                                           null, stringConstructor, ResolvedType.NO_TYPES);
