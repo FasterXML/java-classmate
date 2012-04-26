@@ -277,8 +277,6 @@ We can augment the annotations returned by `SomeOtherClass` with "mix-ins"
 ```java
 // setup removed for brevity; same as above, using SomeOtherClass
 
-AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT);
-
 // MIX-IN -> take SomeClass and apply to SomeOtherClass
 AnnotationOverrides annOverrides = AnnotationOverrides.builder().add(SomeOtherClass.class, SomeClass.class).build();
 
