@@ -29,7 +29,7 @@ public class ResolvedTypeTest {
         assertTrue(objectType.canCreateSubtype(String.class));
         assertTrue(objectType.canCreateSubtype(CharBuffer.class));
 
-        ResolvedArrayType arrayType = new ResolvedArrayType(String[].class, null, null, stringType);
+        ResolvedArrayType arrayType = new ResolvedArrayType(String[].class, null, stringType);
         assertFalse(arrayType.canCreateSubtype(String[].class));
         assertFalse(arrayType.canCreateSubtype(CharBuffer[].class));
         assertFalse(arrayType.canCreateSubtype(String.class));

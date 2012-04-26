@@ -14,6 +14,8 @@ public final class ResolvedConstructor extends ResolvedMember
     protected final Constructor<?> _constructor;
 
     protected final ResolvedType[] _argumentTypes;
+
+    protected final int _hashCode;
     
     public ResolvedConstructor(ResolvedType context, Annotations ann, Constructor<?> constructor,
             ResolvedType[] argumentTypes)            
@@ -21,6 +23,7 @@ public final class ResolvedConstructor extends ResolvedMember
         super(context, ann);
         _constructor = constructor;
         _argumentTypes = argumentTypes;
+        _hashCode = (_constructor == null ? 0 : _constructor.hashCode());
     }
 
     /*
@@ -65,7 +68,7 @@ public final class ResolvedConstructor extends ResolvedMember
      */
 
     @Override public int hashCode() {
-        return _constructor.getName().hashCode();
+        return _hashCode;
     }
 
     @Override public boolean equals(Object o)

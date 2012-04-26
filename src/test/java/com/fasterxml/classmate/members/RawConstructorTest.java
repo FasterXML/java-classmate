@@ -26,10 +26,20 @@ public class RawConstructorTest {
     }
 
     @Test
+    public void init() {
+        try {
+            new RawConstructor(null, null);
+        } catch (NullPointerException npe) {
+            fail(npe.getMessage());
+        }
+    }
+
+    @Test
     public void createKey() {
         RawConstructor rawConstructor = new RawConstructor(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), stringConstructor);
         MethodKey methodKey = rawConstructor.createKey();
         assertNotNull(methodKey);
+        assertEquals("<init>()", methodKey.toString());
     }
 
     @Test

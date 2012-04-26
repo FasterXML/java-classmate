@@ -1,5 +1,6 @@
 package com.fasterxml.classmate;
 
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
 
@@ -9,7 +10,8 @@ import java.util.HashMap;
  * 
  * @author tatu
  */
-public class Annotations
+@SuppressWarnings("serial")
+public class Annotations implements Serializable
 {
     protected HashMap<Class<? extends Annotation>,Annotation> _annotations;
 

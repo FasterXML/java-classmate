@@ -11,6 +11,7 @@ import static junit.framework.Assert.*;
  */
 public class MethodKeyTest {
 
+    @SuppressWarnings("serial")
     private static class MethodKeySubclass extends MethodKey {
         private MethodKeySubclass(String name) {
             super(name);

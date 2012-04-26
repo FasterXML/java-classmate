@@ -49,12 +49,24 @@ public abstract class RawMember
         return getRawMember().getName();
     }
 
-    public boolean isAbstract() {
-        return Modifier.isAbstract(getModifiers());
-    }
-    
     public boolean isStatic() {
         return Modifier.isStatic(getModifiers());
+    }
+
+    public boolean isFinal() {
+        return Modifier.isFinal(getModifiers());
+    }
+
+    public boolean isPrivate() {
+        return Modifier.isPrivate(getModifiers());
+    }
+
+    public boolean isProtected() {
+        return Modifier.isProtected(getModifiers());
+    }
+
+    public boolean isPublic() {
+        return Modifier.isPublic(getModifiers());
     }
 
     public Annotation[] getAnnotations() {
@@ -69,11 +81,9 @@ public abstract class RawMember
 
     // make abstract to force implementation by sub-class
     @Override public abstract boolean equals(Object o);
-    
-    @Override public int hashCode() {
-        return getName().hashCode();
-    }
-    
+
+    @Override public abstract int hashCode();
+
     @Override public String toString() {
         return getName();
     }

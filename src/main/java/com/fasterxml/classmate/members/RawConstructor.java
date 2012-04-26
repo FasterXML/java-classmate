@@ -9,10 +9,13 @@ public final class RawConstructor extends RawMember
 {
     protected final Constructor<?> _constructor;
 
+    protected final int _hashCode;
+
     public RawConstructor(ResolvedType context, Constructor<?> constructor)
     {
         super(context);
         _constructor = constructor;
+        _hashCode = (_constructor == null ? 0 : _constructor.hashCode());
     }
 
     /**
@@ -21,7 +24,7 @@ public final class RawConstructor extends RawMember
      */
     public MethodKey createKey()
     {
-        String name = _constructor.getName();
+        String name = "<init>"; // do not use _constructor.getName() to allow for 'mix-ins'
         Class<?>[] argTypes = _constructor.getParameterTypes();  // return of Constructor#getParameterTypes will never be null
         return new MethodKey(name, argTypes);
     }
@@ -43,8 +46,9 @@ public final class RawConstructor extends RawMember
     /**********************************************************************
      */
 
-    @Override public int hashCode() {
-        return _constructor.getName().hashCode();
+    @Override public int hashCode()
+    {
+        return _hashCode;
     }
 
     @Override public boolean equals(Object o)

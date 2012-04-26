@@ -1,5 +1,6 @@
 package com.fasterxml.classmate;
 
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.*;
 
@@ -9,7 +10,8 @@ import com.fasterxml.classmate.util.ClassKey;
  * Interface for object that determines handling of annotations in regards
  * to inheritance, overrides.
  */
-public abstract class AnnotationConfiguration
+@SuppressWarnings("serial")
+public abstract class AnnotationConfiguration implements Serializable
 {
     /**
      * Method called to figure out how to handle instances of specified annotation
@@ -53,11 +55,11 @@ public abstract class AnnotationConfiguration
      * member method annotations (constructor, field and static method
      * annotations are never inherited)
      */
-    public static class StdConfiguration extends AnnotationConfiguration
+    public static class StdConfiguration extends AnnotationConfiguration implements Serializable
     {
         protected final AnnotationInclusion _defaultInclusion;
 
-        protected HashMap<ClassKey,AnnotationInclusion> _inclusions = new HashMap<ClassKey,AnnotationInclusion>();
+        protected final HashMap<ClassKey,AnnotationInclusion> _inclusions = new HashMap<ClassKey,AnnotationInclusion>();
         
         public StdConfiguration(AnnotationInclusion defaultBehavior)
         {

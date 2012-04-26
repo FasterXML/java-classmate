@@ -1,5 +1,6 @@
 package com.fasterxml.classmate;
 
+import java.io.Serializable;
 import java.util.*;
 
 import com.fasterxml.classmate.util.ClassKey;
@@ -7,7 +8,8 @@ import com.fasterxml.classmate.util.ClassKey;
 /**
  * Interface for object that can provide mix-ins to override annotations.
  */
-public abstract class AnnotationOverrides
+@SuppressWarnings("serial")
+public abstract class AnnotationOverrides implements Serializable
 {
     /*
     /**********************************************************************
