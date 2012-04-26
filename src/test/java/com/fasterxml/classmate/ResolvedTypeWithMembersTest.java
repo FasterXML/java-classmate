@@ -3,13 +3,12 @@ package com.fasterxml.classmate;
 import com.fasterxml.classmate.members.*;
 import org.junit.Test;
 
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static junit.framework.Assert.*;
 
@@ -25,6 +24,10 @@ public class ResolvedTypeWithMembersTest {
 
     @Retention(RetentionPolicy.RUNTIME)
     private static @interface MarkerB { }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Inherited
+    private static @interface MarkerC { }
 
     private static class MixinCandidate {
         private static void staticOverride() { }
@@ -45,6 +48,9 @@ public class ResolvedTypeWithMembersTest {
 
         @Marker
         protected String getShadowed() { return shadowed; }
+
+        @MarkerC
+        protected String inherited() { return ""; }
     }
 
     private static class MixinB {
@@ -67,6 +73,13 @@ public class ResolvedTypeWithMembersTest {
 
         @MarkerB
         protected String getShadowed() { return null; }
+    }
+
+    private static class MixinASubclass extends MixinA {
+
+        @Override protected String getShadowed() { return super.getShadowed(); }
+
+        @Override protected String inherited() { return super.inherited(); }
     }
 
     @Test
@@ -243,6 +256,24 @@ public class ResolvedTypeWithMembersTest {
         ResolvedMethod resolvedMethod = resolvedMethods[0];
         assertNull(resolvedMethod.get(Marker.class));
         assertNull(resolvedMethod.get(MarkerB.class));
+
+        // test, changing annotation-handler to allow for mix-in only if @Inherited is included on the annotation definition
+        ResolvedType mixinASubclassResolved = typeResolver.resolve(MixinASubclass.class);
+        HierarchicType mixinASubclassHierarchicType = new HierarchicType(mixinASubclassResolved, false, 1);
+        members = new ResolvedTypeWithMembers(typeResolver,
+                new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED), mixinASubclassHierarchicType,
+                new HierarchicType[] { mixinASubclassHierarchicType, mixinAHierarchicType }, null, null, null);
+        resolvedMethods = members.resolveMemberMethods();
+        assertEquals(2, resolvedMethods.length);
+        Map<String, ResolvedMethod> mapped = new HashMap<String, ResolvedMethod>(2, 1.0f);
+        mapped.put(resolvedMethods[0].getName(), resolvedMethods[0]);
+        mapped.put(resolvedMethods[1].getName(), resolvedMethods[1]);
+        resolvedMethod = mapped.get("getShadowed");
+        // Marker annotation is on super not subclass and Marker is not marked Inherited
+        assertNull(resolvedMethod.get(Marker.class));
+        resolvedMethod = mapped.get("inherited");
+        // MarkerC annotation is on super not subclass but MarkerC is marked Inherited
+        assertNotNull(resolvedMethod.get(MarkerC.class));
 
         // test, changing annotation-handler to allow for mix-in
         ResolvedType mixinBResolved = typeResolver.resolve(MixinB.class);
