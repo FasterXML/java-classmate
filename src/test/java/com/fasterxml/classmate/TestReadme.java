@@ -1,13 +1,15 @@
 package com.fasterxml.classmate;
 
-import com.fasterxml.classmate.members.RawMethod;
-import com.fasterxml.classmate.members.ResolvedMethod;
+import com.fasterxml.classmate.members.*;
 import org.junit.Test;
 
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.ArrayList;
+import java.util.List;
 
+import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 
@@ -38,6 +40,71 @@ public class TestReadme {
 
     public static class SomeOtherClass {
         public void someMethod() { }
+    }
+
+    @Test
+    public void resolvingClasses() {
+        TypeResolver typeResolver = new TypeResolver();
+        ResolvedType listType = typeResolver.resolve(List.class);
+        assertEquals("java.util.List extends java.util.Collection<java.lang.Object>", listType.getFullDescription());
+
+        typeResolver = new TypeResolver();
+        listType = typeResolver.resolve(List.class, String.class);
+        assertEquals("java.util.List<java.lang.String> extends java.util.Collection<java.lang.String>", listType.getFullDescription());
+
+        typeResolver = new TypeResolver();
+        ResolvedType stringType = typeResolver.resolve(String.class);
+        listType = typeResolver.resolve(List.class, stringType);
+        assertEquals("java.util.List<java.lang.String> extends java.util.Collection<java.lang.String>", listType.getFullDescription());
+
+        typeResolver = new TypeResolver();
+        listType = typeResolver.resolve(new GenericType<List<String>>() {});
+        assertEquals("java.util.List<java.lang.String> extends java.util.Collection<java.lang.String>", listType.getFullDescription());
+    }
+
+    @Test
+    public void resolvingAllMembers() {
+        TypeResolver typeResolver = new TypeResolver();
+        ResolvedType arrayListType = typeResolver.resolve(ArrayList.class, String.class);
+        MemberResolver memberResolver = new MemberResolver(typeResolver);
+        ResolvedTypeWithMembers arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
+        ResolvedMethod[] staticArrayListMethods = arrayListTypeWithMembers.getStaticMethods();
+        assertEquals(0, staticArrayListMethods.length);
+        ResolvedMethod[] arrayListMethods = arrayListTypeWithMembers.getMemberMethods();
+        assertEquals(34, arrayListMethods.length);
+
+        ResolvedField[] arrayListFields = arrayListTypeWithMembers.getMemberFields();
+        assertEquals(3, arrayListFields.length);
+
+        ResolvedConstructor[] arrayListConstructors = arrayListTypeWithMembers.getConstructors();
+        assertEquals(3, arrayListConstructors.length);
+    }
+
+    @Test
+    public void resolvingParticularMembers() {
+        TypeResolver typeResolver = new TypeResolver();
+        ResolvedType arrayListType = typeResolver.resolve(ArrayList.class, String.class);
+        MemberResolver memberResolver = new MemberResolver(typeResolver);
+        memberResolver.setMethodFilter(new Filter<RawMethod>() {
+            @Override public boolean include(RawMethod element) {
+                return "size".equals(element.getName());
+            }
+        });
+        ResolvedTypeWithMembers arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
+        ResolvedMethod sizeMethod = arrayListTypeWithMembers.getMemberMethods()[0];
+        assertNotNull(sizeMethod);
+        assertEquals("size", sizeMethod.getName());
+
+        memberResolver = new MemberResolver(typeResolver);
+        memberResolver.setFieldFilter(new Filter<RawField>() {
+            @Override public boolean include(RawField element) {
+                return "size".equals(element.getName());
+            }
+        });
+        arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
+        ResolvedField sizeField = arrayListTypeWithMembers.getMemberFields()[0];
+        assertNotNull(sizeField);
+        assertEquals("size", sizeField.getName());
     }
 
     @Test

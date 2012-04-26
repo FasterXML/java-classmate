@@ -69,6 +69,8 @@ Member information is lazily constructed. Access to member information is synchr
 
 ## Examples
 
+The following examples are all backed by an accompanying _junit_ [test](java-classmate/blob/master/src/test/java/com/fasterxml/classmate/TestReadme.java)
+
 ### Resolving Classes
 
 ##### Resolve `List.class`
@@ -249,7 +251,7 @@ Override override = someMethod.get(Override.class); // override == null (Retenti
 
 #### Using Annotation "mix-ins"
 
-Types with the same method signature, field defintion or constructor signature but which aren't explicitly related to one another (i.e., extend each other or implement the same interface) can have their annotations "mixed in" to other's resolved types.  For example, using the `SomeClass` from above, let's add another class definition.
+Types with the same method signature, field definition or constructor signature but which aren't explicitly related to one another (i.e., _extend_ each other or _implement_ the same interface) can have their annotations "mixed in" to others' resolved types.  For example, using the `SomeClass` from above, let's add another class definition.
 
 ```java
 public class SomeOtherClass {
@@ -276,7 +278,10 @@ We can augment the annotations returned by `SomeOtherClass` with "mix-ins"
 // setup removed for brevity; same as above, using SomeOtherClass
 
 AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT);
+
+// MIX-IN -> take SomeClass and apply to SomeOtherClass
 AnnotationOverrides annOverrides = AnnotationOverrides.builder().add(SomeOtherClass.class, SomeClass.class).build();
+
 ResolvedTypeWithMembers someOtherTypeWithMembers = memberResolver.resolve(someOtherType, annConfig, annOverrides);
 ResolvedMethod someMethod = someOtherTypeWithMembers.getMemberMethods()[0];
 Marker marker = someMethod.get(Marker.class);  // marker != null
