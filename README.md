@@ -66,3 +66,103 @@ There are a few configuration options that can be used to determine things like:
 Annotations of all member types can be overridden by annotation overrides; annotation value defaulting only works for members that use inheritance, meaning just member methods.
 
 Member information is lazily constructed. Access to member information is synchronized such that it is safe to share `ResolvedTypeWithMembers` instances.
+
+## Examples
+
+### Resolving Classes
+
+##### Resolve `List.class`
+
+```java
+TypeResolver typeResolver = new TypeResolver();
+// listType => List<Object>
+ResolvedType listType = typeResolver.resolve(List.class);
+```
+
+##### Resolve `List<String>.class`
+
+```java
+// listType => List<String>
+ResolvedType listType = typeResolver.resolve(List.class, String.class);
+```
+
+##### Resolve `List<String>.class` (leveraging already ResolvedType object)
+
+```java
+ResolvedType stringType = typeResolver.resolve(String.class);
+// listType => List<String>
+ResolvedType listType = typeResolver.resolve(List.class, stringType);
+```
+
+##### Resolve `List<String>.class` using ["super type token"](http://gafter.blogspot.com/2006/12/super-type-tokens.html)
+
+```java
+// listType => List<String>
+ResolvedType listType = typeResolver.resolve(new GenericType<List<String>>() {});
+```
+
+### Resolving Members (i.e., Field/Method/Constructor)
+
+#### Resolving All Members
+
+##### Resolve `ArrayList<String>` static/instance Methods
+
+```java
+ResolvedType arrayListType = typeResolver.resolve(ArrayList.class, String.class);
+MemberResolver memberResolver = new MemberResolver(typeResolver);
+ResolvedTypeWithMembers arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
+// get static methods
+ResolvedMethod[] staticArrayListMethods = arrayListTypeWithMembers.getStaticMethods();
+// get instance methods
+ResolvedMethod[] arrayListMethods = arrayListTypeWithMembers.getMemberMethods();
+```
+
+##### Resolve `ArrayList<String>` Fields
+
+```java
+ResolvedType arrayListType = typeResolver.resolve(ArrayList.class, String.class);
+MemberResolver memberResolver = new MemberResolver(typeResolver);
+ResolvedTypeWithMembers arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
+// get static/instance fields
+ResolvedField[] arrayListFields = arrayListTypeWithMembers.getMemberFields();
+```
+
+##### Resolve `ArrayList<String>` Constructors
+
+```java
+ResolvedType arrayListType = typeResolver.resolve(ArrayList.class, String.class);
+MemberResolver memberResolver = new MemberResolver(typeResolver);
+ResolvedTypeWithMembers arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
+// get static/instance fields
+ResolvedConstructor[] arrayListConstructors = arrayListTypeWithMembers.getConstructors();
+```
+
+#### Resolving Particular Members
+
+##### Resolve `ArrayList<String>#size()` Method
+
+```java
+ResolvedType arrayListType = typeResolver.resolve(ArrayList.class, String.class);
+MemberResolver memberResolver = new MemberResolver(typeResolver);
+memberResolver.setMethodFilter(new Filter<RawMethod>() {
+    @Override public boolean include(RawMethod element) {
+        return "size".equals(element.getName());
+    }
+});
+ResolvedTypeWithMembers arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
+ResolvedMethod sizeMethod = arrayListTypeWithMembers.getMemberMethods()[0];
+```
+
+##### Resolve `ArrayList<String>.size` Field
+
+```java
+ResolvedType arrayListType = typeResolver.resolve(ArrayList.class, String.class);
+MemberResolver memberResolver = new MemberResolver(typeResolver);
+memberResolver.setFieldFilter(new Filter<RawField>() {
+    @Override public boolean include(RawField element) {
+        return "size".equals(element.getName());
+    }
+});
+ResolvedTypeWithMembers arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
+ResolvedField sizeField = arrayListTypeWithMembers.getMemberFields()[0];
+```
