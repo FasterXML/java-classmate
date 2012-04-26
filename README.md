@@ -169,6 +169,7 @@ ResolvedField sizeField = arrayListTypeWithMembers.getMemberFields()[0];
 
 #### Resolving Members and their Annotations
 
+Classes for reference in the examples below:
 ```java
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Marker { }
@@ -197,7 +198,8 @@ memberResolver.setMethodFilter(new Filter<RawMethod>() {
         return "someMethod".equals(element.getName());
     }
 });
-ResolvedTypeWithMembers someTypeWithMembers = memberResolver.resolve(someType, new new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_BUT_DONT_INHERIT), null);
+AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_BUT_DONT_INHERIT);
+ResolvedTypeWithMembers someTypeWithMembers = memberResolver.resolve(someType, annConfig, null);
 ResolvedMethod someMethod = someTypeWithMembers.getMemberMethods()[0];
 Marker marker = someMethod.get(Marker.class);  // marker != null
 MarkerA markerA = someMethod.get(MarkerA.class); // markerA != null
@@ -213,7 +215,9 @@ memberResolver.setMethodFilter(new Filter<RawMethod>() {
         return "someMethod".equals(element.getName());
     }
 });
-ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(someSubclassType, new new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_BUT_DONT_INHERIT), null);
+
+AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_BUT_DONT_INHERIT);
+ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(someSubclassType, annConfig, null);
 ResolvedMethod someMethod = someSubclassTypeWithMembers.getMemberMethods()[0];
 Marker marker = someMethod.get(Marker.class);  // marker == null
 MarkerA markerA = someMethod.get(MarkerA.class); // markerA == null
@@ -230,14 +234,15 @@ memberResolver.setMethodFilter(new Filter<RawMethod>() {
         return "someMethod".equals(element.getName());
     }
 });
-ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(someSubclassType, new new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED), null);
+AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED);
+ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(someSubclassType, annConfig, null);
 ResolvedMethod someMethod = someSubclassTypeWithMembers.getMemberMethods()[0];
 Marker marker = someMethod.get(Marker.class);  // marker == null
 MarkerA markerA = someMethod.get(MarkerA.class); // markerA != null
 Override override = someMethod.get(Override.class); // override != null
 ```
 
-##### Resolve `SomeSubclass#someMethod()`'s Annotations Including All
+##### Resolve `SomeSubclass#someMethod()`'s Annotations Including All Inherited
 
 ```java
 ResolvedType someSubclassType = typeResolver.resolve(SomeSubclass.class);
@@ -247,7 +252,8 @@ memberResolver.setMethodFilter(new Filter<RawMethod>() {
         return "someMethod".equals(element.getName());
     }
 });
-ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(someSubclassType, new new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT), null);
+AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT);
+ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(someSubclassType, annConfig, null);
 ResolvedMethod someMethod = someSubclassTypeWithMembers.getMemberMethods()[0];
 Marker marker = someMethod.get(Marker.class);  // marker != null
 MarkerA markerA = someMethod.get(MarkerA.class); // markerA != null
