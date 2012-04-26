@@ -66,3 +66,224 @@ There are a few configuration options that can be used to determine things like:
 Annotations of all member types can be overridden by annotation overrides; annotation value defaulting only works for members that use inheritance, meaning just member methods.
 
 Member information is lazily constructed. Access to member information is synchronized such that it is safe to share `ResolvedTypeWithMembers` instances.
+
+## Examples
+
+The following examples are all backed by an accompanying _junit_ [test](java-classmate/blob/master/src/test/java/com/fasterxml/classmate/TestReadme.java)
+
+### Resolving Classes
+
+##### Resolve `List.class`
+
+```java
+TypeResolver typeResolver = new TypeResolver();
+// listType => List<Object>
+ResolvedType listType = typeResolver.resolve(List.class);
+```
+
+##### Resolve `List<String>.class`
+
+```java
+// listType => List<String>
+ResolvedType listType = typeResolver.resolve(List.class, String.class);
+```
+
+##### Resolve `List<String>.class` (leveraging already ResolvedType object)
+
+```java
+ResolvedType stringType = typeResolver.resolve(String.class);
+// listType => List<String>
+ResolvedType listType = typeResolver.resolve(List.class, stringType);
+```
+
+##### Resolve `List<String>.class` using ["super type token"](http://gafter.blogspot.com/2006/12/super-type-tokens.html)
+
+```java
+// listType => List<String>
+ResolvedType listType = typeResolver.resolve(new GenericType<List<String>>() {});
+```
+
+### Resolving Members (i.e., Field/Method/Constructor)
+
+#### Resolving All Members
+
+##### Resolve `ArrayList<String>` static/instance Methods
+
+```java
+ResolvedType arrayListType = typeResolver.resolve(ArrayList.class, String.class);
+MemberResolver memberResolver = new MemberResolver(typeResolver);
+ResolvedTypeWithMembers arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
+// get static methods
+ResolvedMethod[] staticArrayListMethods = arrayListTypeWithMembers.getStaticMethods();
+// get instance methods
+ResolvedMethod[] arrayListMethods = arrayListTypeWithMembers.getMemberMethods();
+```
+
+##### Resolve `ArrayList<String>` Fields
+
+```java
+ResolvedType arrayListType = typeResolver.resolve(ArrayList.class, String.class);
+MemberResolver memberResolver = new MemberResolver(typeResolver);
+ResolvedTypeWithMembers arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
+// get static/instance fields
+ResolvedField[] arrayListFields = arrayListTypeWithMembers.getMemberFields();
+```
+
+##### Resolve `ArrayList<String>` Constructors
+
+```java
+ResolvedType arrayListType = typeResolver.resolve(ArrayList.class, String.class);
+MemberResolver memberResolver = new MemberResolver(typeResolver);
+ResolvedTypeWithMembers arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
+// get static/instance fields
+ResolvedConstructor[] arrayListConstructors = arrayListTypeWithMembers.getConstructors();
+```
+
+#### Resolving Particular Members (i.e., Filtering)
+
+##### Resolve `ArrayList<String>#size()` Method
+
+```java
+ResolvedType arrayListType = typeResolver.resolve(ArrayList.class, String.class);
+MemberResolver memberResolver = new MemberResolver(typeResolver);
+memberResolver.setMethodFilter(new Filter<RawMethod>() {
+    @Override public boolean include(RawMethod element) {
+        return "size".equals(element.getName());
+    }
+});
+ResolvedTypeWithMembers arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
+ResolvedMethod sizeMethod = arrayListTypeWithMembers.getMemberMethods()[0];
+```
+
+##### Resolve `ArrayList<String>.size` Field
+
+```java
+ResolvedType arrayListType = typeResolver.resolve(ArrayList.class, String.class);
+MemberResolver memberResolver = new MemberResolver(typeResolver);
+memberResolver.setFieldFilter(new Filter<RawField>() {
+    @Override public boolean include(RawField element) {
+        return "size".equals(element.getName());
+    }
+});
+ResolvedTypeWithMembers arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
+ResolvedField sizeField = arrayListTypeWithMembers.getMemberFields()[0];
+```
+
+#### Resolving Members and their Annotations
+
+Classes for reference in the examples below:
+```java
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Marker { }
+
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+public @interface MarkerA { }
+
+public class SomeClass {
+    @Marker @MarkerA
+    public void someMethod() { }
+}
+public class SomeSubclass extends SomeClass {
+    @Override
+    public void someMethod() { }
+}
+```
+
+##### Resolve `SomeClass#someMethod()`'s Annotations
+
+```java
+ResolvedType someType = typeResolver.resolve(SomeClass.class);
+MemberResolver memberResolver = new MemberResolver(typeResolver);
+memberResolver.setMethodFilter(new Filter<RawMethod>() {
+    @Override public boolean include(RawMethod element) {
+        return "someMethod".equals(element.getName());
+    }
+});
+AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_BUT_DONT_INHERIT);
+ResolvedTypeWithMembers someTypeWithMembers = memberResolver.resolve(someType, annConfig, null);
+ResolvedMethod someMethod = someTypeWithMembers.getMemberMethods()[0];
+Marker marker = someMethod.get(Marker.class);  // marker != null
+MarkerA markerA = someMethod.get(MarkerA.class); // markerA != null
+```
+
+##### Resolve `SomeSubclass#someMethod()`'s Annotations
+
+```java
+
+// setup removed for brevity; same as above only using SomeSubclass instead of SomeClass
+
+AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_BUT_DONT_INHERIT);
+ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(someSubclassType, annConfig, null);
+ResolvedMethod someMethod = someSubclassTypeWithMembers.getMemberMethods()[0];
+Marker marker = someMethod.get(Marker.class);  // marker == null
+MarkerA markerA = someMethod.get(MarkerA.class); // markerA == null
+Override override = someMethod.get(Override.class); // override == null (RetentionPolicy = SOURCE)
+```
+
+##### Resolve `SomeSubclass#someMethod()`'s Annotations including @Inherited
+
+```java
+
+// setup removed for brevity; same as above
+
+AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED);
+ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(someSubclassType, annConfig, null);
+ResolvedMethod someMethod = someSubclassTypeWithMembers.getMemberMethods()[0];
+Marker marker = someMethod.get(Marker.class);  // marker == null
+MarkerA markerA = someMethod.get(MarkerA.class); // markerA != null
+Override override = someMethod.get(Override.class); // override == null (RetentionPolicy = SOURCE)
+```
+
+##### Resolve `SomeSubclass#someMethod()`'s Annotations including all super class's Annotations
+
+```java
+
+// setup removed for brevity; same as above
+
+AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT);
+ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(someSubclassType, annConfig, null);
+ResolvedMethod someMethod = someSubclassTypeWithMembers.getMemberMethods()[0];
+Marker marker = someMethod.get(Marker.class);  // marker != null
+MarkerA markerA = someMethod.get(MarkerA.class); // markerA != null
+Override override = someMethod.get(Override.class); // override == null (RetentionPolicy = SOURCE)
+```
+
+#### Using Annotation "mix-ins"
+
+Types with the same method signature, field definition or constructor signature but which aren't explicitly related to one another (i.e., _extend_ each other or _implement_ the same interface) can have their annotations "mixed in" to others' resolved types.  For example, using the `SomeClass` from above, let's add another class definition.
+
+```java
+public class SomeOtherClass {
+    public void someMethod() { }
+}
+```
+
+The `someMethod` signature on `SomeOtherClass` is the same as `SomeClass` however `SomeOtherClass` does not extend from `SomeClass`.  Member resolution for `SomeOtherClass`, like we've done above, will (of course) result in no Annotations.
+
+```java
+
+// setup removed for brevity; similar to above but using SomeOtherClass
+
+AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT);
+ResolvedTypeWithMembers someOtherClassTypeWithMembers = memberResolver.resolve(someOtherClassType, annConfig, null);
+ResolvedMethod someMethod = someOtherClassTypeWithMembers.getMemberMethods()[0];
+Marker marker = someMethod.get(Marker.class);  // marker == null, of course
+MarkerA markerA = someMethod.get(MarkerA.class); // markerA == null, of course
+```
+
+We can augment the annotations returned by `SomeOtherClass` with "mix-ins"
+
+```java
+// setup removed for brevity; same as above, using SomeOtherClass
+
+// MIX-IN -> take SomeClass and apply to SomeOtherClass
+AnnotationOverrides annOverrides = AnnotationOverrides.builder().add(SomeOtherClass.class, SomeClass.class).build();
+
+ResolvedTypeWithMembers someOtherTypeWithMembers = memberResolver.resolve(someOtherType, annConfig, annOverrides);
+ResolvedMethod someMethod = someOtherTypeWithMembers.getMemberMethods()[0];
+Marker marker = someMethod.get(Marker.class);  // marker != null
+MarkerA markerA = someMethod.get(MarkerA.class); // markerA != null
+```
+
+Now the `ResolvedMethod` for `SomeOtherClass` also contains the `Marker` and `MarkerA` annotations!

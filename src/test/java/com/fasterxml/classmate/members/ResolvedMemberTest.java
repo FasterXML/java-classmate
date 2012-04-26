@@ -8,6 +8,7 @@ import org.junit.Test;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
@@ -30,18 +31,41 @@ public class ResolvedMemberTest {
         }
     }
 
+    private static class ModifiersClass {
+        private static String test;
+        public final String finalField = "something";
+        protected String protectedField;
+        private static String getTest() {
+            return test;
+        }
+        public final void finalMethod() { }
+        protected void protectedMethod() { }
+    }
+
     private static final Method toStringMethod;
     private static final Method getRawMemberMethod;
     private static final Method getTestMethod;
+    private static final Method finalMethodMethod;
+    private static final Method protectedMethodMethod;
     private static final Field serialVersionUIDField;
     private static final Field testField;
+    private static final Field finalFieldField;
+    private static final Field protectedFieldField;
+    private static final Constructor objectConstructor;
     static {
         try {
             toStringMethod = Object.class.getDeclaredMethod("toString");
             getRawMemberMethod = RawMember.class.getDeclaredMethod("getRawMember");
+            finalMethodMethod = ModifiersClass.class.getDeclaredMethod("finalMethod");
+            protectedMethodMethod = ModifiersClass.class.getDeclaredMethod("protectedMethod");
             getTestMethod = HasStaticFieldMethod.class.getDeclaredMethod("getTest");
+            finalFieldField = ModifiersClass.class.getDeclaredField("finalField");
+            protectedFieldField = ModifiersClass.class.getDeclaredField("protectedField");
+            objectConstructor = Object.class.getDeclaredConstructor();
         } catch (NoSuchMethodException nsme) {
             throw new AssertionError(nsme);
+        } catch (NoSuchFieldException nsfe) {
+            throw new AssertionError(nsfe);
         }
         try {
             serialVersionUIDField = String.class.getDeclaredField("serialVersionUID");
@@ -49,6 +73,72 @@ public class ResolvedMemberTest {
         } catch (NoSuchFieldException nsfe) {
             throw new AssertionError(nsfe);
         }
+    }
+
+    @Test
+    public void isFinal() {
+        ResolvedMethod rawMethod = new ResolvedMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), null, toStringMethod, null, ResolvedType.NO_TYPES);
+        ResolvedMethod rawMethod1 = new ResolvedMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, finalMethodMethod, null, ResolvedType.NO_TYPES);
+
+        ResolvedField rawField = new ResolvedField(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), null, serialVersionUIDField, null);
+        ResolvedField rawField1 = new ResolvedField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, finalFieldField, null);
+        ResolvedField rawField2 = new ResolvedField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, testField, null);
+
+        assertFalse(rawMethod.isFinal());
+        assertTrue(rawMethod1.isFinal());
+
+        assertTrue(rawField.isFinal());
+        assertTrue(rawField1.isFinal());
+        assertFalse(rawField2.isFinal());
+    }
+
+    @Test
+    public void isPrivate() {
+        ResolvedMethod rawMethod = new ResolvedMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, getTestMethod, null, ResolvedType.NO_TYPES);
+        ResolvedMethod rawMethod1 = new ResolvedMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, finalMethodMethod, null, ResolvedType.NO_TYPES);
+
+        ResolvedField rawField = new ResolvedField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, testField, null);
+        ResolvedField rawField1 = new ResolvedField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, finalFieldField, null);
+
+        assertTrue(rawMethod.isPrivate());
+        assertFalse(rawMethod1.isPrivate());
+
+        assertTrue(rawField.isPrivate());
+        assertFalse(rawField1.isPrivate());
+    }
+
+    @Test
+    public void isProtected() {
+        ResolvedMethod rawMethod = new ResolvedMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, getTestMethod, null, ResolvedType.NO_TYPES);
+        ResolvedMethod rawMethod1 = new ResolvedMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, finalMethodMethod, null, ResolvedType.NO_TYPES);
+        ResolvedMethod rawMethod2 = new ResolvedMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, protectedMethodMethod, null, ResolvedType.NO_TYPES);
+
+        ResolvedField rawField = new ResolvedField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, testField, null);
+        ResolvedField rawField1 = new ResolvedField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, finalFieldField, null);
+        ResolvedField rawField2 = new ResolvedField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, protectedFieldField, null);
+
+        assertFalse(rawMethod.isProtected());
+        assertFalse(rawMethod1.isProtected());
+        assertTrue(rawMethod2.isProtected());
+
+        assertFalse(rawField.isProtected());
+        assertFalse(rawField1.isProtected());
+        assertTrue(rawField2.isProtected());
+    }
+
+    @Test
+    public void isPublic() {
+        ResolvedMethod rawMethod = new ResolvedMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, getTestMethod, null, ResolvedType.NO_TYPES);
+        ResolvedMethod rawMethod1 = new ResolvedMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, finalMethodMethod, null, ResolvedType.NO_TYPES);
+
+        ResolvedField rawField = new ResolvedField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, testField, null);
+        ResolvedField rawField1 = new ResolvedField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, finalFieldField, null);
+
+        assertFalse(rawMethod.isPublic());
+        assertTrue(rawMethod1.isPublic());
+
+        assertFalse(rawField.isPublic());
+        assertTrue(rawField1.isPublic());
     }
 
     @Test
@@ -103,17 +193,6 @@ public class ResolvedMemberTest {
     }
 
     @Test
-    public void isAbstract() {
-        ResolvedMethod resolvedMethod = new ResolvedMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), null, toStringMethod, null, null);
-        ResolvedMethod resolvedMethod1 = new ResolvedMethod(new ResolvedObjectType(RawMember.class, null, null, ResolvedType.NO_TYPES), null, getRawMemberMethod, null, null);
-        ResolvedField resolvedField = new ResolvedField(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), null, serialVersionUIDField, null);
-
-        assertFalse(resolvedMethod.isAbstract());
-        assertFalse(resolvedField.isAbstract());
-        assertTrue(resolvedMethod1.isAbstract());
-    }
-
-    @Test
     public void isStatic() {
         ResolvedMethod resolvedMethod = new ResolvedMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), null, toStringMethod, null, null);
         ResolvedMethod resolvedMethod1 = new ResolvedMethod(new ResolvedObjectType(RawMember.class, null, null, ResolvedType.NO_TYPES), null, getRawMemberMethod, null, null);
@@ -139,12 +218,16 @@ public class ResolvedMemberTest {
         ResolvedField resolvedField = new ResolvedField(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), null, serialVersionUIDField, null);
         ResolvedField resolvedStaticField = new ResolvedField(new ResolvedObjectType(HasStaticFieldMethod.class, null, null, ResolvedType.NO_TYPES), null, testField, null);
 
-        assertEquals(toStringMethod.getName().hashCode(), resolvedMethod.hashCode());
-        assertEquals(getRawMemberMethod.getName().hashCode(), resolvedMethod1.hashCode());
-        assertEquals(getTestMethod.getName().hashCode(), resolvedStaticMethod.hashCode());
+        ResolvedConstructor resolvedConstructor = new ResolvedConstructor(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), null, objectConstructor, ResolvedType.NO_TYPES);
 
-        assertEquals(serialVersionUIDField.getName().hashCode(), resolvedField.hashCode());
-        assertEquals(testField.getName().hashCode(), resolvedStaticField.hashCode());
+        assertEquals(toStringMethod.hashCode(), resolvedMethod.hashCode());
+        assertEquals(getRawMemberMethod.hashCode(), resolvedMethod1.hashCode());
+        assertEquals(getTestMethod.hashCode(), resolvedStaticMethod.hashCode());
+
+        assertEquals(serialVersionUIDField.hashCode(), resolvedField.hashCode());
+        assertEquals(testField.hashCode(), resolvedStaticField.hashCode());
+
+        assertEquals(objectConstructor.hashCode(), resolvedConstructor.hashCode());
     }
 
     @Test
@@ -179,6 +262,43 @@ public class ResolvedMemberTest {
 
         assertEquals(serialVersionUIDField.getModifiers(), resolvedField.getModifiers());
         assertEquals(testField.getModifiers(), resolvedStaticField.getModifiers());
+    }
+
+    @Test
+    public void get() throws NoSuchMethodException {
+        // test NPE first
+        try {
+            ResolvedMethod npeMethod = new ResolvedMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), null, toStringMethod, null, null);
+            npeMethod.get(Test.class);
+            fail("Expecting a NullPointerException; haven't passed in an Annotations object reference to the constructor.");
+        } catch (NullPointerException npe) {
+            // expected
+        }
+
+        Annotations annotations = new Annotations();
+        ResolvedMethod resolvedMethod = new ResolvedMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), annotations, toStringMethod, null, null);
+        ResolvedMethod resolvedMethod1 = new ResolvedMethod(new ResolvedObjectType(RawMember.class, null, null, ResolvedType.NO_TYPES), annotations, getRawMemberMethod, null, null);
+        ResolvedMethod resolvedStaticMethod = new ResolvedMethod(new ResolvedObjectType(HasStaticFieldMethod.class, null, null, ResolvedType.NO_TYPES), annotations, getTestMethod, null, null);
+
+        ResolvedField resolvedField = new ResolvedField(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), annotations, serialVersionUIDField, null);
+        ResolvedField resolvedStaticField = new ResolvedField(new ResolvedObjectType(HasStaticFieldMethod.class, null, null, ResolvedType.NO_TYPES), annotations, testField, null);
+
+        assertNull(resolvedMethod.get(Test.class));
+        assertNull(resolvedMethod1.get(Test.class));
+        assertNull(resolvedStaticMethod.get(Test.class));
+        assertNull(resolvedField.get(Test.class));
+        assertNull(resolvedStaticField.get(Test.class));
+
+        Method thisMethod = ResolvedMemberTest.class.getDeclaredMethod("get");
+        Annotation testAnnotation = thisMethod.getAnnotation(Test.class);
+
+        annotations.add(testAnnotation);
+
+        assertSame(testAnnotation, resolvedMethod.get(Test.class));
+        assertSame(testAnnotation, resolvedMethod1.get(Test.class));
+        assertSame(testAnnotation, resolvedStaticMethod.get(Test.class));
+        assertSame(testAnnotation, resolvedField.get(Test.class));
+        assertSame(testAnnotation, resolvedStaticField.get(Test.class));
     }
 
 }

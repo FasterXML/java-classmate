@@ -11,6 +11,7 @@ import static junit.framework.Assert.*;
  */
 public class ClassKeyTest {
 
+    @SuppressWarnings("serial")
     private static class ClassKeySubclass extends ClassKey {
         private ClassKeySubclass(Class<?> clz) {
             super(clz);

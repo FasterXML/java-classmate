@@ -1,5 +1,6 @@
 package com.fasterxml.classmate.util;
 
+import java.io.Serializable;
 import java.util.*;
 
 import com.fasterxml.classmate.ResolvedType;
@@ -11,7 +12,7 @@ import com.fasterxml.classmate.ResolvedType;
  * are fully synchronized so that caller need not do explicit synchronization.
  */
 @SuppressWarnings("serial")
-public class ResolvedTypeCache
+public class ResolvedTypeCache implements Serializable
 {
     protected final CacheMap _map;
     

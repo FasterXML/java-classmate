@@ -23,6 +23,15 @@ public enum AnnotationInclusion
     INCLUDE_BUT_DONT_INHERIT,
 
     /**
+     * Value that indicates that annotation is to be included in results, and
+     * values from overridden members are inherited only if the annotation is
+     * marked with the {@link java.lang.annotation.Inherited} annotation.
+     * Applicable only to member methods; if used with other members will
+     * mean basic inclusion.
+     */
+    INCLUDE_AND_INHERIT_IF_INHERITED,
+
+    /**
      * Value that indicates that annotation is to be included in results; and
      * values from overridden members are also inherited if not overridden
      * by members of subtypes.

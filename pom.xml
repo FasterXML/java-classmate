@@ -25,6 +25,11 @@
             <name>Tatu Saloranta</name>
             <email>tatu@fasterxml.com</email>
         </developer>
+        <developer>
+            <id>blangel</id>
+            <name>Brian Langel</name>
+            <email>blangel@ocheyedan.net</email>
+        </developer>
     </developers>
 
     <prerequisites>

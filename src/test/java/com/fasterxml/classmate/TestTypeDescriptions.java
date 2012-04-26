@@ -55,6 +55,7 @@ public class TestTypeDescriptions extends BaseTest
         assertEquals("boolean", boolType.getFullDescription());
     }
 
+    @SuppressWarnings("serial")
     public void testGenericTypes()
     {
         ResolvedType mapType = typeResolver.resolve(new GenericType<Map<Long,Boolean>>() { });

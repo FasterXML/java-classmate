@@ -1,6 +1,7 @@
 package com.fasterxml.classmate;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.Inherited;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -337,7 +338,7 @@ public class ResolvedTypeWithMembers
                     for (Annotation ann : method.getAnnotations()) {
                         // If already have a method, must be inheritable to include
                         if (old != null) {
-                            if (_annotationHandler.methodInclusion(ann) != AnnotationInclusion.INCLUDE_AND_INHERIT) {
+                            if (!methodCanInherit(ann)) {
                                 continue;
                             }
                             // and if so, apply as default (i.e. do not override)
@@ -364,7 +365,7 @@ public class ResolvedTypeWithMembers
                         }
                     } else { // method masked by something else? can only contribute annotations
                         for (Annotation ann : method.getAnnotations()) {
-                            if (_annotationHandler.methodInclusion(ann) == AnnotationInclusion.INCLUDE_AND_INHERIT) {
+                            if (methodCanInherit(ann)) {
                                 old.applyDefault(ann);
                             }
                         }
@@ -460,6 +461,14 @@ public class ResolvedTypeWithMembers
         }
         return new ResolvedMethod(context, anns, m, rt, argTypes);
     }
+
+    protected boolean methodCanInherit(Annotation annotation) {
+        AnnotationInclusion annotationInclusion = _annotationHandler.methodInclusion(annotation);
+        if (annotationInclusion == AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED) {
+            return annotation.annotationType().isAnnotationPresent(Inherited.class);
+        }
+        return (annotationInclusion == AnnotationInclusion.INCLUDE_AND_INHERIT);
+    }
     
     /*
     /**********************************************************************
@@ -531,7 +540,7 @@ public class ResolvedTypeWithMembers
                     return incl;
                 }
             }
-            AnnotationInclusion incl = _annotationConfig.getInclusionForField(annType);
+            AnnotationInclusion incl = _annotationConfig.getInclusionForMethod(annType);
             _methodInclusions.put(annType, incl);
             return incl;
         }
