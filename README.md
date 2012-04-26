@@ -221,10 +221,10 @@ ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(som
 ResolvedMethod someMethod = someSubclassTypeWithMembers.getMemberMethods()[0];
 Marker marker = someMethod.get(Marker.class);  // marker == null
 MarkerA markerA = someMethod.get(MarkerA.class); // markerA == null
-Override override = someMethod.get(Override.class); // override != null
+Override override = someMethod.get(Override.class); // override == null (RetentionPolicy = SOURCE)
 ```
 
-##### Resolve `SomeSubclass#someMethod()`'s Annotations Including @Inherited
+##### Resolve `SomeSubclass#someMethod()`'s Annotations including @Inherited
 
 ```java
 ResolvedType someSubclassType = typeResolver.resolve(SomeSubclass.class);
@@ -239,10 +239,10 @@ ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(som
 ResolvedMethod someMethod = someSubclassTypeWithMembers.getMemberMethods()[0];
 Marker marker = someMethod.get(Marker.class);  // marker == null
 MarkerA markerA = someMethod.get(MarkerA.class); // markerA != null
-Override override = someMethod.get(Override.class); // override != null
+Override override = someMethod.get(Override.class); // override == null (RetentionPolicy = SOURCE)
 ```
 
-##### Resolve `SomeSubclass#someMethod()`'s Annotations Including All Inherited
+##### Resolve `SomeSubclass#someMethod()`'s Annotations including all super class's Annotations
 
 ```java
 ResolvedType someSubclassType = typeResolver.resolve(SomeSubclass.class);
@@ -257,5 +257,7 @@ ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(som
 ResolvedMethod someMethod = someSubclassTypeWithMembers.getMemberMethods()[0];
 Marker marker = someMethod.get(Marker.class);  // marker != null
 MarkerA markerA = someMethod.get(MarkerA.class); // markerA != null
-Override override = someMethod.get(Override.class); // override != null
+Override override = someMethod.get(Override.class); // override == null (RetentionPolicy = SOURCE)
 ```
+
+#### Resolving Members and their Annotations with "mix-ins"
