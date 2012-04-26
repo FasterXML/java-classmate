@@ -36,6 +36,10 @@ public class TestReadme {
         public void someMethod() { }
     }
 
+    public static class SomeOtherClass {
+        public void someMethod() { }
+    }
+
     @Test
     public void testSomeClassSomeMethod() {
         TypeResolver typeResolver = new TypeResolver();
@@ -117,6 +121,45 @@ public class TestReadme {
         assertNotNull(markerA);
         Override override = someMethod.get(Override.class); // override == null (RetentionPolicy = SOURCE)
         assertNull(override);
+    }
+
+    @Test
+    public void testSomeOtherClassSomeMethodWithoutMixins() {
+        TypeResolver typeResolver = new TypeResolver();
+        ResolvedType someOtherType = typeResolver.resolve(SomeOtherClass.class);
+        MemberResolver memberResolver = new MemberResolver(typeResolver);
+        memberResolver.setMethodFilter(new Filter<RawMethod>() {
+            @Override public boolean include(RawMethod element) {
+                return "someMethod".equals(element.getName());
+            }
+        });
+        AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT);
+        ResolvedTypeWithMembers someOtherTypeWithMembers = memberResolver.resolve(someOtherType, annConfig, null);
+        ResolvedMethod someMethod = someOtherTypeWithMembers.getMemberMethods()[0];
+        Marker marker = someMethod.get(Marker.class);  // marker == null
+        assertNull(marker);
+        MarkerA markerA = someMethod.get(MarkerA.class); // markerA == null
+        assertNull(markerA);
+    }
+
+    @Test
+    public void testSomeOtherClassSomeMethodWithMixins() {
+        TypeResolver typeResolver = new TypeResolver();
+        ResolvedType someOtherType = typeResolver.resolve(SomeOtherClass.class);
+        MemberResolver memberResolver = new MemberResolver(typeResolver);
+        memberResolver.setMethodFilter(new Filter<RawMethod>() {
+            @Override public boolean include(RawMethod element) {
+                return "someMethod".equals(element.getName());
+            }
+        });
+        AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT);
+        AnnotationOverrides annOverrides = AnnotationOverrides.builder().add(SomeOtherClass.class, SomeClass.class).build();
+        ResolvedTypeWithMembers someOtherTypeWithMembers = memberResolver.resolve(someOtherType, annConfig, annOverrides);
+        ResolvedMethod someMethod = someOtherTypeWithMembers.getMemberMethods()[0];
+        Marker marker = someMethod.get(Marker.class);  // marker != null
+        assertNotNull(marker);
+        MarkerA markerA = someMethod.get(MarkerA.class); // markerA != null
+        assertNotNull(markerA);
     }
 
 }

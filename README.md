@@ -208,13 +208,8 @@ MarkerA markerA = someMethod.get(MarkerA.class); // markerA != null
 ##### Resolve `SomeSubclass#someMethod()`'s Annotations
 
 ```java
-ResolvedType someSubclassType = typeResolver.resolve(SomeSubclass.class);
-MemberResolver memberResolver = new MemberResolver(typeResolver);
-memberResolver.setMethodFilter(new Filter<RawMethod>() {
-    @Override public boolean include(RawMethod element) {
-        return "someMethod".equals(element.getName());
-    }
-});
+
+// setup removed for brevity; same as above only using SomeSubclass instead of SomeClass
 
 AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_BUT_DONT_INHERIT);
 ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(someSubclassType, annConfig, null);
@@ -227,13 +222,9 @@ Override override = someMethod.get(Override.class); // override == null (Retenti
 ##### Resolve `SomeSubclass#someMethod()`'s Annotations including @Inherited
 
 ```java
-ResolvedType someSubclassType = typeResolver.resolve(SomeSubclass.class);
-MemberResolver memberResolver = new MemberResolver(typeResolver);
-memberResolver.setMethodFilter(new Filter<RawMethod>() {
-    @Override public boolean include(RawMethod element) {
-        return "someMethod".equals(element.getName());
-    }
-});
+
+// setup removed for brevity; same as above
+
 AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED);
 ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(someSubclassType, annConfig, null);
 ResolvedMethod someMethod = someSubclassTypeWithMembers.getMemberMethods()[0];
@@ -245,13 +236,9 @@ Override override = someMethod.get(Override.class); // override == null (Retenti
 ##### Resolve `SomeSubclass#someMethod()`'s Annotations including all super class's Annotations
 
 ```java
-ResolvedType someSubclassType = typeResolver.resolve(SomeSubclass.class);
-MemberResolver memberResolver = new MemberResolver(typeResolver);
-memberResolver.setMethodFilter(new Filter<RawMethod>() {
-    @Override public boolean include(RawMethod element) {
-        return "someMethod".equals(element.getName());
-    }
-});
+
+// setup removed for brevity; same as above
+
 AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT);
 ResolvedTypeWithMembers someSubclassTypeWithMembers = memberResolver.resolve(someSubclassType, annConfig, null);
 ResolvedMethod someMethod = someSubclassTypeWithMembers.getMemberMethods()[0];
@@ -260,4 +247,40 @@ MarkerA markerA = someMethod.get(MarkerA.class); // markerA != null
 Override override = someMethod.get(Override.class); // override == null (RetentionPolicy = SOURCE)
 ```
 
-#### Resolving Members and their Annotations with "mix-ins"
+#### Using Annotation "mix-ins"
+
+Types with the same method signature, field defintion or constructor signature but which aren't explicitly related to one another (i.e., extend each other or implement the same interface) can have their annotations "mixed in" to other's resolved types.  For example, using the `SomeClass` from above, let's add another class definition.
+
+```java
+public class SomeOtherClass {
+    public void someMethod() { }
+}
+```
+
+The `someMethod` signature on `SomeOtherClass` is the same as `SomeClass` however `SomeOtherClass` does not extend from `SomeClass`.  Member resolution for `SomeOtherClass`, like we've done above, will (of course) result in no Annotations.
+
+```java
+
+// setup removed for brevity; similar to above but using SomeOtherClass
+
+AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT);
+ResolvedTypeWithMembers someOtherClassTypeWithMembers = memberResolver.resolve(someOtherClassType, annConfig, null);
+ResolvedMethod someMethod = someOtherClassTypeWithMembers.getMemberMethods()[0];
+Marker marker = someMethod.get(Marker.class);  // marker == null, of course
+MarkerA markerA = someMethod.get(MarkerA.class); // markerA == null, of course
+```
+
+We can augment the annotations returned by `SomeOtherClass` with "mix-ins"
+
+```java
+// setup removed for brevity; same as above, using SomeOtherClass
+
+AnnotationConfiguration annConfig = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT);
+AnnotationOverrides annOverrides = AnnotationOverrides.builder().add(SomeOtherClass.class, SomeClass.class).build();
+ResolvedTypeWithMembers someOtherTypeWithMembers = memberResolver.resolve(someOtherType, annConfig, annOverrides);
+ResolvedMethod someMethod = someOtherTypeWithMembers.getMemberMethods()[0];
+Marker marker = someMethod.get(Marker.class);  // marker != null
+MarkerA markerA = someMethod.get(MarkerA.class); // markerA != null
+```
+
+Now the `ResolvedMethod` for `SomeOtherClass` also contains the `Marker` and `MarkerA` annotations!
