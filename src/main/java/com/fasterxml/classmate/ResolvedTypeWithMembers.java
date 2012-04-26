@@ -531,7 +531,7 @@ public class ResolvedTypeWithMembers
                     return incl;
                 }
             }
-            AnnotationInclusion incl = _annotationConfig.getInclusionForField(annType);
+            AnnotationInclusion incl = _annotationConfig.getInclusionForMethod(annType);
             _methodInclusions.put(annType, incl);
             return incl;
         }
