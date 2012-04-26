@@ -1,12 +1,15 @@
 package com.fasterxml.classmate.util;
 
+import java.io.Serializable;
+
 /**
  * Helper class needed when storing methods in maps; must
  */
-public class MethodKey
+@SuppressWarnings("serial")
+public class MethodKey implements Serializable
 {
-    private final Class<?>[] NO_CLASSES = new Class[0];
-    
+    private static final Class<?>[] NO_CLASSES = new Class[0];
+
     private final String _name;
     
     private final Class<?>[] _argumentTypes;

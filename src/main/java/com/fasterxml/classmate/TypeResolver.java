@@ -1,5 +1,6 @@
 package com.fasterxml.classmate;
 
+import java.io.Serializable;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -18,7 +19,8 @@ import com.fasterxml.classmate.util.ResolvedTypeCache;
  * to callers, access to state is fully synchronized so that access from
  * multiple threads is safe.
  */
-public class TypeResolver
+@SuppressWarnings("serial")
+public class TypeResolver implements Serializable
 {
     private final static ResolvedType[] NO_TYPES = new ResolvedType[0];
     
@@ -309,8 +311,6 @@ public class TypeResolver
     /**********************************************************************
      */
 
-    int depth = 0;
-    
     private ResolvedType _fromAny(ClassStack context, Type mainType, TypeBindings typeBindings)
     {
         if (mainType instanceof Class<?>) {

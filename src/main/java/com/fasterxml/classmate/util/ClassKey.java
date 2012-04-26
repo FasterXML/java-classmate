@@ -1,10 +1,13 @@
 package com.fasterxml.classmate.util;
 
+import java.io.Serializable;
+
 /**
  * Helper class used as key when we need efficient Class-to-value lookups.
  */
+@SuppressWarnings("serial")
 public class ClassKey
-    implements Comparable<ClassKey>
+    implements Comparable<ClassKey>, Serializable
 {
     private final String _className;
 

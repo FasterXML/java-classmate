@@ -1,5 +1,6 @@
 package com.fasterxml.classmate;
 
+import java.io.Serializable;
 import java.util.*;
 
 import com.fasterxml.classmate.members.*;
@@ -9,7 +10,8 @@ import com.fasterxml.classmate.util.ClassKey;
  * Builder class used to completely resolve members (fields, methods,
  * constructors) of {@link ResolvedType}s (generics-aware classes).
  */
-public class MemberResolver
+@SuppressWarnings("serial")
+public class MemberResolver implements Serializable
 {
     
     /**
