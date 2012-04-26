@@ -144,18 +144,13 @@ public class ResolvedTypeWithMembersTest {
         ResolvedConstructor resolvedConstructor = resolvedConstructors[0];
         assertNull(resolvedConstructor.get(Marker.class));
 
-        // TODO - there's no way of making a mix-in constructor unless the key used for constructor is changed
-        // TODO - to disregard the name as constructor's are not overridden
-
-//        members = new ResolvedTypeWithMembers(typeResolver,
-//                new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT), mixinCandidateHierarchicType,
-//                new HierarchicType[] { mixinAHierarchicType, mixinCandidateHierarchicType }, null, null, null);
-//        resolvedConstructors = members.resolveConstructors();
-//        assertEquals(1, resolvedConstructors.length);
-//        resolvedConstructor = resolvedConstructors[0];
-//        annotations = (Annotations) annotationsField.get(resolvedConstructor);
-//        assertEquals(1, annotations.size());
-//        assertNotNull(annotations.get(Marker.class));
+        members = new ResolvedTypeWithMembers(typeResolver,
+                new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT), mixinCandidateHierarchicType,
+                new HierarchicType[] { mixinAHierarchicType, mixinCandidateHierarchicType }, null, null, null);
+        resolvedConstructors = members.resolveConstructors();
+        assertEquals(1, resolvedConstructors.length);
+        resolvedConstructor = resolvedConstructors[0];
+        assertNotNull(resolvedConstructor.get(Marker.class));
     }
 
     @Test

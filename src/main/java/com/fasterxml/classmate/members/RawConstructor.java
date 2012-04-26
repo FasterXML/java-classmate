@@ -24,7 +24,7 @@ public final class RawConstructor extends RawMember
      */
     public MethodKey createKey()
     {
-        String name = _constructor.getName();
+        String name = "<init>"; // do not use _constructor.getName() to allow for 'mix-ins'
         Class<?>[] argTypes = _constructor.getParameterTypes();  // return of Constructor#getParameterTypes will never be null
         return new MethodKey(name, argTypes);
     }

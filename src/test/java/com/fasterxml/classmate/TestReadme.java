@@ -42,7 +42,7 @@ public class TestReadme {
         public void someMethod() { }
     }
 
-    @Test
+    @Test @SuppressWarnings("serial")
     public void resolvingClasses() {
         TypeResolver typeResolver = new TypeResolver();
         ResolvedType listType = typeResolver.resolve(List.class);

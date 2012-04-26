@@ -39,6 +39,7 @@ public class RawConstructorTest {
         RawConstructor rawConstructor = new RawConstructor(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), stringConstructor);
         MethodKey methodKey = rawConstructor.createKey();
         assertNotNull(methodKey);
+        assertEquals("<init>()", methodKey.toString());
     }
 
     @Test
