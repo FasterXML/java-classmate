@@ -70,6 +70,10 @@ public class TestTypeResolver extends BaseTest
     static interface MatchA<T extends Collection<?>, S extends Comparator<T>> { }
 
     static interface MatchB<T extends List<?>> { }
+
+    // From [https://github.com/FasterXML/jackson-databind/issues/76]
+    @SuppressWarnings("serial")
+    static class HashTree<K, V> extends HashMap<K, HashTree<K, V>> { }
     
     /*
     /**********************************************************************
@@ -210,6 +214,14 @@ public class TestTypeResolver extends BaseTest
         assertEquals(2, params.size());
         assertSame(String.class, params.get(0).getErasedType());
         assertSame(Long.class, params.get(1).getErasedType());
+
+        ResolvedType wildcardMap = typeResolver.resolve(HashTree.class);
+        assertSame(HashTree.class, wildcardMap.getErasedType());
+        // K becomes Object (unbound), V has lower bound of HashTree, so:
+        params = wildcardMap.typeParametersFor(Map.class);
+        assertEquals(2, params.size());
+        assertSame(Object.class, params.get(0).getErasedType());
+        assertSame(HashTree.class, params.get(1).getErasedType());
     }
 
     /**
