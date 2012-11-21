@@ -4,11 +4,13 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.*;
 
 import com.fasterxml.classmate.members.*;
 
 public abstract class ResolvedType
+    implements Type
 {
     public final static ResolvedType[] NO_TYPES = new ResolvedType[0];
 

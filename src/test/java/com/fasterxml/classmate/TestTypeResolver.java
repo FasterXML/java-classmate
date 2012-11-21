@@ -322,6 +322,13 @@ public class TestTypeResolver extends BaseTest
         assertEquals(1, listType.size());
         assertSame(String.class, listType.get(0).getErasedType());
     }
+
+    public void testResolvedTypeAsType()
+    {
+        ResolvedType t1 = typeResolver.resolve(getClass());
+        ResolvedType t2 = typeResolver.resolve(t1, null);
+        assertSame(t1, t2);
+    }
     
     /*
     /**********************************************************************

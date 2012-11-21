@@ -3,12 +3,12 @@
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
-        <version>5</version>
+        <version>7</version>
     </parent>
     <groupId>com.fasterxml</groupId>
     <artifactId>classmate</artifactId>
     <name>ClassMate</name>
-    <version>0.5.5-SNAPSHOT</version>
+    <version>0.6.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>Library for introspecting types with full generic information
         including resolving of field and method types.

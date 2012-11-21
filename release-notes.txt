@@ -1,8 +1,12 @@
 Java ClassMate project: licensed under Apache License 2.0
 (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
-Releaste notes:
+Release notes:
+
+0.6.0:
+
+* [Issue#12]: ResolvedType now implements `java.lang.reflect.Type`
 
 0.5.4:
 
-* Fixed issue#4: problems with self-referential type variables
+* [Issue#4]: problems with self-referential type variables

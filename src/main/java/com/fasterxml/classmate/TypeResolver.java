@@ -316,6 +316,9 @@ public class TypeResolver implements Serializable
         if (mainType instanceof Class<?>) {
             return _fromClass(context, (Class<?>) mainType, typeBindings);
         }
+        if (mainType instanceof ResolvedType) {
+            return (ResolvedType) mainType;
+        }
         if (mainType instanceof ParameterizedType) {
             return _fromParamType(context, (ParameterizedType) mainType, typeBindings);
         }
