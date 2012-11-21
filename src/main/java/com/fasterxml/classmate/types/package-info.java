@@ -1,5 +1,5 @@
 /**
- * Package that contains {@link com.fastexml.classmate.ResolvedType}
+ * Package that contains {@link com.fasterxml.classmate.ResolvedType}
  * implementation classes.
  */
 package com.fasterxml.classmate.types;
