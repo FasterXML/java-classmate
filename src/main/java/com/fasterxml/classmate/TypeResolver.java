@@ -144,7 +144,7 @@ public class TypeResolver implements Serializable
      *  ResolvedType type = TypeResolver.resolve(new GenericType&lt;List&lt;Integer>>() { });
      *</pre>
      */
-    public ResolvedType resolve(Class<?> type, Class<?>... typeParameters)
+    public ResolvedType resolve(Class<?> type, Type... typeParameters)
     {
         if (typeParameters == null || typeParameters.length == 0) {
             return resolve(type);
@@ -155,30 +155,9 @@ public class TypeResolver implements Serializable
         int len = typeParameters.length;
         ResolvedType[] resolvedParams = new ResolvedType[len];
         for (int i = 0; i < len; ++i) {
-            resolvedParams[i] = _fromClass(null, typeParameters[i], bindings);
+            resolvedParams[i] = _fromAny(null, typeParameters[i], bindings);
         }
-        return resolve(type, resolvedParams);
-    }
-
-    /**
-     * Factory method for resolving given type (specified by type-erased class),
-     * using specified types as type parameters.
-     * Sample usage would be:
-     *<pre>
-     *  ResolvedType valueType = TypeResolver.resolve(new GenericType&lt;Set&lt;String>>() { });
-     *  ResolvedType type = TypeResolver.resolve(List.class, valueType);
-     *</pre>
-     * which would be equivalent to
-     *<pre>
-     *  ResolvedType type = TypeResolver.resolve(new GenericType&lt;List&lt;Set&lt;String>>() { });
-     *</pre>
-     */
-    public ResolvedType resolve(Class<?> type, ResolvedType... typeParameters)
-    {
-        if (typeParameters == null || typeParameters.length == 0) {
-            return resolve(type);
-        }
-        return _fromClass(null, type, TypeBindings.create(type, typeParameters));
+        return _fromClass(null, type, TypeBindings.create(type, resolvedParams));
     }
 
     /**
