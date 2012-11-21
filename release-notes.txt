@@ -3,8 +3,10 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
-0.6.0:
+0.7.0:
 
+* [Issue#11]: ResolvedType uses `java.lang.reflect.Type` to allow combination
+  of Class<?>, GenericType and ResolvedType.
 * [Issue#12]: ResolvedType now implements `java.lang.reflect.Type`
 
 0.5.4:

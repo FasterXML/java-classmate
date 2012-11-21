@@ -93,37 +93,13 @@ public class TypeResolver implements Serializable
     public ResolvedType resolve(Type type)
     {
         if (type instanceof GenericType<?>) {
-            return resolve((GenericType<?>) type);
+            return _fromGenericType(null, (GenericType<?>) type, TypeBindings.emptyBindings());
         }
         if (type instanceof Class<?>) {
             return _fromClass(null, (Class<?>) type, TypeBindings.emptyBindings());
         }
         // with erased class, no bindings:
         return resolve(type, TypeBindings.emptyBindings());
-    }
-
-    /**
-     * Factory method for resolving given generic type, defined by using sub-class
-     * instance of {@link GenericType}
-     */
-    public ResolvedType resolve(GenericType<?> generic)
-    {
-        /* To allow multiple levels of inheritance (just in case someone
-         * wants to go to town with inheritnace of GenericType),
-         * we better resolve the whole thing; then dig out
-         * type parameterization...
-         */
-        ResolvedType type = _fromClass(null, generic.getClass(), TypeBindings.emptyBindings());
-        ResolvedType genType = type.findSupertype(GenericType.class);
-        if (genType == null) { // sanity check; shouldn't occur
-            throw new IllegalArgumentException("Unparameterized GenericType instance ("+generic.getClass().getName()+")");
-        }
-        TypeBindings b = genType.getTypeBindings();
-        ResolvedType[] params = b.typeParameterArray();
-        if (params.length == 0) {
-            throw new IllegalArgumentException("Unparameterized GenericType instance ("+generic.getClass().getName()+")");
-        }
-        return params[0];
     }
 
     /*
@@ -163,12 +139,14 @@ public class TypeResolver implements Serializable
     /**
      * Factory method for constructing array type of given element type.
      */
-    public ResolvedArrayType arrayType(ResolvedType elementType)
+    public ResolvedArrayType arrayType(Type elementType)
     {
+        ResolvedType resolvedElementType = resolve(elementType, TypeBindings.emptyBindings());
         // Arrays are cumbersome for some reason:
-        Object emptyArray = Array.newInstance(elementType.getErasedType(), 0);
+        Object emptyArray = Array.newInstance(resolvedElementType.getErasedType(), 0);
         // Should we try to use cache? It's bit tricky, so let's not bother yet
-        return new ResolvedArrayType(emptyArray.getClass(), TypeBindings.emptyBindings(), elementType);
+        return new ResolvedArrayType(emptyArray.getClass(), TypeBindings.emptyBindings(),
+                resolvedElementType);
     }
 
     /**
@@ -315,6 +293,9 @@ public class TypeResolver implements Serializable
         if (mainType instanceof ParameterizedType) {
             return _fromParamType(context, (ParameterizedType) mainType, typeBindings);
         }
+        if (mainType instanceof GenericType<?>) {
+            return _fromGenericType(context, (GenericType<?>) mainType, typeBindings);
+        }
         if (mainType instanceof GenericArrayType) {
             return _fromArrayType(context, (GenericArrayType) mainType, typeBindings);
         }
@@ -363,6 +344,30 @@ public class TypeResolver implements Serializable
         return type;
     }
 
+    /**
+     * Factory method for resolving given generic type, defined by using sub-class
+     * instance of {@link GenericType}
+     */
+    private ResolvedType _fromGenericType(ClassStack context, GenericType<?> generic, TypeBindings typeBindings)
+    {
+        /* To allow multiple levels of inheritance (just in case someone
+         * wants to go to town with inheritance of GenericType),
+         * we better resolve the whole thing; then dig out
+         * type parameterization...
+         */
+        ResolvedType type = _fromClass(context, generic.getClass(), typeBindings);
+        ResolvedType genType = type.findSupertype(GenericType.class);
+        if (genType == null) { // sanity check; shouldn't occur
+            throw new IllegalArgumentException("Unparameterized GenericType instance ("+generic.getClass().getName()+")");
+        }
+        TypeBindings b = genType.getTypeBindings();
+        ResolvedType[] params = b.typeParameterArray();
+        if (params.length == 0) {
+            throw new IllegalArgumentException("Unparameterized GenericType instance ("+generic.getClass().getName()+")");
+        }
+        return params[0];
+    }
+    
     private ResolvedType _constructType(ClassStack context, Class<?> rawType, TypeBindings typeBindings)
     {
         // Ok: no easy shortcut, let's figure out type of type...
