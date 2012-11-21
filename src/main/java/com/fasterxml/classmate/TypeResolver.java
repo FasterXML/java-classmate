@@ -80,20 +80,58 @@ public class TypeResolver implements Serializable
 
     /*
     /**********************************************************************
-    /* Factory methods
+    /* Factory methods, no explicit parameterization
     /**********************************************************************
      */
     
     /**
-     * Factory method for resolving a type-erased class; in this case any
-     * generic type information has to come from super-types (via inheritance).
+     * Factory method for resolving given type: and since no separate context is
+     * given, any generic type information has to come from super-types (via inheritance).
+     * 
+     * @since 0.7.0
      */
-    public ResolvedType resolve(Class<?> rawType)
+    public ResolvedType resolve(Type type)
     {
+        if (type instanceof GenericType<?>) {
+            return resolve((GenericType<?>) type);
+        }
+        if (type instanceof Class<?>) {
+            return _fromClass(null, (Class<?>) type, TypeBindings.emptyBindings());
+        }
         // with erased class, no bindings:
-        return _fromClass(null, rawType, TypeBindings.emptyBindings());
+        return resolve(type, TypeBindings.emptyBindings());
     }
 
+    /**
+     * Factory method for resolving given generic type, defined by using sub-class
+     * instance of {@link GenericType}
+     */
+    public ResolvedType resolve(GenericType<?> generic)
+    {
+        /* To allow multiple levels of inheritance (just in case someone
+         * wants to go to town with inheritnace of GenericType),
+         * we better resolve the whole thing; then dig out
+         * type parameterization...
+         */
+        ResolvedType type = _fromClass(null, generic.getClass(), TypeBindings.emptyBindings());
+        ResolvedType genType = type.findSupertype(GenericType.class);
+        if (genType == null) { // sanity check; shouldn't occur
+            throw new IllegalArgumentException("Unparameterized GenericType instance ("+generic.getClass().getName()+")");
+        }
+        TypeBindings b = genType.getTypeBindings();
+        ResolvedType[] params = b.typeParameterArray();
+        if (params.length == 0) {
+            throw new IllegalArgumentException("Unparameterized GenericType instance ("+generic.getClass().getName()+")");
+        }
+        return params[0];
+    }
+
+    /*
+    /**********************************************************************
+    /* Factory methods, with explicit parameterization
+    /**********************************************************************
+     */
+    
     /**
      * Factory method for resolving given type (specified by type-erased class),
      * using specified types as type parameters.
@@ -141,30 +179,6 @@ public class TypeResolver implements Serializable
             return resolve(type);
         }
         return _fromClass(null, type, TypeBindings.create(type, typeParameters));
-    }
-    
-    /**
-     * Factory method for resolving given generic type, defined by using sub-class
-     * instance of {@link GenericType}
-     */
-    public ResolvedType resolve(GenericType<?> generic)
-    {
-        /* To allow multiple levels of inheritance (just in case someone
-         * wants to go to town with inheritnace of GenericType),
-         * we better resolve the whole thing; then dig out
-         * type parameterization...
-         */
-        ResolvedType type = _fromClass(null, generic.getClass(), TypeBindings.emptyBindings());
-        ResolvedType genType = type.findSupertype(GenericType.class);
-        if (genType == null) { // sanity check; shouldn't occur
-            throw new IllegalArgumentException("Unparameterized GenericType instance ("+generic.getClass().getName()+")");
-        }
-        TypeBindings b = genType.getTypeBindings();
-        ResolvedType[] params = b.typeParameterArray();
-        if (params.length == 0) {
-            throw new IllegalArgumentException("Unparameterized GenericType instance ("+generic.getClass().getName()+")");
-        }
-        return params[0];
     }
 
     /**

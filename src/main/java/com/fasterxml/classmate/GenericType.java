@@ -18,7 +18,8 @@ import java.io.Serializable;
  * which can be passed to methods that accept <code>GenericReference</code>.
  */
 @SuppressWarnings("serial")
-public abstract class GenericType<T> implements Serializable
+public abstract class GenericType<T>
+    implements Serializable, java.lang.reflect.Type
 {
     protected GenericType() { }
 }
