@@ -3,6 +3,13 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
+0.8.0:
+
+* Combine various ResolvedType.resolve(...) methods, using `java.lang.reflect.Type`
+  as common super type
+* Changed order arguments for "resolve" that takes TypeBindings and Type, to prevent
+  problems with overloading: now TypeBindings is the first argument, not second
+
 0.7.0:
 
 * [Issue#11]: ResolvedType uses `java.lang.reflect.Type` to allow combination

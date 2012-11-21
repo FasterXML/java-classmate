@@ -266,14 +266,15 @@ public class TestTypeResolver extends BaseTest
         Field f = StringListWrapper.class.getDeclaredField("field");
         assertNotNull(f);
         // first; field has no generic stuff, should be simple
-        ResolvedType fieldType = typeResolver.resolve(f.getGenericType(), wrapperType.getTypeBindings());
+        ResolvedType fieldType = typeResolver.resolve(wrapperType.getTypeBindings(), f.getGenericType());
         assertEquals(Long.TYPE, fieldType.getErasedType());
         assertTrue(fieldType.isPrimitive());
         // but method return type is templatized; and MUST be given correct type bindings!
         Method m = ListWrapper.class.getDeclaredMethod("wrap");
         ResolvedType superType = wrapperType.getParentClass();
         assertSame(ListWrapper.class, superType.getErasedType());
-        ResolvedType methodReturnType = typeResolver.resolve(m.getGenericReturnType(), superType.getTypeBindings());
+        ResolvedType methodReturnType = typeResolver.resolve(superType.getTypeBindings(),
+                m.getGenericReturnType());
         // should be List<String>
         assertSame(List.class, methodReturnType.getErasedType());
         List<ResolvedType> tp = methodReturnType.getTypeParameters();
@@ -304,7 +305,7 @@ public class TestTypeResolver extends BaseTest
     {
         ResolvedType type = typeResolver.resolve(StringLongMapBean.class);
         Field field = StringLongMapBean.class.getDeclaredField("value");
-        ResolvedType fieldType = typeResolver.resolve(field.getGenericType(), type.getTypeBindings());
+        ResolvedType fieldType = typeResolver.resolve(type.getTypeBindings(), field.getGenericType());
         assertSame(LongValuedMap.class, fieldType.getErasedType());
         List<ResolvedType> mapTypes = fieldType.typeParametersFor(Map.class);
         assertEquals(2, mapTypes.size());
@@ -316,7 +317,7 @@ public class TestTypeResolver extends BaseTest
     {
         ResolvedType type = typeResolver.resolve(StringListBean.class);
         Field field = StringListBean.class.getDeclaredField("value");
-        ResolvedType fieldType = typeResolver.resolve(field.getGenericType(), type.getTypeBindings());
+        ResolvedType fieldType = typeResolver.resolve(type.getTypeBindings(), field.getGenericType());
         assertSame(IntermediateList.class, fieldType.getErasedType());
         List<ResolvedType> listType = fieldType.typeParametersFor(List.class);
         assertEquals(1, listType.size());
@@ -326,7 +327,7 @@ public class TestTypeResolver extends BaseTest
     public void testResolvedTypeAsType()
     {
         ResolvedType t1 = typeResolver.resolve(getClass());
-        ResolvedType t2 = typeResolver.resolve(t1, null);
+        ResolvedType t2 = typeResolver.resolve(t1);
         assertSame(t1, t2);
     }
     
@@ -440,7 +441,7 @@ public class TestTypeResolver extends BaseTest
     {
         Type type = new Type() { };
         try {
-            typeResolver.resolve(type, TypeBindings.emptyBindings());
+            typeResolver.resolve(type);
             fail("Expected an IllegalArgumentException as concrete type of Type is unknown.");
         } catch (IllegalArgumentException iae) {
             verify(iae, "Unrecognized type class: %s", type.getClass().getName());

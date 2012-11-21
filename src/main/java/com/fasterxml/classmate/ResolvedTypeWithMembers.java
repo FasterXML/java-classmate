@@ -401,7 +401,7 @@ public class ResolvedTypeWithMembers
         } else {
             argTypes = new ResolvedType[rawTypes.length];
             for (int i = 0, len = rawTypes.length; i < len; ++i) {
-                argTypes[i] = _typeResolver.resolve(rawTypes[i], bindings);
+                argTypes[i] = _typeResolver.resolve(bindings, rawTypes[i]);
             }
         }
         // And then annotations
@@ -421,7 +421,7 @@ public class ResolvedTypeWithMembers
     {
         final ResolvedType context = raw.getDeclaringType();
         Field field = raw.getRawMember();
-        ResolvedType type = _typeResolver.resolve(field.getGenericType(), context.getTypeBindings());
+        ResolvedType type = _typeResolver.resolve(context.getTypeBindings(), field.getGenericType());
         // And then annotations
         Annotations anns = new Annotations();
         for (Annotation ann : field.getAnnotations()) {
@@ -441,7 +441,7 @@ public class ResolvedTypeWithMembers
         final TypeBindings bindings = context.getTypeBindings();
         Method m = raw.getRawMember();
         Type rawType = m.getGenericReturnType();
-        ResolvedType rt = (rawType == Void.TYPE) ? null : _typeResolver.resolve(rawType, bindings);
+        ResolvedType rt = (rawType == Void.TYPE) ? null : _typeResolver.resolve(bindings, rawType);
         Type[] rawTypes = m.getGenericParameterTypes();
         ResolvedType[] argTypes;
         if (rawTypes == null || rawTypes.length == 0) {
@@ -449,7 +449,7 @@ public class ResolvedTypeWithMembers
         } else {
             argTypes = new ResolvedType[rawTypes.length];
             for (int i = 0, len = rawTypes.length; i < len; ++i) {
-                argTypes[i] = _typeResolver.resolve(rawTypes[i], bindings);
+                argTypes[i] = _typeResolver.resolve(bindings, rawTypes[i]);
             }
         }
         // And then annotations

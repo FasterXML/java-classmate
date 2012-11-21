@@ -80,36 +80,12 @@ public class TypeResolver implements Serializable
 
     /*
     /**********************************************************************
-    /* Factory methods, no explicit parameterization
-    /**********************************************************************
-     */
-    
-    /**
-     * Factory method for resolving given type: and since no separate context is
-     * given, any generic type information has to come from super-types (via inheritance).
-     * 
-     * @since 0.7.0
-     */
-    public ResolvedType resolve(Type type)
-    {
-        if (type instanceof GenericType<?>) {
-            return _fromGenericType(null, (GenericType<?>) type, TypeBindings.emptyBindings());
-        }
-        if (type instanceof Class<?>) {
-            return _fromClass(null, (Class<?>) type, TypeBindings.emptyBindings());
-        }
-        // with erased class, no bindings:
-        return resolve(type, TypeBindings.emptyBindings());
-    }
-
-    /*
-    /**********************************************************************
     /* Factory methods, with explicit parameterization
     /**********************************************************************
      */
     
     /**
-     * Factory method for resolving given type (specified by type-erased class),
+     * Factory method for resolving given base type
      * using specified types as type parameters.
      * Sample usage would be:
      *<pre>
@@ -119,21 +95,53 @@ public class TypeResolver implements Serializable
      *<pre>
      *  ResolvedType type = TypeResolver.resolve(new GenericType&lt;List&lt;Integer>>() { });
      *</pre>
+     * Note that you can mix different types of type parameters, whether already
+     * resolved ({@link ResolvedType}), type-erased ({@link java.lang.Class}) or
+     * generic type reference ({@link GenericType}).
      */
-    public ResolvedType resolve(Class<?> type, Type... typeParameters)
+    public ResolvedType resolve(Type type, Type... typeParameters)
     {
-        if (typeParameters == null || typeParameters.length == 0) {
-            return resolve(type);
+        boolean noParams = (typeParameters == null || typeParameters.length == 0);
+        TypeBindings bindings;
+        Class<?> rawBase;
+
+        if (type instanceof Class<?>) {
+            bindings = TypeBindings.emptyBindings();
+            if (noParams) {
+                return _fromClass(null, (Class<?>) type, bindings);
+            }
+            rawBase = (Class<?>) type;
+        } else if (type instanceof GenericType<?>) {
+            bindings = TypeBindings.emptyBindings();
+            if (noParams) {
+                return _fromGenericType(null, (GenericType<?>) type, bindings);
+            }
+            ResolvedType rt = _fromAny(null, type, bindings);
+            rawBase = rt.getErasedType();
+        } else if (type instanceof ResolvedType) {
+            ResolvedType rt = (ResolvedType) type;
+            if (noParams) {
+                return rt;
+            }
+            bindings = rt.getTypeBindings();
+            rawBase = rt.getErasedType();
+        } else {
+            bindings = TypeBindings.emptyBindings();
+            if (noParams) {
+                return resolve(bindings, type);
+            }
+            // Quite convoluted... but necessary to find Class<?> underlying it all
+            ResolvedType rt = _fromAny(null, type, bindings);
+            rawBase = rt.getErasedType();
         }
-        // with erased class, no bindings "from above"
-        TypeBindings bindings = TypeBindings.emptyBindings();
-        // First: resolve type parameters
+
+        // Next: resolve type parameters
         int len = typeParameters.length;
         ResolvedType[] resolvedParams = new ResolvedType[len];
         for (int i = 0; i < len; ++i) {
             resolvedParams[i] = _fromAny(null, typeParameters[i], bindings);
         }
-        return _fromClass(null, type, TypeBindings.create(type, resolvedParams));
+        return _fromClass(null, rawBase, TypeBindings.create(rawBase, resolvedParams));
     }
 
     /**
@@ -141,7 +149,7 @@ public class TypeResolver implements Serializable
      */
     public ResolvedArrayType arrayType(Type elementType)
     {
-        ResolvedType resolvedElementType = resolve(elementType, TypeBindings.emptyBindings());
+        ResolvedType resolvedElementType = resolve(TypeBindings.emptyBindings(), elementType);
         // Arrays are cumbersome for some reason:
         Object emptyArray = Array.newInstance(resolvedElementType.getErasedType(), 0);
         // Should we try to use cache? It's bit tricky, so let's not bother yet
@@ -156,8 +164,11 @@ public class TypeResolver implements Serializable
      * Use of this method is discouraged (use if and only if you really know what you
      * are doing!); but if used, type bindings passed should come from {@link ResolvedType}
      * instance of declaring class (or interface).
+     *<p>
+     * NOTE: order of arguments was reversed for 0.8, to avoid problems with
+     * overload varargs method.
      */
-    public ResolvedType resolve(Type jdkType, TypeBindings typeBindings)
+    public ResolvedType resolve(TypeBindings typeBindings, Type jdkType)
     {
         return _fromAny(null, jdkType, typeBindings);
     }
