@@ -44,6 +44,26 @@ Its main resolution methods are:
 
 Result in all these cases is an instance of `ResolvedType`, which you can think of as generic type information containing replacement for `java.lang.Class`. It is also the starting point for resolving member (constructor, field, method) information.
 
+### Resolving Type parameters for a class
+
+While finding type parameters for specific class is relatively easy (using `getTypeParameters`), what you more commonly need to know is type parameters for a type implemented or extended.
+Specifically, consider case of:
+
+    public class StringIntMap extends HashMap<String,Integer> { }
+
+where you would want to know `key` and `value` types of your Map sub-type.
+The first step is the same:
+
+    ResolvedType type = typeResolver.resolve(StringIntMap.class);
+
+and to find parameter bindings for `java.util.Map`, you will use:
+
+    List<ResolvedType> mapParams = type.typeParametersFor(Map.class);
+    ResolvedType keyType = mapParams.get(0);
+    ResolvedType valueType = mapParams.get(1);
+
+Note: if types were left unspecified (like, say, `public class MyMap<K,V> extends Map<K,V>`), you will always get resolved types based on bounds: in this case, it would be equivalent to parameterization of `Map<Object,Object`).
+
 ### Resolving Member information
 
 Member information resolution is done by `com.fasterxml.classmate.MemberResolver`, which takes a `ResolvedType` and produces `ResolvedTypeWithMembers`. As with `TypeResolver`, a single instance is typically shared by all code; but since no reuse of information is done, creating new instances is cheap and need not be avoided.
