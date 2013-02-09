@@ -3,9 +3,7 @@ package com.fasterxml.classmate;
 import java.io.Serializable;
 import java.util.List;
 
-import com.fasterxml.classmate.members.ResolvedField;
-import com.fasterxml.classmate.members.ResolvedConstructor;
-import com.fasterxml.classmate.members.ResolvedMethod;
+import com.fasterxml.classmate.members.*;
 
 /**
  * Unit tests focused on ensuring that generic type information is
@@ -54,6 +52,13 @@ public class TestMemberGenericTypes extends BaseTest
 
     public static class Child743 extends BaseJackson743<Long> {
         public static class Data extends BaseDataJackson743<List<String>> { }
+    }
+
+    // And [JACKSON-887]
+    abstract static class BaseType887<T> {
+        public T value;
+
+        public final static class SubType887<T extends Number> extends BaseType887<T> { }
     }
     
     /*
@@ -265,5 +270,20 @@ public class TestMemberGenericTypes extends BaseTest
         ResolvedType type = f.getType();
         assertEquals(List.class, type.getErasedType());
         assertEquals(String.class, type.getTypeParameters().get(0).getErasedType());
+    }
+
+    // [JACKSON-887]
+    public void testTypesViaSubtype()
+    {
+        MemberResolver mr = new MemberResolver(typeResolver);
+        ResolvedType mainType = typeResolver.resolve(BaseType887.SubType887.class);
+        ResolvedTypeWithMembers bean = mr.resolve(mainType, null, null);
+                
+        ResolvedField[] fields = bean.getMemberFields();
+        assertEquals(1, fields.length);
+        ResolvedField f = fields[0];
+        assertEquals("value", f.getName());
+        ResolvedType type = f.getType();
+        assertEquals(Number.class, type.getErasedType());
     }
 }

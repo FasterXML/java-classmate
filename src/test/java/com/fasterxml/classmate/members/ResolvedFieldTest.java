@@ -17,6 +17,7 @@ import static junit.framework.Assert.fail;
  */
 public class ResolvedFieldTest {
 
+    @SuppressWarnings("unused")
     private static class ModifiersClass {
         private static String test;
         private transient String transientField;
