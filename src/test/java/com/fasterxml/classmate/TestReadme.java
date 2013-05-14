@@ -6,12 +6,12 @@ import org.junit.Test;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 /**
  * User: blangel
@@ -63,13 +63,20 @@ public class TestReadme {
     }
 
     @Test
-    public void resolvingAllMembers() {
+    public void resolvingAllMembers()
+    {
         TypeResolver typeResolver = new TypeResolver();
         ResolvedType arrayListType = typeResolver.resolve(ArrayList.class, String.class);
         MemberResolver memberResolver = new MemberResolver(typeResolver);
         ResolvedTypeWithMembers arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
         ResolvedMethod[] staticArrayListMethods = arrayListTypeWithMembers.getStaticMethods();
-        assertEquals(0, staticArrayListMethods.length);
+        /* 13-May-2013, tatu: Java 7 causing trouble here, adding 2 new static methods...
+         *   Needs to be fixed.
+         */
+        if (0 != staticArrayListMethods.length) {
+            fail("Should not find static methods in ArrayList, but found "+staticArrayListMethods.length
+                    +": "+Arrays.asList(staticArrayListMethods));
+        }
         ResolvedMethod[] arrayListMethods = arrayListTypeWithMembers.getMemberMethods();
         assertEquals(34, arrayListMethods.length);
 

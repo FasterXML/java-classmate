@@ -58,8 +58,13 @@ public class ResolvedObjectTypeTest {
 
         ResolvedObjectType stringType = new ResolvedObjectType(String.class, null, objectType, Collections.<ResolvedType>emptyList());
         staticFields = stringType.getStaticFields();
+        /* 13-May-2013, tatu: Looks like Java 7 will add fourth, "HASHING_SEED"?
+         */
         // serialVersionUID & serialPersistentFields & CASE_INSENSITIVE_ORDER
-        assertEquals(3, staticFields.size());
+        int count = staticFields.size();
+        if (3 != count) {
+            fail("Expected 3 static fields, got "+count+"; fields: "+staticFields);
+        }
     }
 
     @Test
