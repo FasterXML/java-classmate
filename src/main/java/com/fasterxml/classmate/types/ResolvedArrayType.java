@@ -93,6 +93,7 @@ public final class ResolvedArrayType extends ResolvedType
         return _elementType.appendErasedSignature(sb);
     }
 
+    @Override
     public StringBuilder appendBriefDescription(StringBuilder sb)
     {
         sb = _elementType.appendBriefDescription(sb);
@@ -100,6 +101,7 @@ public final class ResolvedArrayType extends ResolvedType
         return sb;
     }
 
+    @Override
     public StringBuilder appendFullDescription(StringBuilder sb) {
         return appendBriefDescription(sb);
     }

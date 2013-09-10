@@ -8,11 +8,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNull;
-import static org.junit.Assert.fail;
-
 /**
  * User: blangel
  * Date: 4/26/12
@@ -20,7 +15,9 @@ import static org.junit.Assert.fail;
  *
  * Test the examples listed in ReadMe to ensure correctness.
  */
-public class TestReadme {
+public class TestReadme
+    extends BaseTest
+{
 
     @Retention(RetentionPolicy.RUNTIME)
     public static @interface Marker { }
@@ -73,12 +70,22 @@ public class TestReadme {
         /* 13-May-2013, tatu: Java 7 causing trouble here, adding 2 new static methods...
          *   Needs to be fixed.
          */
-        if (0 != staticArrayListMethods.length) {
-            fail("Should not find static methods in ArrayList, but found "+staticArrayListMethods.length
+        switch (staticArrayListMethods.length) {
+        case 0: // JDK 1.6 and prior, fine
+            break;
+        case 2: // JDK 1.7; must verify
+            matchMembers(staticArrayListMethods, new String[] { "hugeCapacity", "subListRangeCheck" });
+            break;
+        default: // other
+            fail("Should find 0 or 2 static methods in ArrayList, but found "+staticArrayListMethods.length
                     +": "+Arrays.asList(staticArrayListMethods));
         }
         ResolvedMethod[] arrayListMethods = arrayListTypeWithMembers.getMemberMethods();
-        assertEquals(34, arrayListMethods.length);
+        // either 34 (1.6) or 40 (1.7)
+        int count = arrayListMethods.length;
+        if (count != 34 && count != 40) {
+            fail("Expected either 34 (JDK 1.6 and prior) or 40 (JDK 1.7) methods in ArrayList: got "+count);
+        }
 
         ResolvedField[] arrayListFields = arrayListTypeWithMembers.getMemberFields();
         assertEquals(3, arrayListFields.length);
@@ -86,7 +93,7 @@ public class TestReadme {
         ResolvedConstructor[] arrayListConstructors = arrayListTypeWithMembers.getConstructors();
         assertEquals(3, arrayListConstructors.length);
     }
-
+    
     @Test
     public void resolvingParticularMembers() {
         TypeResolver typeResolver = new TypeResolver();
@@ -235,5 +242,4 @@ public class TestReadme {
         MarkerA markerA = someMethod.get(MarkerA.class); // markerA != null
         assertNotNull(markerA);
     }
-
 }

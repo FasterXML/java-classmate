@@ -31,6 +31,7 @@ public class ClassKey
     /**********************************************************************
      */
 
+    @Override
     public int compareTo(ClassKey other)
     {
         // Just need to sort by name, ok to collide (unless used in TreeMap/Set!)

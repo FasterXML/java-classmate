@@ -63,6 +63,7 @@ public class TestTypeResolver extends BaseTest
 
     // For testing wildcards
 
+    @SuppressWarnings("rawtypes")
     static interface Wild<T extends List<? extends Collection>, S extends List<? super Collection>> { }
 
     // For testing type-parameters matching
@@ -72,7 +73,6 @@ public class TestTypeResolver extends BaseTest
     static interface MatchB<T extends List<?>> { }
 
     // From [https://github.com/FasterXML/jackson-databind/issues/76]
-    @SuppressWarnings("serial")
     static class HashTree<K, V> extends HashMap<K, HashTree<K, V>> { }
     
     /*
@@ -82,7 +82,8 @@ public class TestTypeResolver extends BaseTest
      */
 
     protected TypeResolver typeResolver;
-    
+ 
+    @Override
     protected void setUp()
     {
         // Let's use a single instance for all tests, to increase chance of seeing failures
@@ -427,6 +428,7 @@ public class TestTypeResolver extends BaseTest
 
     public void testWildcardType()
     {
+        @SuppressWarnings("rawtypes")
         GenericType<Wild<List<? extends Collection>, List<? super Collection>>> genericType =
                 new GenericType<Wild<List<? extends Collection>, List<? super Collection>>>() { };
         ResolvedType resolvedType = typeResolver.resolve(genericType);

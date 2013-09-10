@@ -25,6 +25,7 @@ public final class RawMethod extends RawMember
     /**********************************************************************
      */
 
+    @Override
     public Method getRawMember() {
         return _method;
     }

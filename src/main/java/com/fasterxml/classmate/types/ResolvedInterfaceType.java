@@ -49,6 +49,7 @@ public class ResolvedInterfaceType extends ResolvedType
     /**********************************************************************
      */
     
+    @Override
     public ResolvedType getParentClass() {
         // interfaces do not have parent class, just interfaces
         return null;
@@ -92,6 +93,7 @@ public class ResolvedInterfaceType extends ResolvedType
     /**********************************************************************
      */
 
+    @Override
     public synchronized List<RawField> getStaticFields()
     {
         // Interfaces can have static fields, but only as static constants...
@@ -104,6 +106,7 @@ public class ResolvedInterfaceType extends ResolvedType
         return Arrays.asList(_constantFields);
     }
 
+    @Override
     public synchronized List<RawMethod> getMemberMethods()
     {
         if (_memberMethods == null) {

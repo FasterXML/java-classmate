@@ -24,6 +24,7 @@ public final class RawField extends RawMember
     /**********************************************************************
      */
 
+    @Override
     public Field getRawMember() {
         return _field;
     }

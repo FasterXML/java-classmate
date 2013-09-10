@@ -12,4 +12,4 @@ target
 *.iml
 
 # and emacs temp save files
-*.~
+*~

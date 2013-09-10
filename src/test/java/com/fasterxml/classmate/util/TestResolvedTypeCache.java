@@ -3,6 +3,7 @@ package com.fasterxml.classmate.util;
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.types.ResolvedInterfaceType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
+
 import junit.framework.TestCase;
 
 import java.util.List;
@@ -45,6 +46,7 @@ public class TestResolvedTypeCache extends TestCase
         assertSame(type3, found3);
     }
 
+    @SuppressWarnings("unused")
     public void testKeyEquals() {
 
         try {

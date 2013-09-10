@@ -57,6 +57,7 @@ public final class HierarchicType
     @Override public String toString() { return _type.toString(); }
     @Override public int hashCode() { return _type.hashCode(); }
 
+    @Override
     public boolean equals(Object o)
     {
         if (o == this) return true;

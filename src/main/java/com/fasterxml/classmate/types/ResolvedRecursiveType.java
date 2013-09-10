@@ -107,10 +107,15 @@ public class ResolvedRecursiveType extends ResolvedType
     /**********************************************************************
      */
 
+    @Override
     public List<RawField> getMemberFields() { return _referencedType.getMemberFields(); }
+    @Override
     public List<RawField> getStaticFields() { return _referencedType.getStaticFields(); }
+    @Override
     public List<RawMethod> getStaticMethods() { return _referencedType.getStaticMethods(); }
+    @Override
     public List<RawMethod> getMemberMethods() { return _referencedType.getMemberMethods(); }
+    @Override
     public List<RawConstructor> getConstructors() { return _referencedType.getConstructors(); }
     
     /*

@@ -120,7 +120,7 @@ public class ResolvedObjectType extends ResolvedType
     /**********************************************************************
      */
 
-    
+    @Override
     public synchronized List<RawField> getMemberFields()
     {
         if (_memberFields == null) {
@@ -132,6 +132,7 @@ public class ResolvedObjectType extends ResolvedType
         return Arrays.asList(_memberFields);
     }
 
+    @Override
     public synchronized List<RawField> getStaticFields()
     {
         if (_staticFields == null) {
@@ -143,6 +144,7 @@ public class ResolvedObjectType extends ResolvedType
         return Arrays.asList(_staticFields);
     }
 
+    @Override
     public synchronized List<RawMethod> getMemberMethods()
     {
         if (_memberMethods == null) {
@@ -154,6 +156,7 @@ public class ResolvedObjectType extends ResolvedType
         return Arrays.asList(_memberMethods);
     } 
 
+    @Override
     public synchronized List<RawMethod> getStaticMethods()
     {
         if (_staticMethods == null) {
@@ -165,6 +168,7 @@ public class ResolvedObjectType extends ResolvedType
         return Arrays.asList(_staticMethods);
     } 
 
+    @Override
     public List<RawConstructor> getConstructors()
     {
         if (_constructors == null) {

@@ -2,11 +2,8 @@ package com.fasterxml.classmate;
 
 import org.junit.Test;
 
-import javax.swing.table.TableStringConverter;
-
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertSame;
-import static junit.framework.Assert.fail;
 
 /**
  * User: blangel

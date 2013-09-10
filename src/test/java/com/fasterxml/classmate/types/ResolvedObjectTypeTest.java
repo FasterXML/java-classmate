@@ -1,23 +1,22 @@
 package com.fasterxml.classmate.types;
 
+import java.util.*;
+
+import com.fasterxml.classmate.BaseTest;
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
 import com.fasterxml.classmate.members.RawConstructor;
 import com.fasterxml.classmate.members.RawField;
+
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static junit.framework.Assert.*;
 
 /**
  * User: blangel
  * Date: 4/12/12
  * Time: 4:59 PM
  */
-public class ResolvedObjectTypeTest {
+public class ResolvedObjectTypeTest extends BaseTest
+{
 
     private static class NoExplicitConstructor { }
 
@@ -26,7 +25,8 @@ public class ResolvedObjectTypeTest {
     private static interface NoConstructor { }
 
     @Test
-    public void constructors() {
+    public void testConstructors()
+    {
         ResolvedObjectType resolvedObjectType = new ResolvedObjectType(String.class, null, null, (List<ResolvedType>) null);
         assertNotNull(resolvedObjectType._superInterfaces);
 
@@ -41,7 +41,7 @@ public class ResolvedObjectTypeTest {
     }
 
     @Test
-    public void getArrayElementType() {
+    public void testGetArrayElementType() {
         ResolvedObjectType resolvedObjectType = new ResolvedObjectType(String.class, null, null, (List<ResolvedType>) null);
         assertNull(resolvedObjectType.getArrayElementType());
 
@@ -51,7 +51,7 @@ public class ResolvedObjectTypeTest {
     }
 
     @Test
-    public void getStaticFields() {
+    public void testGetStaticFields() {
         ResolvedObjectType objectType = new ResolvedObjectType(Object.class, null, null, Collections.<ResolvedType>emptyList());
         List<RawField> staticFields = objectType.getStaticFields();
         assertEquals(0, staticFields.size());
@@ -62,13 +62,18 @@ public class ResolvedObjectTypeTest {
          */
         // serialVersionUID & serialPersistentFields & CASE_INSENSITIVE_ORDER
         int count = staticFields.size();
-        if (3 != count) {
-            fail("Expected 3 static fields, got "+count+"; fields: "+staticFields);
+        if (3 != count) { // 3 for 1.6
+            if (4 != count) { // 4 for 1.7
+                fail("Expected 3 (JDK 1.6) or 4 (1.7) static fields, got "+count+"; fields: "+staticFields);
+            }
+            matchRawMembers(staticFields, new String[] {
+                    "serialVersionUID", "serialPersistentFields", "CASE_INSENSITIVE_ORDER", "HASHING_SEED"
+            });
         }
     }
 
     @Test
-    public void getConstructors() {
+    public void testGetConstructors() {
         ResolvedObjectType noExplicitConstructorType = new ResolvedObjectType(NoExplicitConstructor.class, null, null, Collections.<ResolvedType>emptyList());
         List<RawConstructor> constructors = noExplicitConstructorType.getConstructors();
 

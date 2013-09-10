@@ -22,9 +22,10 @@ public class TypeBindingsTest {
 
     @Test
     public void construction() throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException,
-            InvocationTargetException, InstantiationException {
+            InvocationTargetException, InstantiationException
+    {
 
-        Constructor constructor = TypeBindings.class.getDeclaredConstructor(String[].class, ResolvedType[].class);
+        Constructor<?> constructor = TypeBindings.class.getDeclaredConstructor(String[].class, ResolvedType[].class);
         constructor.setAccessible(true);
 
         Field namesField = TypeBindings.class.getDeclaredField("_names");

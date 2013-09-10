@@ -29,7 +29,9 @@ public final class ResolvedField extends ResolvedMember
     /**********************************************************************
      */
 
+    @Override
     public Field getRawMember() { return _field; }
+    @Override
     public ResolvedType getType() { return _type; }
 
     public boolean isTransient() {
