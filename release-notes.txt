@@ -5,6 +5,8 @@ Release notes:
 
 0.9.0:
 
+#14: Fixed 2 unit tests that failed with JDK 1.7 (due to addition of members to 'java.lang.Object`
+  and `java.util.ArrayList`)
 #15: ClassMate jar should include LICENSE file
 
 0.8.0:
