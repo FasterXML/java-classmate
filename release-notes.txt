@@ -3,6 +3,12 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
+1.0.0 (15-Oct-2013)
+
+The official Big One-Oh version!
+
+(no functional changes since 0.9.0)
+
 0.9.0:
 
 #14: Fixed 2 unit tests that failed with JDK 1.7 (due to addition of members to 'java.lang.Object`
