@@ -354,6 +354,15 @@ public class ResolvedTypeWithMembers
                             }
                         }
                     }
+                    // and parameter annotations
+                    final Annotation[][] parameterAnnotations = method.getRawMember().getParameterAnnotations();
+                    for (int i = 0; i < parameterAnnotations.length; i++) {
+                        for (final Annotation annotation : parameterAnnotations[i]) {
+                            if (parameterCanInherit(annotation)) {
+                                old.applyArgumentDefault(i, annotation);
+                            }
+                        }
+                    }
                 } else { // "real" methods; add if not present, possibly add defaults as well
                     if (old == null) { // new one to add
                         ResolvedMethod newMethod = resolveMethod(method);
@@ -363,10 +372,28 @@ public class ResolvedTypeWithMembers
                         if (overrideAnn != null) {
                             newMethod.applyOverrides(overrideAnn);
                         }
+                        // and parameter annotations
+                        final Annotation[][] parameterAnnotations = method.getRawMember().getParameterAnnotations();
+                        for (int i = 0; i < parameterAnnotations.length; i++) {
+                            for (final Annotation annotation : parameterAnnotations[i]) {
+                                if (parameterCanInherit(annotation)) {
+                                    newMethod.applyArgumentOverride(i, annotation);
+                                }
+                            }
+                        }
                     } else { // method masked by something else? can only contribute annotations
                         for (Annotation ann : method.getAnnotations()) {
                             if (methodCanInherit(ann)) {
                                 old.applyDefault(ann);
+                            }
+                        }
+                        // and parameter annotations
+                        final Annotation[][] parameterAnnotations = method.getRawMember().getParameterAnnotations();
+                        for (int i = 0; i < parameterAnnotations.length; i++) {
+                            for (final Annotation annotation : parameterAnnotations[i]) {
+                                if (parameterCanInherit(annotation)) {
+                                    old.applyArgumentDefault(i, annotation);
+                                }
                             }
                         }
                     }
@@ -469,6 +496,14 @@ public class ResolvedTypeWithMembers
         }
         return (annotationInclusion == AnnotationInclusion.INCLUDE_AND_INHERIT);
     }
+
+    protected boolean parameterCanInherit(Annotation annotation) {
+        AnnotationInclusion annotationInclusion = _annotationHandler.parameterInclusion(annotation);
+        if (annotationInclusion == AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED) {
+            return annotation.annotationType().isAnnotationPresent(Inherited.class);
+        }
+        return (annotationInclusion == AnnotationInclusion.INCLUDE_AND_INHERIT);
+    }
     
     /*
     /**********************************************************************
@@ -487,7 +522,8 @@ public class ResolvedTypeWithMembers
         private HashMap<Class<? extends Annotation>, AnnotationInclusion> _fieldInclusions;
         private HashMap<Class<? extends Annotation>, AnnotationInclusion> _constructorInclusions;
         private HashMap<Class<? extends Annotation>, AnnotationInclusion> _methodInclusions;
-        
+        private HashMap<Class<? extends Annotation>, AnnotationInclusion> _parameterInclusions;
+
         public AnnotationHandler(AnnotationConfiguration annotationConfig) {
             _annotationConfig = annotationConfig;
         }
@@ -544,6 +580,26 @@ public class ResolvedTypeWithMembers
             _methodInclusions.put(annType, incl);
             return incl;
         }
-        
+
+        public boolean includeParameterAnnotation(Annotation ann)
+        {
+            return parameterInclusion(ann) != AnnotationInclusion.DONT_INCLUDE;
+        }
+
+        public AnnotationInclusion parameterInclusion(Annotation ann)
+        {
+            Class<? extends Annotation> annType = ann.annotationType();
+            if (_parameterInclusions == null) {
+                _parameterInclusions = new HashMap<Class<? extends Annotation>, AnnotationInclusion>();
+            } else {
+                AnnotationInclusion incl = _parameterInclusions.get(annType);
+                if (incl != null) {
+                    return incl;
+                }
+            }
+            AnnotationInclusion incl = _annotationConfig.getInclusionForParameter(annType);
+            _parameterInclusions.put(annType, incl);
+            return incl;
+        }
     }
 }

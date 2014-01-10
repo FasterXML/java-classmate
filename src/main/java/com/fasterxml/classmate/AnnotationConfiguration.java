@@ -47,6 +47,15 @@ public abstract class AnnotationConfiguration implements Serializable
      */
     public abstract AnnotationInclusion getInclusionForMethod(Class<? extends Annotation> annotationType);
 
+    /**
+     * Method called to figure out how to handle instances of specified annotation
+     * type when used as parameter annotation.
+     *<p>
+     * Note that parameter annotations can be inherited for member methods, but not for static
+     * methods; for static methods thereby this just determines between inclusion and
+     * non-inclusion.
+     */
+    public abstract AnnotationInclusion getInclusionForParameter(Class<? extends Annotation> annotationType);
     
     /**
      * Simple implementation that can be configured with default behavior
@@ -85,7 +94,12 @@ public abstract class AnnotationConfiguration implements Serializable
         public AnnotationInclusion getInclusionForMethod(Class<? extends Annotation> annotationType) {
             return getInclusionForClass(annotationType);
         }
-        
+
+        @Override
+        public AnnotationInclusion getInclusionForParameter(Class<? extends Annotation> annotationType) {
+            return getInclusionForClass(annotationType);
+        }
+
         public void setInclusion(Class<? extends Annotation> annotationType, AnnotationInclusion incl)
         {
             _inclusions.put(new ClassKey(annotationType), incl);
