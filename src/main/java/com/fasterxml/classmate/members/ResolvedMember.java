@@ -62,7 +62,12 @@ public abstract class ResolvedMember<T extends Member>
     {
         return _annotations.get(cls);
     }
-    
+
+    public Annotations getAnnotations()
+    {
+        return _annotations;
+    }
+
     /*
     /**********************************************************************
     /* Simple accessors

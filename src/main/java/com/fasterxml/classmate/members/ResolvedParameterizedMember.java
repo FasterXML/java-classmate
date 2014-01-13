@@ -22,6 +22,16 @@ public abstract class ResolvedParameterizedMember<T extends Member> extends Reso
         _paramAnnotations = new Annotations[_paramTypes.length];
     }
 
+    public Annotations getParameterAnnotations(int index) {
+        if (index >= _paramTypes.length)
+            throw new IndexOutOfBoundsException("No parameter at index " + index + ", this is greater than the total number of parameters");
+
+        if (_paramAnnotations[index] == null) {
+            _paramAnnotations[index] = new Annotations();
+        }
+        return _paramAnnotations[index];
+    }
+
     public void applyParamOverride(int index, Annotation override)
     {
         if (index >= _paramAnnotations.length)
@@ -38,12 +48,12 @@ public abstract class ResolvedParameterizedMember<T extends Member> extends Reso
         getParameterAnnotations(index).addAll(overrides);
     }
 
-    public void applyParamDefault(int index, Annotation override)
+    public void applyParamDefault(int index, Annotation defaultValue)
     {
         if (index >= _paramAnnotations.length)
             return;
 
-        getParameterAnnotations(index).addAsDefault(override);
+        getParameterAnnotations(index).addAsDefault(defaultValue);
     }
 
     public <A extends Annotation> A getParam(int index, Class<A> cls)
@@ -67,12 +77,5 @@ public abstract class ResolvedParameterizedMember<T extends Member> extends Reso
             return null;
         }
         return _paramTypes[index];
-    }
-
-    private Annotations getParameterAnnotations(int index) {
-        if (_paramAnnotations[index] == null) {
-            _paramAnnotations[index] = new Annotations();
-        }
-        return _paramAnnotations[index];
     }
 }

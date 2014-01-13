@@ -3,6 +3,7 @@ package com.fasterxml.classmate;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Container class used for storing set of annotations resolved for types (classes)
@@ -11,7 +12,7 @@ import java.util.HashMap;
  * @author tatu
  */
 @SuppressWarnings("serial")
-public class Annotations implements Serializable
+public class Annotations implements Serializable, Iterable<Annotation>
 {
     protected HashMap<Class<? extends Annotation>,Annotation> _annotations;
 
@@ -62,6 +63,11 @@ public class Annotations implements Serializable
         } else if (!_annotations.containsKey(type)) {
             _annotations.put(type, defValue);
         }
+    }
+
+    public Iterator<Annotation> iterator()
+    {
+        return _annotations.values().iterator();
     }
 
     /*
