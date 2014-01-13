@@ -17,11 +17,13 @@ public class TestParameterAnnotations {
 
     TypeResolver types;
     MemberResolver members;
+    AnnotationConfiguration annotations;
 
     @Before
     public void setup() {
         types = new TypeResolver();
         members = new MemberResolver(types);
+        annotations = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED);
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -63,8 +65,7 @@ public class TestParameterAnnotations {
     // note: most of the above is unimplemented currently
 
     @Test
-    public void testIncludesUninheritableAnnotationsDirectly() throws NoSuchMethodException {
-        AnnotationConfiguration annotations = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED);
+    public void testIncludesUninheritableAnnotationsDirectly() {
         ResolvedTypeWithMembers type = members.resolve(types.resolve(BaseInterface.class), annotations, null);
         ResolvedMethod[] methods = type.getMemberMethods();
 
@@ -76,8 +77,7 @@ public class TestParameterAnnotations {
     }
 
     @Test
-    public void testInheritsOnlyMarkedAnnotations() throws NoSuchMethodException {
-        AnnotationConfiguration annotations = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED);
+    public void testInheritsOnlyMarkedAnnotations() {
         ResolvedTypeWithMembers type = members.resolve(types.resolve(ExtendedInterface.class), annotations, null);
         ResolvedMethod[] methods = type.getMemberMethods();
 
@@ -93,8 +93,7 @@ public class TestParameterAnnotations {
     }
 
     @Test
-    public void testMixInAnnotations() throws NoSuchMethodException {
-        AnnotationConfiguration annotations = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED);
+    public void testMixInAnnotations() {
         ResolvedTypeWithMembers type = members.resolve(types.resolve(TargetInterface.class), annotations, AnnotationOverrides.builder().add(TargetInterface.class, ExtendedMixIn.class).build());
         ResolvedMethod[] methods = type.getMemberMethods();
 
