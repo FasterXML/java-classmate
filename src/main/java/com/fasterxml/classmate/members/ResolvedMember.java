@@ -12,7 +12,7 @@ import com.fasterxml.classmate.ResolvedType;
  * overridden, or filtered out) are resolved, since resolution process can add non-trivial
  * overhead.
  */
-public abstract class ResolvedMember
+public abstract class ResolvedMember<T extends Member>
 {
     /**
      * {@link ResolvedType} (class with generic type parameters) that declared
@@ -21,6 +21,12 @@ public abstract class ResolvedMember
     protected final ResolvedType _declaringType;
 
     protected final Annotations _annotations;
+
+    protected final T _member;
+
+    protected final ResolvedType _type;
+
+    protected final int _hashCode;
     
     /*
     /**********************************************************************
@@ -28,10 +34,13 @@ public abstract class ResolvedMember
     /**********************************************************************
      */
     
-    protected ResolvedMember(ResolvedType context, Annotations ann)
+    protected ResolvedMember(ResolvedType context, Annotations ann, T member, ResolvedType type)
     {
         _declaringType = context;
         _annotations = ann;
+        _member = member;
+        _type = type;
+        _hashCode = (_member == null ? 0 : _member.hashCode());
     }
 
     public void applyOverride(Annotation override)
@@ -68,12 +77,16 @@ public abstract class ResolvedMember
      * Returns type of this member; if it has one, for methods this is the
      * return type, for fields field type, and for constructors null.
      */
-    public abstract ResolvedType getType();
+    public ResolvedType getType() {
+        return _type;
+    }
  
     /**
      * Returns JDK object that represents member.
      */
-    public abstract Member getRawMember();
+    public T getRawMember() {
+        return _member;
+    }
 
     public String getName() {
         return getRawMember().getName();
@@ -116,5 +129,23 @@ public abstract class ResolvedMember
      */
 
     protected final int getModifiers() { return getRawMember().getModifiers(); }
+
+    /*
+    /**********************************************************************
+    /* Standard methods
+    /**********************************************************************
+     */
+
+    @Override public int hashCode() {
+        return _hashCode;
+    }
+
+    @Override public boolean equals(Object o)
+    {
+        if (o == this) return true;
+        if (o == null || o.getClass() != getClass()) return false;
+        ResolvedMember other = (ResolvedMember) o;
+        return (other._member == _member);
+    }
     
 }

@@ -384,7 +384,7 @@ public class ResolvedTypeWithMembers
                         for (int i = 0; i < argAnnotations.length; i++) {
                             for (final Annotation annotation : argAnnotations[i]) {
                                 if (parameterCanInherit(annotation)) {
-                                    old.applyArgumentDefault(i, annotation);
+                                    old.applyParamDefault(i, annotation);
                                 }
                             }
                         }
@@ -402,7 +402,7 @@ public class ResolvedTypeWithMembers
                         Annotations[] annotations = paramOverrides.get(key);
                         if (annotations != null) {
                             for (int i = 0; i < annotations.length; i++) {
-                                newMethod.applyArgumentOverrides(i, annotations[i]);
+                                newMethod.applyParamOverrides(i, annotations[i]);
                             }
                         }
                     } else { // method masked by something else? can only contribute annotations
@@ -416,7 +416,7 @@ public class ResolvedTypeWithMembers
                         for (int i = 0; i < parameterAnnotations.length; i++) {
                             for (final Annotation annotation : parameterAnnotations[i]) {
                                 if (parameterCanInherit(annotation)) {
-                                    old.applyArgumentDefault(i, annotation);
+                                    old.applyParamDefault(i, annotation);
                                 }
                             }
                         }
@@ -517,7 +517,7 @@ public class ResolvedTypeWithMembers
         Annotation[][] annotations = m.getParameterAnnotations();
         for (int i = 0; i < argTypes.length; i++) {
             for (Annotation ann : annotations[i]) {
-                method.applyArgumentOverride(i, ann);
+                method.applyParamOverride(i, ann);
             }
         }
         return method;

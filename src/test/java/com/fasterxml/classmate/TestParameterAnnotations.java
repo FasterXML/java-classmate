@@ -72,7 +72,7 @@ public class TestParameterAnnotations {
         checkMethods(methods, BaseInterface.class);
 
         ResolvedMethod m = methods[0];
-        assertNotNull(m.getArgument(0, Marker.class));
+        assertNotNull(m.getParam(0, Marker.class));
     }
 
     @Test
@@ -86,10 +86,10 @@ public class TestParameterAnnotations {
 
         // check that the correct annotations were detected
         ResolvedMethod m = methods[0];
-        assertNull(m.getArgument(0, Marker.class));
-        assertNotNull(m.getArgument(0, MarkerInherited.class));
-        assertNotNull(m.getArgument(0, MarkerOverridden.class));
-        assertEquals(456, m.getArgument(0, MarkerOverridden.class).value());
+        assertNull(m.getParam(0, Marker.class));
+        assertNotNull(m.getParam(0, MarkerInherited.class));
+        assertNotNull(m.getParam(0, MarkerOverridden.class));
+        assertEquals(456, m.getParam(0, MarkerOverridden.class).value());
     }
 
     @Test
@@ -103,10 +103,10 @@ public class TestParameterAnnotations {
 
         // check that the mixed-in annotations are present
         ResolvedMethod m = methods[0];
-        assertNotNull(m.getArgument(0, Marker.class));
-        assertNotNull(m.getArgument(0, MarkerInherited.class));
-        assertNotNull(m.getArgument(0, MarkerOverridden.class));
-        assertEquals(456, m.getArgument(0, MarkerOverridden.class).value());
+        assertNotNull(m.getParam(0, Marker.class));
+        assertNotNull(m.getParam(0, MarkerInherited.class));
+        assertNotNull(m.getParam(0, MarkerOverridden.class));
+        assertEquals(456, m.getParam(0, MarkerOverridden.class).value());
     }
 
     private void checkMethods(ResolvedMethod[] methods, Class<?> type) {
@@ -116,7 +116,7 @@ public class TestParameterAnnotations {
                 Method raw = method.getRawMember();
                 assertEquals(type.getMethod(method.getName(), raw.getParameterTypes()), raw);
             } catch (NoSuchMethodException e) {
-                fail("No suh method: " + method);
+                fail("No such method: " + method);
             }
         }
     }
