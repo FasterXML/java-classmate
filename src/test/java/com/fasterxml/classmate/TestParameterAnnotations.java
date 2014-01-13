@@ -1,9 +1,11 @@
 package com.fasterxml.classmate;
 
 import com.fasterxml.classmate.members.ResolvedMethod;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.annotation.*;
+import java.lang.reflect.Method;
 
 import static org.junit.Assert.*;
 
@@ -12,6 +14,15 @@ import static org.junit.Assert.*;
  * inherited and overridden.
  */
 public class TestParameterAnnotations {
+
+    TypeResolver types;
+    MemberResolver members;
+
+    @Before
+    public void setup() {
+        types = new TypeResolver();
+        members = new MemberResolver(types);
+    }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
@@ -35,32 +46,78 @@ public class TestParameterAnnotations {
         void something(@MarkerOverridden(456) String value);
     }
 
+    static interface TargetInterface {
+        void something(@Marker String value);
+    }
+
+    static interface MixIn {
+        void something(@MarkerOverridden(123) String value);
+    }
+
+    static interface ExtendedMixIn extends MixIn {
+        void something(@MarkerInherited @MarkerOverridden(456) String value);
+    }
+
     // todo: test more complex hierarchies
-    // todo: test attempts to inherit un-inheritable annotations
-    // todo: test mix-ins
     // todo: test constructors
     // note: most of the above is unimplemented currently
 
     @Test
-    public void testInheritsMarkedAnnotations() throws NoSuchMethodException {
+    public void testIncludesUninheritableAnnotationsDirectly() throws NoSuchMethodException {
         AnnotationConfiguration annotations = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED);
-        TypeResolver types = new TypeResolver();
-        MemberResolver members = new MemberResolver(types);
+        ResolvedTypeWithMembers type = members.resolve(types.resolve(BaseInterface.class), annotations, null);
+        ResolvedMethod[] methods = type.getMemberMethods();
+
+        // sanity test our method
+        checkMethods(methods, BaseInterface.class);
+
+        ResolvedMethod m = methods[0];
+        assertNotNull(m.getArgument(0, Marker.class));
+    }
+
+    @Test
+    public void testInheritsOnlyMarkedAnnotations() throws NoSuchMethodException {
+        AnnotationConfiguration annotations = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED);
         ResolvedTypeWithMembers type = members.resolve(types.resolve(ExtendedInterface.class), annotations, null);
         ResolvedMethod[] methods = type.getMemberMethods();
 
         // sanity test our method
-        assertEquals(1, methods.length);
-
-        ResolvedMethod m = methods[0];
-        assertEquals("something", m.getName());
-        assertEquals(1, m.getArgumentCount());
-        assertEquals(ExtendedInterface.class.getDeclaredMethod("something", String.class), m.getRawMember());
+        checkMethods(methods, ExtendedInterface.class);
 
         // check that the correct annotations were detected
+        ResolvedMethod m = methods[0];
         assertNull(m.getArgument(0, Marker.class));
         assertNotNull(m.getArgument(0, MarkerInherited.class));
         assertNotNull(m.getArgument(0, MarkerOverridden.class));
         assertEquals(456, m.getArgument(0, MarkerOverridden.class).value());
+    }
+
+    @Test
+    public void testMixInAnnotations() throws NoSuchMethodException {
+        AnnotationConfiguration annotations = new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED);
+        ResolvedTypeWithMembers type = members.resolve(types.resolve(TargetInterface.class), annotations, AnnotationOverrides.builder().add(TargetInterface.class, ExtendedMixIn.class).build());
+        ResolvedMethod[] methods = type.getMemberMethods();
+
+        // sanity test our method
+        checkMethods(methods, TargetInterface.class);
+
+        // check that the mixed-in annotations are present
+        ResolvedMethod m = methods[0];
+        assertNotNull(m.getArgument(0, Marker.class));
+        assertNotNull(m.getArgument(0, MarkerInherited.class));
+        assertNotNull(m.getArgument(0, MarkerOverridden.class));
+        assertEquals(456, m.getArgument(0, MarkerOverridden.class).value());
+    }
+
+    private void checkMethods(ResolvedMethod[] methods, Class<?> type) {
+        assertEquals(type.getMethods().length, methods.length);
+        for (ResolvedMethod method : methods) {
+            try {
+                Method raw = method.getRawMember();
+                assertEquals(type.getMethod(method.getName(), raw.getParameterTypes()), raw);
+            } catch (NoSuchMethodException e) {
+                fail("No suh method: " + method);
+            }
+        }
     }
 }
