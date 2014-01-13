@@ -67,6 +67,9 @@ public class Annotations implements Serializable, Iterable<Annotation>
 
     public Iterator<Annotation> iterator()
     {
+        if (_annotations == null) {
+            _annotations = new HashMap<Class<? extends Annotation>,Annotation>();
+        }
         return _annotations.values().iterator();
     }
 
