@@ -225,6 +225,16 @@ public class ResolvedTypeWithMembers
                             constructor.applyOverride(ann);
                         }
                     }
+
+                    // and parameter annotations
+                    Annotation[][] params = raw.getRawMember().getParameterAnnotations();
+                    for (int i = 0; i < params.length; i++) {
+                        for (Annotation annotation : params[i]) {
+                            if (_annotationHandler.includeParameterAnnotation(annotation)) {
+                                constructor.applyParamOverride(i, annotation);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -462,7 +472,18 @@ public class ResolvedTypeWithMembers
                 anns.add(ann);
             }
         }
-        return new ResolvedConstructor(context, anns, ctor, argTypes);
+
+        ResolvedConstructor constructor = new ResolvedConstructor(context, anns, ctor, argTypes);
+
+        // and parameter annotations
+        Annotation[][] annotations = ctor.getParameterAnnotations();
+        for (int i = 0; i < argTypes.length; i++) {
+            for (Annotation ann : annotations[i]) {
+                constructor.applyParamOverride(i, ann);
+            }
+        }
+
+        return constructor;
     }
 
     /**

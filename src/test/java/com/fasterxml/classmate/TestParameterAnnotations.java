@@ -1,10 +1,12 @@
 package com.fasterxml.classmate;
 
+import com.fasterxml.classmate.members.ResolvedConstructor;
 import com.fasterxml.classmate.members.ResolvedMethod;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.annotation.*;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 import static org.junit.Assert.*;
@@ -60,9 +62,26 @@ public class TestParameterAnnotations {
         void something(@MarkerInherited @MarkerOverridden(456) String value);
     }
 
-    // todo: test more complex hierarchies
-    // todo: test constructors
-    // note: most of the above is unimplemented currently
+    static abstract class BaseImpl {
+        public String v;
+        public BaseImpl(@Marker @MarkerOverridden(789) String v) {
+            this.v = v;
+        }
+    }
+
+    static class MixInClass {
+        public MixInClass(@MarkerInherited String v) { }
+    }
+
+    static class Impl extends BaseImpl implements ExtendedInterface {
+
+        public Impl(@MarkerOverridden(999) String v) {
+            super(v);
+        }
+
+        @Override
+        public void something(final String value) { }
+    }
 
     @Test
     public void testIncludesUninheritableAnnotationsDirectly() {
@@ -108,6 +127,22 @@ public class TestParameterAnnotations {
         assertEquals(456, m.getParam(0, MarkerOverridden.class).value());
     }
 
+    @Test
+    public void testConstructorParameterAnnotations() {
+        ResolvedTypeWithMembers type = members.resolve(types.resolve(Impl.class), annotations, AnnotationOverrides.builder().add(Impl.class, MixInClass.class).build());
+        ResolvedConstructor[] constructors = type.getConstructors();
+
+        // sanity test our constructor
+        checkConstructors(constructors, Impl.class);
+
+        // check that the constructor parameter annotations are properly inherited/overridden
+        ResolvedConstructor c = constructors[0];
+        assertNull(c.getParam(0, Marker.class));
+        assertNotNull(c.getParam(0, MarkerInherited.class));
+        assertNotNull(c.getParam(0, MarkerOverridden.class));
+        assertEquals(999, c.getParam(0, MarkerOverridden.class).value());
+    }
+
     private void checkMethods(ResolvedMethod[] methods, Class<?> type) {
         assertEquals(type.getMethods().length, methods.length);
         for (ResolvedMethod method : methods) {
@@ -116,6 +151,18 @@ public class TestParameterAnnotations {
                 assertEquals(type.getMethod(method.getName(), raw.getParameterTypes()), raw);
             } catch (NoSuchMethodException e) {
                 fail("No such method: " + method);
+            }
+        }
+    }
+
+    private void checkConstructors(ResolvedConstructor[] constructors, Class<?> type) {
+        assertEquals(type.getConstructors().length, constructors.length);
+        for (ResolvedConstructor constructor : constructors) {
+            try {
+                Constructor raw = constructor.getRawMember();
+                assertEquals(type.getConstructor(raw.getParameterTypes()), raw);
+            } catch (NoSuchMethodException e) {
+                fail("No such constructor: " + constructor);
             }
         }
     }
