@@ -13,6 +13,12 @@ External links that may help include:
 * [Resolving Generic Types with Classmate](http://www.cowtowncoder.com/blog/archives/2012/04/entry_471.html) (some simple usage examples)
 * [Problem with java.lang.reflect.Type](http://www.cowtowncoder.com/blog/archives/2010/12/entry_436.html) (explanation of issues ClassMate was written to solve)
 
+## Contributing
+
+Contributions are welcome (of course!); we require a simple one-page CLA to help simplify distribution
+(corporate users want to know how contributions are handled), one per contributor. Feel free to submit
+Pull Requests and we will get you through this formality.
+
 -----
 
 ## Usage
