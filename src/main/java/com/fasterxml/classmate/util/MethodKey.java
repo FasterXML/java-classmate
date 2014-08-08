@@ -3,7 +3,8 @@ package com.fasterxml.classmate.util;
 import java.io.Serializable;
 
 /**
- * Helper class needed when storing methods in maps; must
+ * Helper class needed when storing methods in maps.
+ * Immutable.
  */
 @SuppressWarnings("serial")
 public class MethodKey implements Serializable
