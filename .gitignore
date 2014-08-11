@@ -1,7 +1,7 @@
 # Skip maven 'target' directory
 target
 
-# plus eclipse crap
+# plus eclipse artifacts
 .classpath
 .project
 .settings
