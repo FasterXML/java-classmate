@@ -30,7 +30,7 @@ To use ClassMate via Maven, include following dependency:
     <dependency>
       <groupId>com.fasterxml</groupId>
       <artifactId>classmate</artifactId>
-      <version>1.0.0</version>
+      <version>1.1.0</version>
     </dependency>
 
 ### Non-Maven
