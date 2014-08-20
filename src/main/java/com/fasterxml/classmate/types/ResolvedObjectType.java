@@ -17,7 +17,13 @@ import com.fasterxml.classmate.members.RawMethod;
  */
 public class ResolvedObjectType extends ResolvedType
 {
-    protected final ResolvedObjectType _superClass;
+    /**
+     * While fundamentally super class has to be {@link ResolvedObjectType}
+     * (or null for {@link java.lang.Object}), we may need to hold on to
+     * a {@link ResolvedRecursiveType} occasionally.
+     */
+    protected final ResolvedType _superClass;
+
     /**
      * List of interfaces this type implements; may be empty but never null
      */
@@ -44,9 +50,9 @@ public class ResolvedObjectType extends ResolvedType
     /* Life cycle
     /**********************************************************************
      */
-
+    
     public ResolvedObjectType(Class<?> erased, TypeBindings bindings,
-            ResolvedObjectType superClass, List<ResolvedType> interfaces)
+            ResolvedType superClass, List<ResolvedType> interfaces)
     {
         this(erased, bindings, superClass,
                 (interfaces == null || interfaces.isEmpty()) ? NO_TYPES :
@@ -54,12 +60,41 @@ public class ResolvedObjectType extends ResolvedType
     }
 
     public ResolvedObjectType(Class<?> erased, TypeBindings bindings,
-            ResolvedObjectType superClass, ResolvedType[] interfaces)
+            ResolvedType superClass, ResolvedType[] interfaces)
     {
         super(erased, bindings);
+        /* 19-Aug-2014, tatu: bit unclean, but has to do for now.
+         *   Problem is, there is no common super-type, nor can we yet
+         *   force or coerce recursive types. Rather, they may only get
+         *   resolved only slightly after construction. So... need to
+         *   keep a reference.
+         */
+        if (superClass != null) {
+            if (!(superClass instanceof ResolvedObjectType)
+                    && !(superClass instanceof ResolvedRecursiveType)
+                    ) {
+                throw new IllegalArgumentException("Unexpected parent type for "
+                        +erased.getName()+": "+superClass.getClass().getName());
+            }
+        }
+        
         _superClass = superClass;
         _superInterfaces = (interfaces == null) ? NO_TYPES : interfaces;
         _modifiers = erased.getModifiers();
+    }
+
+    @Deprecated // since 1.1; removed from 1.2 -- kept for binary backwards compatibility
+    public ResolvedObjectType(Class<?> erased, TypeBindings bindings,
+            ResolvedObjectType superClass, List<ResolvedType> interfaces)
+    {
+        this(erased, bindings, (ResolvedType) superClass, interfaces);
+    }
+
+    @Deprecated // since 1.1; removed from 1.2 -- kept for binary backwards compatibility
+    public ResolvedObjectType(Class<?> erased, TypeBindings bindings,
+            ResolvedObjectType superClass, ResolvedType[] interfaces)
+    {
+        this(erased, bindings, (ResolvedType) superClass, interfaces);
     }
     
     @Override
@@ -74,7 +109,27 @@ public class ResolvedObjectType extends ResolvedType
      */
 
     @Override
-    public ResolvedObjectType getParentClass() { return _superClass; }
+    public ResolvedObjectType getParentClass() {
+        
+        /* 19-Aug-2014, tatu: Ugly does it... sigh.
+         *   But can't be helped because ResolvedRecursiveType is typically only
+         *   resolved after instances of this type have been constructed.
+         *   This means that resolution will need to be done somewhat dynamically.
+         */
+        if (_superClass == null) {
+            return null;
+        }
+        if (_superClass instanceof ResolvedObjectType) {
+            return (ResolvedObjectType) _superClass;
+        }
+        ResolvedType rt = ((ResolvedRecursiveType) _superClass).getSelfReferencedType();
+        if (!(rt instanceof ResolvedObjectType)) {
+            throw new IllegalStateException("Internal error: self-referential parent type ("
+                    +_superClass+") does not resolve into proper ResolvedObjectType, but instead to: "
+                    +rt);
+        }
+        return (ResolvedObjectType) rt;
+    }
 
     @Override
     public ResolvedType getSelfReferencedType() { return null; }

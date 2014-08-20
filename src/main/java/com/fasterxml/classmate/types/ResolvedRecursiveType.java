@@ -20,7 +20,7 @@ import com.fasterxml.classmate.members.RawMethod;
 public class ResolvedRecursiveType extends ResolvedType
 {
     /**
-     * Actual fully resolved type; assigned once resultion is complete
+     * Actual fully resolved type; assigned once resolution is complete
      */
     protected ResolvedType _referencedType;
 

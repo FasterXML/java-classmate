@@ -11,13 +11,16 @@ import java.util.List;
 
 import static junit.framework.Assert.*;
 
-/**
- * User: blangel
- * Date: 4/13/12
- * Time: 4:30 PM
- */
-public class ResolvedTypeTest {
+public class ResolvedTypeTest
+{
+    // For [Issue#16]
 
+    private static class Foo16 extends Bar16 { }
+
+    private static class Bar16 extends Zen16<Bar16, Foo16> { }
+
+    private static class Zen16<A, B extends A>  { }
+    
     @Test
     public void canCreateSubtype() {
         ResolvedObjectType stringType = new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES);
@@ -111,4 +114,31 @@ public class ResolvedTypeTest {
         assertEquals(0, type.getStaticFields().size());
     }
 
+    // For [Issue#16]
+    @Test
+    public void testIssue16()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType type = resolver.resolve(Bar16.class);
+        assertNotNull(type);
+
+        // We'll have the "default" constructor so
+        assertEquals(1, type.getConstructors().size());
+        assertEquals(0, type.getMemberFields().size());
+        assertEquals(0, type.getMemberMethods().size());
+        assertEquals(0, type.getStaticMethods().size());
+        assertEquals(0, type.getStaticFields().size());
+
+        assertEquals(Bar16.class, type.getErasedType());
+        ResolvedType parent = type.getParentClass();
+        assertNotNull(parent);
+        assertEquals(Zen16.class, parent.getErasedType());
+
+        List<ResolvedType> params = parent.getTypeParameters();
+        assertNotNull(params);
+        assertEquals(2, params.size());
+
+        assertEquals(Bar16.class, params.get(0).getErasedType());
+        assertEquals(Foo16.class, params.get(1).getErasedType());
+    }
 }

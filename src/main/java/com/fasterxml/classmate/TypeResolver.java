@@ -411,15 +411,21 @@ public class TypeResolver implements Serializable
         return resolved;
     }
 
-    private ResolvedObjectType _resolveSuperClass(ClassStack context, Class<?> rawType, TypeBindings typeBindings)
+    /**
+     * NOTE: return type changed in 1.0.1 from {@link ResolvedObjectType} to
+     *    {@link ResolvedType}, since it was found that other types may
+     *    be returned...
+     * 
+     * @return Usually a {@link ResolvedObjectType}, but possibly also
+     *    {@link ResolvedRecursiveType}
+     */
+    private ResolvedType _resolveSuperClass(ClassStack context, Class<?> rawType, TypeBindings typeBindings)
     {
         Type parent = rawType.getGenericSuperclass();
         if (parent == null) {
             return null;
         }
-        ResolvedType rt = _fromAny(context, parent, typeBindings);
-        // can this ever be something other than class? (primitive, array)
-        return (ResolvedObjectType) rt;
+        return _fromAny(context, parent, typeBindings);
     }
     
     private ResolvedType _fromParamType(ClassStack context, ParameterizedType ptype, TypeBindings parentBindings)
