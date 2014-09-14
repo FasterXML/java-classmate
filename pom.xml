@@ -15,9 +15,9 @@
     </description>
     <url>http://github.com/cowtowncoder/java-classmate</url>
     <scm>
-        <connection>scm:git:git@github.com:cowtowncoder/java-classmate.git</connection>
-        <developerConnection>scm:git:git@github.com:cowtowncoder/java-classmate.git</developerConnection>
-        <url>http://github.com/cowtowncoder/java-classmate</url>
+        <connection>scm:git:git@github.com:arikkfir/java-classmate.git</connection>
+        <developerConnection>scm:git:git@github.com:arikkfir/java-classmate.git</developerConnection>
+        <url>http://github.com/arikkfir/java-classmate</url>
     </scm>
     <developers>
         <developer>
@@ -153,6 +153,7 @@
             </activation>
             <build>
                 <plugins>
+<!--
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
@@ -167,9 +168,24 @@
                             </execution>
                         </executions>
                     </plugin>
+-->
                 </plugins>
             </build>
         </profile>
     </profiles>
     <!-- NOTE: repositories from parent POM -->
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>libs-snapshot-local</id>
+            <name>repo.arik.home.local-snapshots</name>
+            <url>http://repo.arik.home.local/libs-snapshot-local</url>
+        </snapshotRepository>
+        <repository>
+            <id>libs-release-local</id>
+            <name>repo.arik.home.local-releases</name>
+            <url>http://repo.arik.home.local/libs-release-local</url>
+        </repository>
+    </distributionManagement>
+
 </project>
