@@ -19,13 +19,13 @@ public class TestMemberResolver extends BaseTest
     static class BaseClass
     {
         protected int intField;
-
+        
         protected static int staticIntField;
 
         public BaseClass(String arg) { }
 
         public BaseClass(String arg, boolean b) { }
-
+        
         public static BaseClass factory1(String arg) { return null; }
 
         public void member1() { }
@@ -40,7 +40,7 @@ public class TestMemberResolver extends BaseTest
         protected String stringField;
 
         protected static int staticIntField2;
-
+        
         public SubClass() { super(""); }
 
         @Override public void member2() { }
@@ -53,10 +53,10 @@ public class TestMemberResolver extends BaseTest
         public static int y;
 
         public DummyMixIn() { }
-
+        
         public void method(String arg) { }
         public static void staticMethod(String arg) { }
-    }
+    } 
 
     static class DummyMixIn2 extends DummyMixIn { }
 
@@ -72,7 +72,7 @@ public class TestMemberResolver extends BaseTest
 
         private String getTest() { return test; }
     }
-
+    
     /*
     /**********************************************************************
     /* setup
@@ -80,7 +80,7 @@ public class TestMemberResolver extends BaseTest
      */
 
     protected TypeResolver typeResolver;
-
+    
     protected void setUp()
     {
         // Let's use a single instance for all tests, to increase chance of seeing failures
@@ -94,17 +94,7 @@ public class TestMemberResolver extends BaseTest
      */
 
     /**
-     * Test for most basic thing; type hierarchy resolution
-     */
-    public void testJavaLangObjectResolving()
-    {
-        MemberResolver mr = new MemberResolver(typeResolver);
-        ResolvedType mainType = typeResolver.resolve(Object.class);
-        mr.resolve(mainType, null, null);
-    }
-
-    /**
-     * Test for most basic thing; type hierarchy resolution
+     * Test for most basic thing; type hierarchy resolution 
      */
     public void testSimpleHierarchy()
     {
@@ -167,7 +157,7 @@ public class TestMemberResolver extends BaseTest
         ResolvedTypeWithMembers bean = mr.resolve(mainType, null, null);
         ResolvedMethod[] statics = bean.getStaticMethods();
         assertEquals(1, statics.length);
-
+        
         ResolvedMethod[] members = bean.getMemberMethods();
         assertEquals(2, members.length);
 
@@ -177,7 +167,7 @@ public class TestMemberResolver extends BaseTest
         ResolvedConstructor[] ctors = bean.getConstructors();
         assertEquals(2, ctors.length);
     }
-
+    
     /**
      * Test for checking basic aggregation with two types (subtype that
      * extends supertype)
@@ -187,7 +177,7 @@ public class TestMemberResolver extends BaseTest
         MemberResolver mr = new MemberResolver(typeResolver);
         ResolvedType mainType = typeResolver.resolve(SubClass.class);
         ResolvedTypeWithMembers bean = mr.resolve(mainType, null, null);
-
+        
         verifySubtypeAggregate(bean);
     }
 
@@ -360,12 +350,12 @@ public class TestMemberResolver extends BaseTest
     /* Helper methods
     /**********************************************************************
      */
-
+    
     private void verifySubtypeAggregate(ResolvedTypeWithMembers bean)
     {
         ResolvedMethod[] statics = bean.getStaticMethods();
         assertEquals(0, statics.length);
-
+        
         ResolvedMethod[] members = bean.getMemberMethods();
         assertEquals(2, members.length);
 
