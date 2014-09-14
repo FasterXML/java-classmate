@@ -13,19 +13,19 @@ import com.fasterxml.classmate.util.ClassKey;
 @SuppressWarnings("serial")
 public class MemberResolver implements Serializable
 {
-
+    
     /**
      * Type resolved needed for resolving types of member objects
      * (method argument and return; field types; constructor argument types)
      */
     protected final TypeResolver _typeResolver;
-
+    
     /*
     /**********************************************************************
     /* Modifiable configuration
     /**********************************************************************
      */
-
+    
     /**
      * Configuration setting that determines whether members from
      * {@link java.lang.Object} are included or not; by default
@@ -56,7 +56,7 @@ public class MemberResolver implements Serializable
      * constructors.
      */
     protected Filter<RawConstructor> _constructorFilter;
-
+    
     /*
     /**********************************************************************
     /* Life cycle (construct and config)
@@ -96,7 +96,7 @@ public class MemberResolver implements Serializable
         _constructorFilter = f;
         return this;
     }
-
+    
     /*
     /**********************************************************************
     /* Public API
@@ -107,7 +107,7 @@ public class MemberResolver implements Serializable
      * Method for constructing hierarchy object needed to fully resolve
      * member information, including basic type flattening as well as
      * addition of mix-in types in appropriate positions.
-     *
+     * 
      * @param mainType Resolved type that is the starting point (i.e. the leaf class)
      *    for member resolution.
      * @param annotationConfig Configuration of annotation types; which ones to include, how to inherit
@@ -194,13 +194,13 @@ public class MemberResolver implements Serializable
             }
         }
     }
-
+    
     /*
     /**********************************************************************
     /* Internal methods
     /**********************************************************************
      */
-
+    
     protected void _gatherTypes(ResolvedType currentType, Set<ClassKey> seenTypes, List<ResolvedType> types)
     {
         // may get called with null if no parent type
@@ -209,7 +209,7 @@ public class MemberResolver implements Serializable
         }
         Class<?> raw = currentType.getErasedType();
         // Also, don't include Object.class unless that's ok
-        if (!_cfgIncludeLangObject) {
+        if (!_cfgIncludeLangObject && raw == Object.class) {
             return;
         }
         // Finally, only include first instance of an interface, so:
