@@ -149,7 +149,7 @@ public abstract class ResolvedMember<T extends Member>
     {
         if (o == this) return true;
         if (o == null || o.getClass() != getClass()) return false;
-        ResolvedMember other = (ResolvedMember) o;
+        ResolvedMember<?> other = (ResolvedMember<?>) o;
         return (other._member == _member);
     }
     

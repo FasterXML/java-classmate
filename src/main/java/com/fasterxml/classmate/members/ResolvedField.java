@@ -7,6 +7,7 @@ import com.fasterxml.classmate.Annotations;
 import com.fasterxml.classmate.ResolvedType;
 
 public final class ResolvedField extends ResolvedMember<Field>
+     implements Comparable<ResolvedField>
 {
     public ResolvedField(ResolvedType context, Annotations ann,
             Field field, ResolvedType type)
@@ -26,5 +27,10 @@ public final class ResolvedField extends ResolvedMember<Field>
 
     public boolean isVolatile() {
         return Modifier.isVolatile(getModifiers());
+    }
+
+    @Override
+    public int compareTo(ResolvedField other) {
+         return getName().compareTo(other.getName());
     }
 }

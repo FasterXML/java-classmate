@@ -7,6 +7,7 @@ import com.fasterxml.classmate.Annotations;
 import com.fasterxml.classmate.ResolvedType;
 
 public final class ResolvedMethod extends ResolvedParameterizedMember<Method>
+     implements Comparable<ResolvedMethod>
 {
     public ResolvedMethod(ResolvedType context, Annotations ann, Method method,
             ResolvedType returnType, ResolvedType[] argumentTypes)
@@ -44,4 +45,21 @@ public final class ResolvedMethod extends ResolvedParameterizedMember<Method>
 
     public ResolvedType getReturnType() { return getType(); }
 
+    /*
+    /**********************************************************************
+    /* Standard method override
+    /**********************************************************************
+     */
+
+    @Override
+    public int compareTo(ResolvedMethod other)
+    {
+         // primary sort by name (alphabetic); secondary by arg count (ascending)
+         int diff = getName().compareTo(other.getName());
+         if (diff == 0) {
+              // subtract fine, no fear of overflow here
+              diff = getArgumentCount() - other.getArgumentCount();
+         }
+         return diff;
+    }
 }

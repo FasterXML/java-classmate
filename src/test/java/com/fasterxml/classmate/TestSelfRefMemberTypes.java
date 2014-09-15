@@ -1,5 +1,8 @@
 package com.fasterxml.classmate;
 
+import java.util.Arrays;
+
+import com.fasterxml.classmate.members.ResolvedField;
 import com.fasterxml.classmate.members.ResolvedMethod;
 
 /**
@@ -25,7 +28,26 @@ public class TestSelfRefMemberTypes extends BaseTest
         return null;
       }
     }
+
+    // From Jackson-databind, [Issue#543]
+    static abstract class Animal { }
+
+    static class ContainerWithField<T extends Animal> {
+         public T animal;
+
+         public ContainerWithField(T a) { animal = a; }
+     }
     
+    static class ContainerWithTwoAnimals<U extends Animal,V extends Animal> extends ContainerWithField<U>
+    {
+         public V animal2;
+    
+         public ContainerWithTwoAnimals(U a1, V a2) {
+              super(a1);
+              animal2 = a2;
+         }
+    }
+
     /*
     /**********************************************************************
     /* setup
@@ -76,5 +98,27 @@ public class TestSelfRefMemberTypes extends BaseTest
           // All right... hmmh. Actually, due to lack of bindings, they are just Objects
           assertEquals(ComplexSelfType.class, argType.getErasedType());
           assertEquals(ComplexSelfType.class, returnType.getErasedType());
-      }
+    }
+
+    public void testSelfReferencesVaryingDimensions()
+    {
+          TypeResolver typeResolver = new TypeResolver();
+          MemberResolver memberResolver = new MemberResolver(typeResolver);
+
+          ResolvedType t = typeResolver.resolve(ContainerWithTwoAnimals.class);
+          ResolvedField[] fields = memberResolver.resolve(t, null, null).getMemberFields();
+          assertEquals(2, fields.length);
+          Arrays.sort(fields);
+
+          ResolvedField m = fields[0];
+          assertEquals("animal", m.getName());
+          assertEquals(Animal.class, m.getType().getErasedType());
+
+          m = fields[1];
+          assertEquals("animal2", m.getName());
+          assertEquals(Animal.class, m.getType().getErasedType());
+
+          // anything else worth asserting?
+    }
 }
+
