@@ -2,7 +2,6 @@ package com.fasterxml.classmate;
 
 import org.junit.Test;
 
-import static junit.framework.Assert.assertSame;
 import static junit.framework.Assert.assertTrue;
 
 /**
@@ -30,15 +29,4 @@ public class AnnotationInclusionTest {
         }
         assertTrue(found);
     }
-
-    @Test
-    public void valueOf() {
-        AnnotationInclusion dontInclude = AnnotationInclusion.valueOf("DONT_INCLUDE");
-        assertSame(AnnotationInclusion.DONT_INCLUDE, dontInclude);
-        AnnotationInclusion includeAndInherit = AnnotationInclusion.valueOf("INCLUDE_AND_INHERIT");
-        assertSame(AnnotationInclusion.INCLUDE_AND_INHERIT, includeAndInherit);
-        AnnotationInclusion includeButDontInherit = AnnotationInclusion.valueOf("INCLUDE_BUT_DONT_INHERIT");
-        assertSame(AnnotationInclusion.INCLUDE_BUT_DONT_INHERIT, includeButDontInherit);
-    }
-
 }

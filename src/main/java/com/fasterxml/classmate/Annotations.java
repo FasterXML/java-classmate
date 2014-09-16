@@ -2,8 +2,7 @@ package com.fasterxml.classmate;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * Container class used for storing set of annotations resolved for types (classes)
@@ -14,6 +13,8 @@ import java.util.Iterator;
 @SuppressWarnings("serial")
 public class Annotations implements Serializable, Iterable<Annotation>
 {
+    private final Annotation[] NO_ANNOTATIONS = new Annotation[0];
+     
     protected HashMap<Class<? extends Annotation>,Annotation> _annotations;
 
     /*
@@ -65,6 +66,12 @@ public class Annotations implements Serializable, Iterable<Annotation>
         }
     }
 
+    /*
+    /**********************************************************************
+    /* Accessors
+    /**********************************************************************
+     */
+
     public Iterator<Annotation> iterator()
     {
         if (_annotations == null) {
@@ -72,12 +79,6 @@ public class Annotations implements Serializable, Iterable<Annotation>
         }
         return _annotations.values().iterator();
     }
-
-    /*
-    /**********************************************************************
-    /* Accessors
-    /**********************************************************************
-     */
     
     public int size() {
         return (_annotations == null) ? 0 : _annotations.size();
@@ -91,7 +92,29 @@ public class Annotations implements Serializable, Iterable<Annotation>
         }
         return (A) _annotations.get(cls);
     }
-    
+
+    /**
+     * @since 1.1.1
+     */
+    public Annotation[] asArray() {
+         if (_annotations == null || _annotations.isEmpty()) {
+              return NO_ANNOTATIONS;
+         }
+         return _annotations.values().toArray(new Annotation[_annotations.size()]);
+    }
+
+    /**
+     * @since 1.1.1
+     */
+    public List<Annotation> asList() {
+         if (_annotations == null || _annotations.isEmpty()) {
+              return Collections.emptyList();
+         }
+         List<Annotation> l = new ArrayList<Annotation>(_annotations.size());
+         l.addAll(_annotations.values());
+         return l;
+    }
+
     /*
     /**********************************************************************
     /* Standard method overrides

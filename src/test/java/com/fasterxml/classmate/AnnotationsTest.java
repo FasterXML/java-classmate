@@ -8,6 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
 
 import static junit.framework.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * User: blangel
@@ -35,6 +36,10 @@ public class AnnotationsTest {
 
         assertNotNull(annotations.get(Test.class));
         assertNotNull(annotations.get(Marker.class));
+
+        assertEquals(2, annotations.size());
+        assertEquals(2, annotations.asList().size());
+        assertEquals(2, annotations.asArray().length);
     }
 
     @Test

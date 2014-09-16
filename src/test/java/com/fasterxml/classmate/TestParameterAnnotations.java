@@ -92,6 +92,7 @@ public class TestParameterAnnotations {
         checkMethods(methods, BaseInterface.class);
 
         ResolvedMethod m = methods[0];
+        assertEquals("something", m.getName());
         assertNotNull(m.getParam(0, Marker.class));
     }
 
