@@ -28,7 +28,7 @@ public class ResolvedTypeWithMembers
     private final static ResolvedMethod[] NO_RESOLVED_METHODS = new ResolvedMethod[0];
     private final static ResolvedField[] NO_RESOLVED_FIELDS = new ResolvedField[0];
     private final static ResolvedConstructor[] NO_RESOLVED_CONSTRUCTORS = new ResolvedConstructor[0];
-    
+
     /**
      * Default annotation configuration is to ignore all annotations types.
      */
@@ -44,7 +44,7 @@ public class ResolvedTypeWithMembers
      * Handler for resolving annotation information
      */
     protected final AnnotationHandler _annotationHandler;
-    
+
     /**
      * Leaf of the type hierarchy, i.e. type from which this hierarchy
      * was generated.
@@ -66,12 +66,12 @@ public class ResolvedTypeWithMembers
      * Filter to use for selecting constructors to include
      */
     protected Filter<RawConstructor> _constructorFilter;
-    
+
     /**
      * Filter to use for selecting methods to include
      */
     protected Filter<RawMethod> _methodFilter;
-    
+
     /*
     /**********************************************************************
     /* Lazily constructed members
@@ -82,6 +82,8 @@ public class ResolvedTypeWithMembers
 
     protected ResolvedMethod[] _memberMethods = null;
 
+    protected ResolvedField[] _staticFields = null;
+
     protected ResolvedField[] _memberFields = null;
 
     protected ResolvedConstructor[] _constructors = null;
@@ -91,7 +93,7 @@ public class ResolvedTypeWithMembers
     /* Life cycle at this point
     /**********************************************************************
      */
-    
+
     public ResolvedTypeWithMembers(TypeResolver typeResolver, AnnotationConfiguration annotationConfig,
             HierarchicType mainType, HierarchicType[] types,
             Filter<RawConstructor> constructorFilter, Filter<RawField> fieldFilter, Filter<RawMethod> methodFilter)
@@ -107,13 +109,13 @@ public class ResolvedTypeWithMembers
         _fieldFilter = fieldFilter;
         _methodFilter = methodFilter;
     }
-    
+
     /*
     /**********************************************************************
     /* Public API, access to component types
     /**********************************************************************
      */
-    
+
     public int size() { return _types.length; }
 
     /**
@@ -150,7 +152,7 @@ public class ResolvedTypeWithMembers
         List<HierarchicType> l = Arrays.asList(_types);
         return l.subList(0, index);
     }
-    
+
     /*
     /**********************************************************************
     /* Public API, actual resolution of members
@@ -177,7 +179,16 @@ public class ResolvedTypeWithMembers
         }
         return _memberFields;
     }
-    
+
+    public ResolvedField[] getStaticFields()
+    {
+        if( _staticFields == null )
+        {
+            _staticFields = resolveStaticFields();
+        }
+        return _staticFields;
+    }
+
     public ResolvedMethod[] getMemberMethods()
     {
         if (_memberMethods == null) {
@@ -193,13 +204,13 @@ public class ResolvedTypeWithMembers
         }
         return _constructors;
     }
-    
+
     /*
     /**********************************************************************
     /* Internal methods: actual resolution
     /**********************************************************************
      */
-    
+
     /**
      * Method that will actually resolve full information (types, annotations)
      * for constructors of the main type.
@@ -217,7 +228,7 @@ public class ResolvedTypeWithMembers
         // then apply overrides (mix-ins):
         for (HierarchicType type : overridesOnly()) {
             for (RawConstructor raw : type.getType().getConstructors()) {
-                ResolvedConstructor constructor = constructors.get(raw.createKey()); 
+                ResolvedConstructor constructor = constructors.get(raw.createKey());
                 // must override something, otherwise to ignore
                 if (constructor != null) {
                     for (Annotation ann : raw.getAnnotations()) {
@@ -290,7 +301,66 @@ public class ResolvedTypeWithMembers
         }
         return fields.values().toArray(new ResolvedField[fields.size()]);
     }
-    
+
+    /**
+     * Method for fully resolving static field definitions and associated annotations.
+     * Neither field definitions nor associated annotations inherit, but we may
+     * still need to add annotation overrides, as well as filter out filters
+     * and annotations that caller is not interested in.
+     */
+    protected ResolvedField[] resolveStaticFields()
+    {
+        LinkedHashMap<String, ResolvedField> fields = new LinkedHashMap<String, ResolvedField>();
+
+        /* Fields need different handling: must start from bottom; and annotations only get added
+         * as overrides, never as defaults. And sub-classes fully mask fields. This makes
+         * handling bit simpler than that of member methods.
+         */
+        for( int typeIndex = _types.length; --typeIndex >= 0; )
+        {
+            HierarchicType thisType = _types[ typeIndex ];
+            // If it's just a mix-in, add annotations as overrides
+            if( thisType.isMixin() )
+            {
+                for( RawField raw : thisType.getType().getStaticFields() )
+                {
+                    if( ( _fieldFilter != null ) && !_fieldFilter.include( raw ) )
+                    {
+                        continue;
+                    }
+                    ResolvedField field = fields.get( raw.getName() );
+                    if( field != null )
+                    {
+                        for( Annotation ann : raw.getAnnotations() )
+                        {
+                            if( _annotationHandler.includeMethodAnnotation( ann ) )
+                            {
+                                field.applyOverride( ann );
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            { // If actual type, add fields, masking whatever might have existed before:
+                for( RawField field : thisType.getType().getStaticFields() )
+                {
+                    if( ( _fieldFilter != null ) && !_fieldFilter.include( field ) )
+                    {
+                        continue;
+                    }
+                    fields.put( field.getName(), resolveField( field ) );
+                }
+            }
+        }
+        // and that's it?
+        if( fields.size() == 0 )
+        {
+            return NO_RESOLVED_FIELDS;
+        }
+        return fields.values().toArray( new ResolvedField[ fields.size() ] );
+    }
+
     /**
      * Method that will actually resolve full information (types, annotations)
      * for static methods, using configured filter.
@@ -307,7 +377,7 @@ public class ResolvedTypeWithMembers
         // then apply overrides (mix-ins):
         for (HierarchicType type : overridesOnly()) {
             for (RawMethod raw : type.getType().getStaticMethods()) {
-                ResolvedMethod method = methods.get(raw.createKey()); 
+                ResolvedMethod method = methods.get(raw.createKey());
                 // must override something, otherwise to ignore
                 if (method != null) {
                     for (Annotation ann : raw.getAnnotations()) {
@@ -343,7 +413,7 @@ public class ResolvedTypeWithMembers
 
                 MethodKey key = method.createKey();
                 ResolvedMethod old = methods.get(key);
-                
+
                 // Ok, now, mix-ins only contribute annotations; whereas 'real' types methods
                 if (type.isMixin()) { // mix-in: only get annotations
                     for (Annotation ann : method.getAnnotations()) {
@@ -503,7 +573,7 @@ public class ResolvedTypeWithMembers
         }
         return new ResolvedField(context, anns, field, type);
     }
-    
+
     /**
      * Method for resolving individual method completely
      */
@@ -559,7 +629,7 @@ public class ResolvedTypeWithMembers
         }
         return (annotationInclusion == AnnotationInclusion.INCLUDE_AND_INHERIT);
     }
-    
+
     /*
     /**********************************************************************
     /* Helper types
@@ -598,7 +668,7 @@ public class ResolvedTypeWithMembers
             _constructorInclusions.put(annType, incl);
             return (incl != AnnotationInclusion.DONT_INCLUDE);
         }
-        
+
         public boolean includeFieldAnnotation(Annotation ann)
         {
             Class<? extends Annotation> annType = ann.annotationType();
