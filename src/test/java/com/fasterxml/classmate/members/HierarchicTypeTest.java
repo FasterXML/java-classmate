@@ -1,15 +1,12 @@
 package com.fasterxml.classmate.members;
 
-import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
 import org.junit.Test;
 
 import static junit.framework.Assert.*;
 
 /**
- * User: blangel
- * Date: 4/13/12
- * Time: 12:56 PM
+ * @author blangel
  */
 public class HierarchicTypeTest {
 
@@ -22,7 +19,7 @@ public class HierarchicTypeTest {
         } catch (NullPointerException npe) {
             // expected
         }
-        ResolvedObjectType stringType = new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES);
+        ResolvedObjectType stringType = ResolvedObjectType.create(String.class, null, null, null);
         hierarchicType = new HierarchicType(stringType, false, 0);
         assertEquals(stringType.toString(), hierarchicType.toString());
     }
@@ -36,7 +33,7 @@ public class HierarchicTypeTest {
         } catch (NullPointerException npe) {
             // expected
         }
-        ResolvedObjectType stringType = new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES);
+        ResolvedObjectType stringType = ResolvedObjectType.create(String.class, null, null, null);
         hierarchicType = new HierarchicType(stringType, false, 0);
         assertEquals(stringType.hashCode(), hierarchicType.hashCode());
     }
@@ -63,9 +60,9 @@ public class HierarchicTypeTest {
         }
 
         // test unequal types
-        ResolvedObjectType stringType = new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES);
+        ResolvedObjectType stringType = ResolvedObjectType.create(String.class, null, null, null);
         hierarchicType = new HierarchicType(stringType, false, 0);
-        ResolvedObjectType objectType = new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES);
+        ResolvedObjectType objectType = ResolvedObjectType.create(Object.class, null, null, null);
         hierarchicType1 = new HierarchicType(objectType, false, 0);
         assertFalse(hierarchicType.equals(hierarchicType1));
         assertFalse(hierarchicType1.equals(hierarchicType));

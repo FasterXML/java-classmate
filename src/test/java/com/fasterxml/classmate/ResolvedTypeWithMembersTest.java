@@ -1,6 +1,7 @@
 package com.fasterxml.classmate;
 
 import com.fasterxml.classmate.members.*;
+
 import org.junit.Test;
 
 import java.lang.annotation.Inherited;
@@ -29,6 +30,7 @@ public class ResolvedTypeWithMembersTest {
     @Inherited
     private static @interface MarkerC { }
 
+    @SuppressWarnings("unused")
     private static class MixinCandidate {
         private static void staticOverride() { }
         private String shadowed;

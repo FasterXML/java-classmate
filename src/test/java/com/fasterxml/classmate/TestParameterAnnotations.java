@@ -47,6 +47,7 @@ public class TestParameterAnnotations {
     }
 
     static interface ExtendedInterface extends BaseInterface {
+        @Override
         void something(@MarkerOverridden(456) String value);
     }
 
@@ -59,6 +60,7 @@ public class TestParameterAnnotations {
     }
 
     static interface ExtendedMixIn extends MixIn {
+        @Override
         void something(@MarkerInherited @MarkerOverridden(456) String value);
     }
 
@@ -160,7 +162,7 @@ public class TestParameterAnnotations {
         assertEquals(type.getConstructors().length, constructors.length);
         for (ResolvedConstructor constructor : constructors) {
             try {
-                Constructor raw = constructor.getRawMember();
+                Constructor<?> raw = constructor.getRawMember();
                 assertEquals(type.getConstructor(raw.getParameterTypes()), raw);
             } catch (NoSuchMethodException e) {
                 fail("No such constructor: " + constructor);

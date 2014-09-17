@@ -10,6 +10,7 @@ target
 *.ipr
 *.iws
 *.iml
+.idea
 
 # and emacs temp save files
 *~

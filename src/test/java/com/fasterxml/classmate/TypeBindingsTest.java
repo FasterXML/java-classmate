@@ -65,7 +65,7 @@ public class TypeBindingsTest {
         TypeBindings instance = TypeBindings.create(String.class, (List<ResolvedType>) null);
         assertTrue(instance.isEmpty());
         List<ResolvedType> types = new ArrayList<ResolvedType>();
-        types.add(new ResolvedObjectType(Object.class, TypeBindings.emptyBindings(), null, ResolvedType.NO_TYPES));
+        types.add(ResolvedObjectType.create(Object.class, TypeBindings.emptyBindings(), null, null));
         instance = TypeBindings.create(Comparable.class, types);
         assertFalse(instance.isEmpty());
     }
@@ -74,7 +74,7 @@ public class TypeBindingsTest {
     public void getBoundName() {
         // test index bounds
         List<ResolvedType> types = new ArrayList<ResolvedType>();
-        types.add(new ResolvedObjectType(Object.class, TypeBindings.emptyBindings(), null, ResolvedType.NO_TYPES));
+        types.add(ResolvedObjectType.create(Object.class, TypeBindings.emptyBindings(), null, null));
         TypeBindings instance = TypeBindings.create(Comparable.class, types);
 
         assertNull(instance.getBoundName(-1));
@@ -89,7 +89,7 @@ public class TypeBindingsTest {
     public void getBoundType() {
         // test index bounds
         List<ResolvedType> types = new ArrayList<ResolvedType>();
-        types.add(new ResolvedObjectType(Object.class, TypeBindings.emptyBindings(), null, ResolvedType.NO_TYPES));
+        types.add(ResolvedObjectType.create(Object.class, TypeBindings.emptyBindings(), null, null));
         TypeBindings instance = TypeBindings.create(Comparable.class, types);
 
         assertNull(instance.getBoundType(-1));
@@ -105,11 +105,11 @@ public class TypeBindingsTest {
         assertEquals("", instance.toString());
 
         List<ResolvedType> types = new ArrayList<ResolvedType>();
-        types.add(new ResolvedObjectType(Object.class, TypeBindings.emptyBindings(), null, ResolvedType.NO_TYPES));
+        types.add(ResolvedObjectType.create(Object.class, TypeBindings.emptyBindings(), null, null));
         instance = TypeBindings.create(Comparable.class, types);
         assertEquals("<java.lang.Object>", instance.toString());
 
-        types.add(new ResolvedObjectType(String.class, TypeBindings.emptyBindings(), null, ResolvedType.NO_TYPES));
+        types.add(ResolvedObjectType.create(String.class, TypeBindings.emptyBindings(), null, null));
         instance = TypeBindings.create(Map.class, types);
         assertEquals("<java.lang.Object,java.lang.String>", instance.toString());
     }
@@ -133,21 +133,21 @@ public class TypeBindingsTest {
 
         // test unequal types length
         List<ResolvedType> types = new ArrayList<ResolvedType>();
-        types.add(new ResolvedObjectType(Object.class, TypeBindings.emptyBindings(), null, ResolvedType.NO_TYPES));
+        types.add(ResolvedObjectType.create(Object.class, TypeBindings.emptyBindings(), null, null));
         TypeBindings instance2 = TypeBindings.create(Comparable.class, types);
         assertFalse(instance.equals(instance2));
         assertFalse(instance2.equals(instance));
 
         // test equal types length (unequal values)
         types = new ArrayList<ResolvedType>();
-        types.add(new ResolvedObjectType(String.class, TypeBindings.emptyBindings(), null, ResolvedType.NO_TYPES));
+        types.add(ResolvedObjectType.create(String.class, TypeBindings.emptyBindings(), null, null));
         TypeBindings instance3 = TypeBindings.create(Comparable.class, types);
         assertFalse(instance2.equals(instance3));
         assertFalse(instance3.equals(instance2));
 
         // test equal types length (equal values)
         types = new ArrayList<ResolvedType>();
-        types.add(new ResolvedObjectType(String.class, TypeBindings.emptyBindings(), null, ResolvedType.NO_TYPES));
+        types.add(ResolvedObjectType.create(String.class, TypeBindings.emptyBindings(), null, null));
         TypeBindings instance4 = TypeBindings.create(Comparable.class, types);
         assertTrue(instance3.equals(instance4));
         assertTrue(instance4.equals(instance3));

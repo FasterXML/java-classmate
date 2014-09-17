@@ -47,7 +47,7 @@ public class ResolvedArrayTypeTest {
         ResolvedArrayType arrayType = new ResolvedArrayType(Object.class, null, null);
         assertEquals(0, arrayType.getImplementedInterfaces().size());
 
-        arrayType = new ResolvedArrayType(Collection.class, TypeBindings.create(String.class, (ResolvedType[]) null), new ResolvedObjectType(String.class, null, null, (ResolvedType[]) null));
+        arrayType = new ResolvedArrayType(Collection.class, TypeBindings.create(String.class, (ResolvedType[]) null), ResolvedObjectType.create(String.class, null, null, null));
         assertEquals(0, arrayType.getImplementedInterfaces().size());
     }
 
@@ -91,7 +91,7 @@ public class ResolvedArrayTypeTest {
             // expected
         }
 
-        ResolvedArrayType arrayType = new ResolvedArrayType(Object.class, null, new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null));
+        ResolvedArrayType arrayType = new ResolvedArrayType(Object.class, null, ResolvedObjectType.create(Object.class, null, null, null));
         StringBuilder buffer = new StringBuilder();
         StringBuilder returned = arrayType.appendSignature(buffer);
         assertSame(buffer, returned);
@@ -118,7 +118,7 @@ public class ResolvedArrayTypeTest {
             // expected
         }
 
-        ResolvedArrayType arrayType = new ResolvedArrayType(Object.class, null, new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null));
+        ResolvedArrayType arrayType = new ResolvedArrayType(Object.class, null, ResolvedObjectType.create(Object.class, null, null, null));
         StringBuilder buffer = new StringBuilder();
         StringBuilder returned = arrayType.appendErasedSignature(buffer);
         assertSame(buffer, returned);
@@ -145,7 +145,7 @@ public class ResolvedArrayTypeTest {
             // expected
         }
 
-        ResolvedArrayType arrayType = new ResolvedArrayType(Object.class, null, new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null));
+        ResolvedArrayType arrayType = new ResolvedArrayType(Object.class, null, ResolvedObjectType.create(Object.class, null, null, null));
         StringBuilder buffer = new StringBuilder();
         StringBuilder returned = arrayType.appendBriefDescription(buffer);
         assertSame(buffer, returned);
@@ -172,7 +172,7 @@ public class ResolvedArrayTypeTest {
             // expected
         }
 
-        ResolvedArrayType arrayType = new ResolvedArrayType(Object.class, null, new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null));
+        ResolvedArrayType arrayType = new ResolvedArrayType(Object.class, null, ResolvedObjectType.create(Object.class, null, null, null));
         StringBuilder buffer = new StringBuilder();
         StringBuilder returned = arrayType.appendFullDescription(buffer);
         assertSame(buffer, returned);

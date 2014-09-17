@@ -1,23 +1,21 @@
 package com.fasterxml.classmate.members;
 
-import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
+
 import org.junit.Test;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 /**
- * User: blangel
- * Date: 4/13/12
- * Time: 11:44 AM
+ * @author blangel
  */
 public class RawFieldTest {
 
+    @SuppressWarnings("unused")
     private static class ModifiersClass {
         private static String test;
         private transient String transientField;
@@ -40,6 +38,7 @@ public class RawFieldTest {
     }
 
     @Test
+    @SuppressWarnings("unused")
     public void init() {
         try {
             new RawField(null, null);
@@ -50,8 +49,8 @@ public class RawFieldTest {
 
     @Test
     public void isTransient() {
-        RawField rawField = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), transientFieldField);
-        RawField rawField1 = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), testField);
+        RawField rawField = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), transientFieldField);
+        RawField rawField1 = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), testField);
 
         assertTrue(rawField.isTransient());
         assertFalse(rawField1.isTransient());
@@ -59,8 +58,8 @@ public class RawFieldTest {
 
     @Test
     public void isVolatile() {
-        RawField rawField = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), volatileFieldField);
-        RawField rawField1 = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), testField);
+        RawField rawField = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), volatileFieldField);
+        RawField rawField1 = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), testField);
 
         assertTrue(rawField.isVolatile());
         assertFalse(rawField1.isVolatile());
@@ -69,7 +68,7 @@ public class RawFieldTest {
     @Test
     public void equals() {
         // test referential equality
-        RawField rawField = new RawField(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), serialVersionUIDField);
+        RawField rawField = new RawField(ResolvedObjectType.create(String.class, null, null, null), serialVersionUIDField);
         assertTrue(rawField.equals(rawField));
 
         // test null
@@ -79,12 +78,12 @@ public class RawFieldTest {
         assertFalse(rawField.equals("not a RawField"));
 
         // test unequal fields
-        RawField rawField1 = new RawField(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), testField);
+        RawField rawField1 = new RawField(ResolvedObjectType.create(String.class, null, null, null), testField);
         assertFalse(rawField.equals(rawField1));
         assertFalse(rawField1.equals(rawField));
 
-        RawField rawField2 = new RawField(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), testField);
-        RawField rawField3 = new RawField(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), serialVersionUIDField);
+        RawField rawField2 = new RawField(ResolvedObjectType.create(String.class, null, null, null), testField);
+        RawField rawField3 = new RawField(ResolvedObjectType.create(String.class, null, null, null), serialVersionUIDField);
         assertTrue(rawField.equals(rawField3));
         assertTrue(rawField3.equals(rawField));
         assertTrue(rawField1.equals(rawField2));

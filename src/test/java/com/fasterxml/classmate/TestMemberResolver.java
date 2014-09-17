@@ -61,6 +61,7 @@ public class TestMemberResolver extends BaseTest
     static class DummyMixIn2 extends DummyMixIn { }
 
     // simple class extending from Object for config tests (includeObject, filtering, etc)
+    @SuppressWarnings("unused")
     static class SimpleClass
     {
         private String test;
@@ -80,7 +81,8 @@ public class TestMemberResolver extends BaseTest
      */
 
     protected TypeResolver typeResolver;
-    
+
+    @Override
     protected void setUp()
     {
         // Let's use a single instance for all tests, to increase chance of seeing failures
@@ -305,7 +307,8 @@ public class TestMemberResolver extends BaseTest
         assertEquals(0, typesWithOverrides.size());
         // now test case with interfaces
         ResolvedType comparator = typeResolver.resolve(Comparator.class);
-        ResolvedObjectType stringType = new ResolvedObjectType(String.class, TypeBindings.emptyBindings(), null, new ResolvedType[] { comparator });
+        ResolvedObjectType stringType = new ResolvedObjectType(String.class, TypeBindings.emptyBindings(),
+                (ResolvedType) null, new ResolvedType[] { comparator });
         addOverridesMethod.invoke(memberResolver, typesWithOverrides, seenTypes, stringType);
         assertEquals(2, seenTypes.size());
         assertEquals(2, typesWithOverrides.size());
@@ -329,7 +332,7 @@ public class TestMemberResolver extends BaseTest
         ResolvedType currentType;
         Set<ClassKey> seenTypes = new HashSet<ClassKey>();
         List<ResolvedType> types = new ArrayList<ResolvedType>();
-        currentType = new ResolvedObjectType(String.class, TypeBindings.emptyBindings(), null, ResolvedType.NO_TYPES);
+        currentType = new ResolvedObjectType(String.class, TypeBindings.emptyBindings(), (ResolvedType) null, ResolvedType.NO_TYPES);
         seenTypes.add(new ClassKey(String.class));
 
         gatherTypesMethod.invoke(memberResolver, currentType, seenTypes, types);
@@ -338,7 +341,7 @@ public class TestMemberResolver extends BaseTest
 
         // now test that a type with interfaces has its interfaces gathered
         ResolvedType comparator = typeResolver.resolve(Comparator.class);
-        currentType = new ResolvedObjectType(String.class, TypeBindings.emptyBindings(), null, new ResolvedType[] { comparator });
+        currentType = new ResolvedObjectType(String.class, TypeBindings.emptyBindings(), (ResolvedType) null, new ResolvedType[] { comparator });
         seenTypes.clear();
         gatherTypesMethod.invoke(memberResolver, currentType, seenTypes, types);
         assertEquals(2, seenTypes.size());

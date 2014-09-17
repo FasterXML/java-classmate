@@ -83,28 +83,28 @@ public class TestResolvedTypeCache extends TestCase
         assertTrue(key.equals(key3));
 
         // test unequal, null other type-parameters
-        ResolvedTypeCache.Key key4 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] { new ResolvedObjectType(String.class, null, null, (ResolvedType[]) null)} );
+        ResolvedTypeCache.Key key4 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] { ResolvedObjectType.create(String.class, null, null, null)} );
         assertFalse(key.equals(key4));
         assertFalse(key4.equals(key));
 
         // test unequal, type-parameters length
         ResolvedTypeCache.Key key5 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] {
-                new ResolvedObjectType(String.class, null, null, (ResolvedType[]) null),
-                new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null)
+                ResolvedObjectType.create(String.class, null, null, null),
+                ResolvedObjectType.create(Object.class, null, null, null)
         });
         assertFalse(key4.equals(key5));
 
         // test unequal type-parameters
         ResolvedTypeCache.Key key6 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] {
-                new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null),
-                new ResolvedObjectType(String.class, null, null, (ResolvedType[]) null)
+                ResolvedObjectType.create(Object.class, null, null, null),
+                ResolvedObjectType.create(String.class, null, null, null)
         });
         assertFalse(key5.equals(key6));
 
         // test equal type-parameters
         ResolvedTypeCache.Key key7 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] {
-                new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null),
-                new ResolvedObjectType(String.class, null, null, (ResolvedType[]) null)
+                ResolvedObjectType.create(Object.class, null, null, null),
+                ResolvedObjectType.create(String.class, null, null, null)
         });
         assertTrue(key6.equals(key7));
 

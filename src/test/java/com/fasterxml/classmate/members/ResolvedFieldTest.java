@@ -1,14 +1,13 @@
 package com.fasterxml.classmate.members;
 
-import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
+
 import org.junit.Test;
 
 import java.lang.reflect.Field;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
 
 /**
  * User: blangel
@@ -40,18 +39,9 @@ public class ResolvedFieldTest {
     }
 
     @Test
-    public void init() {
-        try {
-            new ResolvedField(null, null, null, null);
-        } catch (NullPointerException npe) {
-            fail(npe.getMessage());
-        }
-    }
-
-    @Test
     public void isTransient() {
-        ResolvedField rawField = new ResolvedField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, transientFieldField, null);
-        ResolvedField rawField1 = new ResolvedField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, testField, null);
+        ResolvedField rawField = new ResolvedField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), null, transientFieldField, null);
+        ResolvedField rawField1 = new ResolvedField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), null, testField, null);
 
         assertTrue(rawField.isTransient());
         assertFalse(rawField1.isTransient());
@@ -59,8 +49,8 @@ public class ResolvedFieldTest {
 
     @Test
     public void isVolatile() {
-        ResolvedField rawField = new ResolvedField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, volatileFieldField, null);
-        ResolvedField rawField1 = new ResolvedField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, testField, null);
+        ResolvedField rawField = new ResolvedField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), null, volatileFieldField, null);
+        ResolvedField rawField1 = new ResolvedField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), null, testField, null);
 
         assertTrue(rawField.isVolatile());
         assertFalse(rawField1.isVolatile());
@@ -68,7 +58,7 @@ public class ResolvedFieldTest {
 
     @Test
     public void equals() {
-        ResolvedField resolvedField = new ResolvedField(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), null, serialVersionUIDField, null);
+        ResolvedField resolvedField = new ResolvedField(ResolvedObjectType.create(String.class, null, null, null), null, serialVersionUIDField, null);
         // referential equality
         assertTrue(resolvedField.equals(resolvedField));
 
@@ -79,13 +69,13 @@ public class ResolvedFieldTest {
         assertFalse(resolvedField.equals("not a ResolvedField"));
 
         // test inequality of field
-        ResolvedField resolvedField1 = new ResolvedField(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), null, testField, null);
+        ResolvedField resolvedField1 = new ResolvedField(ResolvedObjectType.create(String.class, null, null, null), null, testField, null);
         assertFalse(resolvedField.equals(resolvedField1));
         assertFalse(resolvedField1.equals(resolvedField));
 
         // test equality of field
-        ResolvedField resolvedField2 = new ResolvedField(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), null, testField, null);
-        ResolvedField resolvedField3 = new ResolvedField(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), null, serialVersionUIDField, null);
+        ResolvedField resolvedField2 = new ResolvedField(ResolvedObjectType.create(String.class, null, null, null), null, testField, null);
+        ResolvedField resolvedField3 = new ResolvedField(ResolvedObjectType.create(String.class, null, null, null), null, serialVersionUIDField, null);
 
         assertTrue(resolvedField.equals(resolvedField3));
         assertTrue(resolvedField3.equals(resolvedField));

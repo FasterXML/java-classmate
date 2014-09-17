@@ -11,13 +11,10 @@ import com.fasterxml.classmate.members.RawField;
 import org.junit.Test;
 
 /**
- * User: blangel
- * Date: 4/12/12
- * Time: 4:59 PM
+ * @author blangel
  */
 public class ResolvedObjectTypeTest extends BaseTest
 {
-
     private static class NoExplicitConstructor { }
 
     private static abstract class AbstractClass { }
@@ -27,36 +24,36 @@ public class ResolvedObjectTypeTest extends BaseTest
     @Test
     public void testConstructors()
     {
-        ResolvedObjectType resolvedObjectType = new ResolvedObjectType(String.class, null, null, (List<ResolvedType>) null);
+        ResolvedObjectType resolvedObjectType = ResolvedObjectType.create(String.class, null, null, (List<ResolvedType>) null);
         assertNotNull(resolvedObjectType._superInterfaces);
 
-        resolvedObjectType = new ResolvedObjectType(String.class, null, null, Collections.<ResolvedType>emptyList());
+        resolvedObjectType = ResolvedObjectType.create(String.class, null, null, Collections.<ResolvedType>emptyList());
         assertNotNull(resolvedObjectType._superInterfaces);
 
         List<ResolvedType> types = new ArrayList<ResolvedType>();
         types.add(resolvedObjectType);
-        ResolvedObjectType resolvedObjectType1 = new ResolvedObjectType(String.class, null, null, types);
+        ResolvedObjectType resolvedObjectType1 = ResolvedObjectType.create(String.class, null, null, types);
         assertNotNull(resolvedObjectType1._superInterfaces);
         assertSame(resolvedObjectType, resolvedObjectType1._superInterfaces[0]);
     }
 
     @Test
     public void testGetArrayElementType() {
-        ResolvedObjectType resolvedObjectType = new ResolvedObjectType(String.class, null, null, (List<ResolvedType>) null);
+        ResolvedObjectType resolvedObjectType = ResolvedObjectType.create(String.class, null, null, (List<ResolvedType>) null);
         assertNull(resolvedObjectType.getArrayElementType());
 
-        ResolvedObjectType resolvedObjectType1 = new ResolvedObjectType(String.class, TypeBindings.emptyBindings(), resolvedObjectType,
+        ResolvedObjectType resolvedObjectType1 = ResolvedObjectType.create(String.class, TypeBindings.emptyBindings(), resolvedObjectType,
                 Collections.<ResolvedType>emptyList());
         assertNull(resolvedObjectType1.getArrayElementType());
     }
 
     @Test
     public void testGetStaticFields() {
-        ResolvedObjectType objectType = new ResolvedObjectType(Object.class, null, null, Collections.<ResolvedType>emptyList());
+        ResolvedObjectType objectType = ResolvedObjectType.create(Object.class, null, null, Collections.<ResolvedType>emptyList());
         List<RawField> staticFields = objectType.getStaticFields();
         assertEquals(0, staticFields.size());
 
-        ResolvedObjectType stringType = new ResolvedObjectType(String.class, null, objectType, Collections.<ResolvedType>emptyList());
+        ResolvedObjectType stringType = ResolvedObjectType.create(String.class, null, objectType, Collections.<ResolvedType>emptyList());
         staticFields = stringType.getStaticFields();
         /* 13-May-2013, tatu: Looks like Java 7 will add fourth, "HASHING_SEED"?
          */
@@ -74,46 +71,46 @@ public class ResolvedObjectTypeTest extends BaseTest
 
     @Test
     public void testGetConstructors() {
-        ResolvedObjectType noExplicitConstructorType = new ResolvedObjectType(NoExplicitConstructor.class, null, null, Collections.<ResolvedType>emptyList());
+        ResolvedObjectType noExplicitConstructorType = ResolvedObjectType.create(NoExplicitConstructor.class, null, null, Collections.<ResolvedType>emptyList());
         List<RawConstructor> constructors = noExplicitConstructorType.getConstructors();
 
         assertEquals(1, constructors.size());
 
         // abstract classes have constructors...they just can't be instantiated except via a sub-class instantiation
-        ResolvedObjectType abstractClass = new ResolvedObjectType(AbstractClass.class, null, null, Collections.<ResolvedType>emptyList());
+        ResolvedObjectType abstractClass = ResolvedObjectType.create(AbstractClass.class, null, null, Collections.<ResolvedType>emptyList());
         constructors = abstractClass.getConstructors();
         assertEquals(1, constructors.size());
 
-        ResolvedObjectType primitiveType = new ResolvedObjectType(boolean.class, null, null, Collections.<ResolvedType>emptyList());
+        ResolvedObjectType primitiveType = ResolvedObjectType.create(boolean.class, null, null, Collections.<ResolvedType>emptyList());
         constructors = primitiveType.getConstructors();
         assertEquals(0, constructors.size());
-        primitiveType = new ResolvedObjectType(void.class, null, null, Collections.<ResolvedType>emptyList());
+        primitiveType = ResolvedObjectType.create(void.class, null, null, Collections.<ResolvedType>emptyList());
         constructors = primitiveType.getConstructors();
         assertEquals(0, constructors.size());
-        primitiveType = new ResolvedObjectType(int.class, null, null, Collections.<ResolvedType>emptyList());
+        primitiveType = ResolvedObjectType.create(int.class, null, null, Collections.<ResolvedType>emptyList());
         constructors = primitiveType.getConstructors();
         assertEquals(0, constructors.size());
-        primitiveType = new ResolvedObjectType(long.class, null, null, Collections.<ResolvedType>emptyList());
+        primitiveType = ResolvedObjectType.create(long.class, null, null, Collections.<ResolvedType>emptyList());
         constructors = primitiveType.getConstructors();
         assertEquals(0, constructors.size());
-        primitiveType = new ResolvedObjectType(short.class, null, null, Collections.<ResolvedType>emptyList());
+        primitiveType = ResolvedObjectType.create(short.class, null, null, Collections.<ResolvedType>emptyList());
         constructors = primitiveType.getConstructors();
         assertEquals(0, constructors.size());
-        primitiveType = new ResolvedObjectType(double.class, null, null, Collections.<ResolvedType>emptyList());
+        primitiveType = ResolvedObjectType.create(double.class, null, null, Collections.<ResolvedType>emptyList());
         constructors = primitiveType.getConstructors();
         assertEquals(0, constructors.size());
-        primitiveType = new ResolvedObjectType(float.class, null, null, Collections.<ResolvedType>emptyList());
+        primitiveType = ResolvedObjectType.create(float.class, null, null, Collections.<ResolvedType>emptyList());
         constructors = primitiveType.getConstructors();
         assertEquals(0, constructors.size());
-        primitiveType = new ResolvedObjectType(byte.class, null, null, Collections.<ResolvedType>emptyList());
+        primitiveType = ResolvedObjectType.create(byte.class, null, null, Collections.<ResolvedType>emptyList());
         constructors = primitiveType.getConstructors();
         assertEquals(0, constructors.size());
 
-        ResolvedObjectType arrayType = new ResolvedObjectType(Object[].class, null, null, Collections.<ResolvedType>emptyList());
+        ResolvedObjectType arrayType = ResolvedObjectType.create(Object[].class, null, null, Collections.<ResolvedType>emptyList());
         constructors = arrayType.getConstructors();
         assertEquals(0, constructors.size());
 
-        ResolvedObjectType interfaceClass = new ResolvedObjectType(NoConstructor.class, null, null, Collections.<ResolvedType>emptyList());
+        ResolvedObjectType interfaceClass = ResolvedObjectType.create(NoConstructor.class, null, null, Collections.<ResolvedType>emptyList());
         constructors = interfaceClass.getConstructors();
         assertEquals(0, constructors.size());
     }

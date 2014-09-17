@@ -1,7 +1,7 @@
 package com.fasterxml.classmate.members;
 
-import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
+
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
@@ -9,9 +9,7 @@ import java.lang.reflect.Constructor;
 import static junit.framework.Assert.*;
 
 /**
- * User: blangel
- * Date: 4/13/12
- * Time: 12:45 PM
+ * @author blangel
  */
 public class ResolvedConstructorTest {
 
@@ -26,6 +24,7 @@ public class ResolvedConstructorTest {
         }
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void init() {
         try {
@@ -37,22 +36,22 @@ public class ResolvedConstructorTest {
 
     @Test
     public void getRawMember() {
-        ResolvedConstructor resolvedConstructor = new ResolvedConstructor(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES),
-                                                                          null, stringConstructor, ResolvedType.NO_TYPES);
+        ResolvedConstructor resolvedConstructor = new ResolvedConstructor(ResolvedObjectType.create(String.class, null, null, null),
+                                                                          null, stringConstructor, null);
         assertSame(stringConstructor, resolvedConstructor.getRawMember());
     }
 
     @Test
     public void getType() {
-        ResolvedConstructor resolvedConstructor = new ResolvedConstructor(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES),
-                null, stringConstructor, ResolvedType.NO_TYPES);
+        ResolvedConstructor resolvedConstructor = new ResolvedConstructor(ResolvedObjectType.create(String.class, null, null, null),
+                null, stringConstructor, null);
         assertNull(resolvedConstructor.getType());
     }
 
     @Test
     public void getArgumentType() {
-        ResolvedConstructor resolvedConstructor = new ResolvedConstructor(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES),
-                null, stringConstructor, ResolvedType.NO_TYPES);
+        ResolvedConstructor resolvedConstructor = new ResolvedConstructor(ResolvedObjectType.create(String.class, null, null, null),
+                null, stringConstructor, null);
 
         assertNull(resolvedConstructor.getArgumentType(Integer.MIN_VALUE));
         assertNull(resolvedConstructor.getArgumentType(-1));
@@ -63,15 +62,15 @@ public class ResolvedConstructorTest {
 
     @Test
     public void resolvedConstructorHashCode() {
-        ResolvedConstructor resolvedConstructor = new ResolvedConstructor(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES),
-                null, stringConstructor, ResolvedType.NO_TYPES);
+        ResolvedConstructor resolvedConstructor = new ResolvedConstructor(ResolvedObjectType.create(String.class, null, null, null),
+                null, stringConstructor, null);
         assertEquals(stringConstructor.getName().hashCode(), resolvedConstructor.hashCode());
     }
 
     @Test
     public void equals() {
-        ResolvedConstructor resolvedConstructor = new ResolvedConstructor(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES),
-                null, stringConstructor, ResolvedType.NO_TYPES);
+        ResolvedConstructor resolvedConstructor = new ResolvedConstructor(ResolvedObjectType.create(String.class, null, null, null),
+                null, stringConstructor, null);
         // referential equality
         assertTrue(resolvedConstructor.equals(resolvedConstructor));
 
@@ -82,16 +81,16 @@ public class ResolvedConstructorTest {
         assertFalse(resolvedConstructor.equals("not a ResolvedConstructor"));
 
         // unequal constructors
-        ResolvedConstructor resolvedConstructor1 = new ResolvedConstructor(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES),
-                null, objectConstructor, ResolvedType.NO_TYPES);
+        ResolvedConstructor resolvedConstructor1 = new ResolvedConstructor(ResolvedObjectType.create(String.class, null, null, null),
+                null, objectConstructor, null);
         assertFalse(resolvedConstructor.equals(resolvedConstructor1));
         assertFalse(resolvedConstructor1.equals(resolvedConstructor));
 
         // equal constructors
-        ResolvedConstructor resolvedConstructor2 = new ResolvedConstructor(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES),
-                null, objectConstructor, ResolvedType.NO_TYPES);
-        ResolvedConstructor resolvedConstructor3 = new ResolvedConstructor(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES),
-                null, stringConstructor, ResolvedType.NO_TYPES);
+        ResolvedConstructor resolvedConstructor2 = new ResolvedConstructor(ResolvedObjectType.create(String.class, null, null, null),
+                null, objectConstructor, null);
+        ResolvedConstructor resolvedConstructor3 = new ResolvedConstructor(ResolvedObjectType.create(String.class, null, null, null),
+                null, stringConstructor, null);
 
         assertTrue(resolvedConstructor1.equals(resolvedConstructor2));
         assertTrue(resolvedConstructor2.equals(resolvedConstructor1));

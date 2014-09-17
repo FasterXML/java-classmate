@@ -1,23 +1,19 @@
 package com.fasterxml.classmate.members;
 
-import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
+
 import org.junit.Test;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 
 import static junit.framework.Assert.*;
 
 /**
- * User: blangel
- * Date: 4/13/12
- * Time: 11:24 AM
+ * @author blangel
  */
 public class RawMemberTest {
 
+    @SuppressWarnings("unused")
     private static class ModifiersClass {
         private static String test;
         public final String finalField = "something";
@@ -38,7 +34,7 @@ public class RawMemberTest {
     private static final Field testField;
     private static final Field finalFieldField;
     private static final Field protectedFieldField;
-    private static final Constructor objectConstructor;
+    private static final Constructor<?> objectConstructor;
     static {
         try {
             toStringMethod = Object.class.getDeclaredMethod("toString");
@@ -64,12 +60,12 @@ public class RawMemberTest {
 
     @Test
     public void isStatic() {
-        RawMethod rawMethod = new RawMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), toStringMethod);
-        RawMethod rawMethod1 = new RawMethod(new ResolvedObjectType(RawMember.class, null, null, ResolvedType.NO_TYPES), getRawMemberMethod);
-        RawMethod rawStaticMethod = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), getTestMethod);
+        RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
+        RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(RawMember.class, null, null, null), getRawMemberMethod);
+        RawMethod rawStaticMethod = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), getTestMethod);
 
-        RawField rawField = new RawField(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), serialVersionUIDField);
-        RawField rawStaticField = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), testField);
+        RawField rawField = new RawField(ResolvedObjectType.create(Object.class, null, null, null), serialVersionUIDField);
+        RawField rawStaticField = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), testField);
 
         assertFalse(rawMethod.isStatic());
         assertFalse(rawMethod1.isStatic());
@@ -81,12 +77,12 @@ public class RawMemberTest {
 
     @Test
     public void isFinal() {
-        RawMethod rawMethod = new RawMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), toStringMethod);
-        RawMethod rawMethod1 = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), finalMethodMethod);
+        RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
+        RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), finalMethodMethod);
 
-        RawField rawField = new RawField(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), serialVersionUIDField);
-        RawField rawField1 = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), finalFieldField);
-        RawField rawField2 = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), testField);
+        RawField rawField = new RawField(ResolvedObjectType.create(Object.class, null, null, null), serialVersionUIDField);
+        RawField rawField1 = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), finalFieldField);
+        RawField rawField2 = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), testField);
 
         assertFalse(rawMethod.isFinal());
         assertTrue(rawMethod1.isFinal());
@@ -98,11 +94,11 @@ public class RawMemberTest {
 
     @Test
     public void isPrivate() {
-        RawMethod rawMethod = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), getTestMethod);
-        RawMethod rawMethod1 = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), finalMethodMethod);
+        RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), getTestMethod);
+        RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), finalMethodMethod);
 
-        RawField rawField = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), testField);
-        RawField rawField1 = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), finalFieldField);
+        RawField rawField = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), testField);
+        RawField rawField1 = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), finalFieldField);
 
         assertTrue(rawMethod.isPrivate());
         assertFalse(rawMethod1.isPrivate());
@@ -113,13 +109,13 @@ public class RawMemberTest {
 
     @Test
     public void isProtected() {
-        RawMethod rawMethod = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), getTestMethod);
-        RawMethod rawMethod1 = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), finalMethodMethod);
-        RawMethod rawMethod2 = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), protectedMethodMethod);
+        RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), getTestMethod);
+        RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), finalMethodMethod);
+        RawMethod rawMethod2 = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), protectedMethodMethod);
 
-        RawField rawField = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), testField);
-        RawField rawField1 = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), finalFieldField);
-        RawField rawField2 = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), protectedFieldField);
+        RawField rawField = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), testField);
+        RawField rawField1 = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), finalFieldField);
+        RawField rawField2 = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), protectedFieldField);
 
         assertFalse(rawMethod.isProtected());
         assertFalse(rawMethod1.isProtected());
@@ -132,11 +128,11 @@ public class RawMemberTest {
 
     @Test
     public void isPublic() {
-        RawMethod rawMethod = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), getTestMethod);
-        RawMethod rawMethod1 = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), finalMethodMethod);
+        RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), getTestMethod);
+        RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), finalMethodMethod);
 
-        RawField rawField = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), testField);
-        RawField rawField1 = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), finalFieldField);
+        RawField rawField = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), testField);
+        RawField rawField1 = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), finalFieldField);
 
         assertFalse(rawMethod.isPublic());
         assertTrue(rawMethod1.isPublic());
@@ -147,12 +143,12 @@ public class RawMemberTest {
 
     @Test
     public void rawMemberHashCode() {
-        RawMethod rawMethod = new RawMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), toStringMethod);
-        RawMethod rawMethod1 = new RawMethod(new ResolvedObjectType(RawMember.class, null, null, ResolvedType.NO_TYPES), getRawMemberMethod);
-        RawMethod rawStaticMethod = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), getTestMethod);
+        RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
+        RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(RawMember.class, null, null, null), getRawMemberMethod);
+        RawMethod rawStaticMethod = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), getTestMethod);
 
-        RawField rawField = new RawField(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), serialVersionUIDField);
-        RawField rawStaticField = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), testField);
+        RawField rawField = new RawField(ResolvedObjectType.create(Object.class, null, null, null), serialVersionUIDField);
+        RawField rawStaticField = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), testField);
 
         assertEquals(toStringMethod.hashCode(), rawMethod.hashCode());
         assertEquals(getRawMemberMethod.hashCode(), rawMethod1.hashCode());
@@ -164,14 +160,14 @@ public class RawMemberTest {
 
     @Test
     public void getModifiers() {
-        RawMethod rawMethod = new RawMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), toStringMethod);
-        RawMethod rawMethod1 = new RawMethod(new ResolvedObjectType(RawMember.class, null, null, ResolvedType.NO_TYPES), getRawMemberMethod);
-        RawMethod rawStaticMethod = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), getTestMethod);
+        RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
+        RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(RawMember.class, null, null, null), getRawMemberMethod);
+        RawMethod rawStaticMethod = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), getTestMethod);
 
-        RawField rawField = new RawField(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), serialVersionUIDField);
-        RawField rawStaticField = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), testField);
+        RawField rawField = new RawField(ResolvedObjectType.create(Object.class, null, null, null), serialVersionUIDField);
+        RawField rawStaticField = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), testField);
 
-        RawConstructor rawConstructor = new RawConstructor(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES),
+        RawConstructor rawConstructor = new RawConstructor(ResolvedObjectType.create(Object.class, null, null, null),
                 objectConstructor);
 
         assertEquals(toStringMethod.getModifiers(), rawMethod.getModifiers());
@@ -186,12 +182,12 @@ public class RawMemberTest {
 
     @Test
     public void rawMemberToString() {
-        RawMethod rawMethod = new RawMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), toStringMethod);
-        RawMethod rawMethod1 = new RawMethod(new ResolvedObjectType(RawMember.class, null, null, ResolvedType.NO_TYPES), getRawMemberMethod);
-        RawMethod rawStaticMethod = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), getTestMethod);
+        RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
+        RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(RawMember.class, null, null, null), getRawMemberMethod);
+        RawMethod rawStaticMethod = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), getTestMethod);
 
-        RawField rawField = new RawField(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), serialVersionUIDField);
-        RawField rawStaticField = new RawField(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), testField);
+        RawField rawField = new RawField(ResolvedObjectType.create(Object.class, null, null, null), serialVersionUIDField);
+        RawField rawStaticField = new RawField(ResolvedObjectType.create(ModifiersClass.class, null, null, null), testField);
 
         assertEquals(toStringMethod.getName(), rawMethod.toString());
         assertEquals(getRawMemberMethod.getName(), rawMethod1.toString());

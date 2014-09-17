@@ -1,6 +1,5 @@
 package com.fasterxml.classmate.types;
 
-import com.fasterxml.classmate.ResolvedType;
 import org.junit.Test;
 
 import static junit.framework.Assert.*;
@@ -14,6 +13,7 @@ public class ResolvedRecursiveTypeTest {
 
     private static abstract class AbstractClass { }
 
+    @SuppressWarnings("unused")
     private static class Mock {
         private static final String staticMemberField = "test";
         private final String memberField = "test";
@@ -32,21 +32,21 @@ public class ResolvedRecursiveTypeTest {
             // expected : TODO - for now? likely shouldn't be expected
         }
 
-        recursiveType.setReference(new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null));
+        recursiveType.setReference(ResolvedObjectType.create(Object.class, null, null,null));
         assertTrue(recursiveType.canCreateSubtypes());
 
         // TODO - currently fails for final-classes, likely should not, need to ask cowtowncoder about intent of canCreateSubtypes()
 //        recursiveType = new ResolvedRecursiveType(String.class, null);
-//        recursiveType.setReference(new ResolvedObjectType(String.class, null, null, (ResolvedType[]) null));
+//        recursiveType.setReference(ResolvedObjectType.create(String.class, null, null, (ResolvedType[]) null));
 //        assertFalse(recursiveType.canCreateSubtypes()); // String is final
     }
 
     @Test
     public void setReference() {
         ResolvedRecursiveType recursiveType = new ResolvedRecursiveType(String.class, null);
-        recursiveType.setReference(new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null));
+        recursiveType.setReference(ResolvedObjectType.create(Object.class, null, null, null));
         try {
-            recursiveType.setReference(new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null));
+            recursiveType.setReference(ResolvedObjectType.create(Object.class, null, null, null));
             fail("Expecting an IllegalStateException; reference was already set");
         } catch (IllegalStateException ise) {
             // expected
@@ -55,9 +55,9 @@ public class ResolvedRecursiveTypeTest {
         recursiveType = new ResolvedRecursiveType(String.class, null);
         recursiveType.setReference(null); // can continuously set to null
         recursiveType.setReference(null);
-        recursiveType.setReference(new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null));
+        recursiveType.setReference(ResolvedObjectType.create(Object.class, null, null, null));
         try {
-            recursiveType.setReference(new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null));
+            recursiveType.setReference(ResolvedObjectType.create(Object.class, null, null, null));
             fail("Expecting an IllegalStateException; reference was already set");
         } catch (IllegalStateException ise) {
             // expected
@@ -121,7 +121,7 @@ public class ResolvedRecursiveTypeTest {
         } catch (NullPointerException npe) {
             // expected
         }
-        recursiveType.setReference(new ResolvedObjectType(Mock.class, null, null, (ResolvedType[]) null));
+        recursiveType.setReference(ResolvedObjectType.create(Mock.class, null, null, null));
         assertEquals(1, recursiveType.getMemberFields().size());
     }
 
@@ -134,7 +134,7 @@ public class ResolvedRecursiveTypeTest {
         } catch (NullPointerException npe) {
             // expected
         }
-        recursiveType.setReference(new ResolvedObjectType(Mock.class, null, null, (ResolvedType[]) null));
+        recursiveType.setReference(ResolvedObjectType.create(Mock.class, null, null, null));
         assertEquals(1, recursiveType.getStaticFields().size());
     }
 
@@ -147,7 +147,7 @@ public class ResolvedRecursiveTypeTest {
         } catch (NullPointerException npe) {
             // expected
         }
-        recursiveType.setReference(new ResolvedObjectType(Mock.class, null, null, (ResolvedType[]) null));
+        recursiveType.setReference(ResolvedObjectType.create(Mock.class, null, null, null));
         assertEquals(1, recursiveType.getMemberMethods().size());
     }
 
@@ -160,7 +160,7 @@ public class ResolvedRecursiveTypeTest {
         } catch (NullPointerException npe) {
             // expected
         }
-        recursiveType.setReference(new ResolvedObjectType(Mock.class, null, null, (ResolvedType[]) null));
+        recursiveType.setReference(ResolvedObjectType.create(Mock.class, null, null, null));
         assertEquals(1, recursiveType.getStaticMethods().size());
     }
 
@@ -173,7 +173,7 @@ public class ResolvedRecursiveTypeTest {
         } catch (NullPointerException npe) {
             // expected
         }
-        recursiveType.setReference(new ResolvedObjectType(Mock.class, null, null, (ResolvedType[]) null));
+        recursiveType.setReference(ResolvedObjectType.create(Mock.class, null, null, null));
         assertEquals(1, recursiveType.getConstructors().size());
     }
 

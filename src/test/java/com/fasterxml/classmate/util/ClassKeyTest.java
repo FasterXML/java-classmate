@@ -5,9 +5,7 @@ import org.junit.Test;
 import static junit.framework.Assert.*;
 
 /**
- * User: blangel
- * Date: 4/12/12
- * Time: 3:10 PM
+ * @author blangel
  */
 public class ClassKeyTest {
 
@@ -18,6 +16,7 @@ public class ClassKeyTest {
         }
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void nullClass() {
         try {

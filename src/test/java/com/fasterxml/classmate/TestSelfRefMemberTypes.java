@@ -55,7 +55,8 @@ public class TestSelfRefMemberTypes extends BaseTest
      */
 
     protected TypeResolver typeResolver;
-    
+
+    @Override
     protected void setUp()
     {
         // Let's use a single instance for all tests, to increase chance of seeing failures
@@ -70,7 +71,6 @@ public class TestSelfRefMemberTypes extends BaseTest
 
     public void testSelfReferencesSimple()
     {
-        TypeResolver typeResolver = new TypeResolver();
         MemberResolver memberResolver = new MemberResolver(typeResolver);
         ResolvedType type = typeResolver.resolve(MyComparable.class);
         ResolvedMethod[] resolvedMethods = memberResolver.resolve(type, null, null).getMemberMethods();
@@ -81,7 +81,6 @@ public class TestSelfRefMemberTypes extends BaseTest
 
     public void testSelfReferencesComplex()
     {
-          TypeResolver typeResolver = new TypeResolver();
           MemberResolver memberResolver = new MemberResolver(typeResolver);
 
           ResolvedType t = typeResolver.resolve(ClassUsingComplexSelfType.class);
@@ -102,7 +101,6 @@ public class TestSelfRefMemberTypes extends BaseTest
 
     public void testSelfReferencesVaryingDimensions()
     {
-          TypeResolver typeResolver = new TypeResolver();
           MemberResolver memberResolver = new MemberResolver(typeResolver);
 
           ResolvedType t = typeResolver.resolve(ContainerWithTwoAnimals.class);

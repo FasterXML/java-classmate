@@ -15,7 +15,8 @@ public class TestTypeDescriptions extends BaseTest
      */
 
     protected TypeResolver typeResolver;
-    
+
+    @Override
     protected void setUp()
     {
         // Let's use a single instance for all tests, to increase chance of seeing failures

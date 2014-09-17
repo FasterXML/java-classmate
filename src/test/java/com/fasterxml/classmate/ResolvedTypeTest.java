@@ -23,11 +23,11 @@ public class ResolvedTypeTest
     
     @Test
     public void canCreateSubtype() {
-        ResolvedObjectType stringType = new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES);
+        ResolvedObjectType stringType = ResolvedObjectType.create(String.class, null, null, null);
         assertTrue(stringType.canCreateSubtype(String.class));
         assertFalse(stringType.canCreateSubtype(CharBuffer.class));
 
-        ResolvedObjectType objectType = new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES);
+        ResolvedObjectType objectType = ResolvedObjectType.create(Object.class, null, null, null);
         assertTrue(objectType.canCreateSubtype(Object.class));
         assertTrue(objectType.canCreateSubtype(String.class));
         assertTrue(objectType.canCreateSubtype(CharBuffer.class));
@@ -41,14 +41,14 @@ public class ResolvedTypeTest
 
     @Test
     public void typeParametersFor() {
-        ResolvedObjectType stringType = new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES);
+        ResolvedObjectType stringType = ResolvedObjectType.create(String.class, null, null, null);
         assertNull(stringType.typeParametersFor(CharBuffer.class));
     }
 
     @Test
     public void findSupertype() {
-        ResolvedInterfaceType comparableType = new ResolvedInterfaceType(Comparable.class, TypeBindings.create(String.class, ResolvedType.NO_TYPES), ResolvedType.NO_TYPES);
-        ResolvedObjectType stringType = new ResolvedObjectType(String.class, null, null, new ResolvedType[] { comparableType });
+        ResolvedInterfaceType comparableType = new ResolvedInterfaceType(Comparable.class, TypeBindings.create(String.class, ResolvedType.NO_TYPES), null);
+        ResolvedObjectType stringType = new ResolvedObjectType(String.class, null, (ResolvedType) null, new ResolvedType[] { comparableType });
         assertNull(stringType.findSupertype(CharBuffer.class));
 
         assertNull(stringType.findSupertype(Serializable.class));
@@ -57,9 +57,9 @@ public class ResolvedTypeTest
 
     @Test
     public void isConcrete() {
-        ResolvedObjectType stringType = new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES);
+        ResolvedObjectType stringType = ResolvedObjectType.create(String.class, null, null, null);
         assertTrue(stringType.isConcrete());
-        ResolvedObjectType charBufferType = new ResolvedObjectType(CharBuffer.class, null, null, ResolvedType.NO_TYPES);
+        ResolvedObjectType charBufferType = ResolvedObjectType.create(CharBuffer.class, null, null, null);
         assertFalse(charBufferType.isConcrete());
     }
 

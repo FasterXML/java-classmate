@@ -119,7 +119,7 @@ public class TestTypeResolver extends BaseTest
     {
         final GenericType<String> type = new GenericType<String>() { };
         // force failure
-        TypeResolver._primitiveTypes.put(new ClassKey(type.getClass()), new ResolvedObjectType(type.getClass(), null, null, ResolvedType.NO_TYPES) {
+        TypeResolver._primitiveTypes.put(new ClassKey(type.getClass()), new ResolvedObjectType(type.getClass(), null, (ResolvedType) null, ResolvedType.NO_TYPES) {
             @Override public ResolvedType findSupertype(Class<?> erasedSupertype) {
                 return null;
             }
@@ -132,9 +132,9 @@ public class TestTypeResolver extends BaseTest
         }
 
         // now force failure on getting generic's parameterized type
-        TypeResolver._primitiveTypes.put(new ClassKey(type.getClass()), new ResolvedObjectType(type.getClass(), null, null, ResolvedType.NO_TYPES) {
+        TypeResolver._primitiveTypes.put(new ClassKey(type.getClass()), new ResolvedObjectType(type.getClass(), null, (ResolvedType) null, ResolvedType.NO_TYPES) {
             @Override public ResolvedType findSupertype(Class<?> erasedSupertype) {
-                return new ResolvedObjectType(type.getClass(), null, null, ResolvedType.NO_TYPES);
+                return ResolvedObjectType.create(type.getClass(), null, null, null);
             }
         });
         try {
@@ -378,7 +378,7 @@ public class TestTypeResolver extends BaseTest
         }
         // add a mock class to force 'internal-error' case
         Object subclass = new Object() { };
-        typeResolver._resolvedTypes.put(new ResolvedTypeCache.Key(subclass.getClass()), new ResolvedObjectType(subclass.getClass(), null, null, ResolvedType.NO_TYPES) {
+        typeResolver._resolvedTypes.put(new ResolvedTypeCache.Key(subclass.getClass()), new ResolvedObjectType(subclass.getClass(), null, (ResolvedType) null, ResolvedType.NO_TYPES) {
             @Override public ResolvedType findSupertype(Class<?> erasedSupertype) {
                 return null;
             }
@@ -396,7 +396,7 @@ public class TestTypeResolver extends BaseTest
         final ResolvedType finalSuperType = supertype;
         TypeBindings typeBindings = TypeBindings.emptyBindings(); // force failure of parameter resolution
         typeResolver._resolvedTypes.put(new ResolvedTypeCache.Key(subclass.getClass()), new ResolvedObjectType(subclass.getClass(),
-                typeBindings, null, ResolvedType.NO_TYPES) {
+                typeBindings, (ResolvedType) null, ResolvedType.NO_TYPES) {
             @Override public ResolvedType findSupertype(Class<?> erasedSupertype) {
                 return finalSuperType;
             }

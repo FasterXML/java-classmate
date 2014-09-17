@@ -1,19 +1,16 @@
 package com.fasterxml.classmate.members;
 
-import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
 import com.fasterxml.classmate.util.MethodKey;
+
 import org.junit.Test;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 
 import static junit.framework.Assert.*;
 
 /**
- * User: blangel
- * Date: 4/13/12
- * Time: 11:10 AM
+ * @author blangel
  */
 public class RawMethodTest {
 
@@ -40,6 +37,7 @@ public class RawMethodTest {
         }
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void init() {
         try {
@@ -51,8 +49,8 @@ public class RawMethodTest {
 
     @Test
     public void isAbstract() {
-        RawMethod rawMethod = new RawMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), toStringMethod);
-        RawMethod rawMethod1 = new RawMethod(new ResolvedObjectType(RawMember.class, null, null, ResolvedType.NO_TYPES), getRawMemberMethod);
+        RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
+        RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(RawMember.class, null, null, null), getRawMemberMethod);
 
         assertFalse(rawMethod.isAbstract());
         assertTrue(rawMethod1.isAbstract());
@@ -60,8 +58,8 @@ public class RawMethodTest {
 
     @Test
     public void isStrict() {
-        RawMethod rawMethod = new RawMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), toStringMethod);
-        RawMethod rawMethod1 = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), strictfpMethodMethod);
+        RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
+        RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), strictfpMethodMethod);
 
         assertFalse(rawMethod.isStrict());
         assertTrue(rawMethod1.isStrict());
@@ -69,8 +67,8 @@ public class RawMethodTest {
 
     @Test
     public void isNative() {
-        RawMethod rawMethod = new RawMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), toStringMethod);
-        RawMethod rawMethod1 = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), nativeMethodMethod);
+        RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
+        RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), nativeMethodMethod);
 
         assertFalse(rawMethod.isNative());
         assertTrue(rawMethod1.isNative());
@@ -78,8 +76,8 @@ public class RawMethodTest {
 
     @Test
     public void isSynchronized() {
-        RawMethod rawMethod = new RawMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), toStringMethod);
-        RawMethod rawMethod1 = new RawMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), synchronizedMethodMethod);
+        RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
+        RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), synchronizedMethodMethod);
 
         assertFalse(rawMethod.isSynchronized());
         assertTrue(rawMethod1.isSynchronized());
@@ -87,7 +85,7 @@ public class RawMethodTest {
 
     @Test
     public void createKey() {
-        RawMethod rawMethod = new RawMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), toStringMethod);
+        RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
         MethodKey methodKey = rawMethod.createKey();
         assertNotNull(methodKey);
     }
@@ -95,7 +93,7 @@ public class RawMethodTest {
     @Test
     public void equals() {
         // referential equality
-        RawMethod rawMethod = new RawMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), toStringMethod);
+        RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
         assertTrue(rawMethod.equals(rawMethod));
 
         // null
@@ -105,11 +103,11 @@ public class RawMethodTest {
         assertFalse(rawMethod.equals("not a RawMethod"));
 
         // equality via delegation to Method
-        RawMethod rawMethod1 = new RawMethod(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), toStringMethod);
+        RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(String.class, null, null, null), toStringMethod);
         assertTrue(rawMethod.equals(rawMethod1));
         assertTrue(rawMethod1.equals(rawMethod));
 
-        RawMethod rawMethod2 = new RawMethod(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), null);
+        RawMethod rawMethod2 = new RawMethod(ResolvedObjectType.create(String.class, null, null, null), null);
         assertFalse(rawMethod.equals(rawMethod2));
         assertFalse(rawMethod2.equals(rawMethod));
         assertFalse(rawMethod1.equals(rawMethod2));

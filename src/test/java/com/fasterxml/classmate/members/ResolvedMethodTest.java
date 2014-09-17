@@ -2,6 +2,7 @@ package com.fasterxml.classmate.members;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
+
 import org.junit.Test;
 
 import java.lang.reflect.Method;
@@ -9,12 +10,9 @@ import java.lang.reflect.Method;
 import static junit.framework.Assert.*;
 
 /**
- * User: blangel
- * Date: 4/13/12
- * Time: 10:50 AM
+ * @author blangel
  */
 public class ResolvedMethodTest {
-
     private static abstract class ModifiersClass {
         private strictfp void strictfpMethod() { }
         private native void nativeMethod();
@@ -24,6 +22,7 @@ public class ResolvedMethodTest {
 
     private static final Method toStringMethod;
     private static final Method abstractMethodMethod;
+    @SuppressWarnings("unused")
     private static final Method getRawMemberMethod;
     private static final Method strictfpMethodMethod;
     private static final Method nativeMethodMethod;
@@ -42,18 +41,9 @@ public class ResolvedMethodTest {
     }
 
     @Test
-    public void init() {
-        try {
-            new ResolvedMethod(null, null, null, null, ResolvedType.NO_TYPES);
-        } catch (NullPointerException npe) {
-            fail(npe.getMessage());
-        }
-    }
-
-    @Test
     public void isAbstract() {
-        ResolvedMethod resolvedMethod = new ResolvedMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), null, toStringMethod, null, null);
-        ResolvedMethod resolvedMethod1 = new ResolvedMethod(new ResolvedObjectType(RawMember.class, null, null, ResolvedType.NO_TYPES), null, abstractMethodMethod, null, null);
+        ResolvedMethod resolvedMethod = new ResolvedMethod(ResolvedObjectType.create(Object.class, null, null, null), null, toStringMethod, null, null);
+        ResolvedMethod resolvedMethod1 = new ResolvedMethod(ResolvedObjectType.create(RawMember.class, null, null, null), null, abstractMethodMethod, null, null);
 
         assertFalse(resolvedMethod.isAbstract());
         assertTrue(resolvedMethod1.isAbstract());
@@ -61,8 +51,8 @@ public class ResolvedMethodTest {
 
     @Test
     public void isStrict() {
-        ResolvedMethod rawMethod = new ResolvedMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), null, toStringMethod, null, ResolvedType.NO_TYPES);
-        ResolvedMethod rawMethod1 = new ResolvedMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, strictfpMethodMethod, null, ResolvedType.NO_TYPES);
+        ResolvedMethod rawMethod = new ResolvedMethod(ResolvedObjectType.create(Object.class, null, null, null), null, toStringMethod, null, ResolvedType.NO_TYPES);
+        ResolvedMethod rawMethod1 = new ResolvedMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), null, strictfpMethodMethod, null, ResolvedType.NO_TYPES);
 
         assertFalse(rawMethod.isStrict());
         assertTrue(rawMethod1.isStrict());
@@ -70,8 +60,8 @@ public class ResolvedMethodTest {
 
     @Test
     public void isNative() {
-        ResolvedMethod rawMethod = new ResolvedMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), null, toStringMethod, null, ResolvedType.NO_TYPES);
-        ResolvedMethod rawMethod1 = new ResolvedMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, nativeMethodMethod, null, ResolvedType.NO_TYPES);
+        ResolvedMethod rawMethod = new ResolvedMethod(ResolvedObjectType.create(Object.class, null, null, null), null, toStringMethod, null, ResolvedType.NO_TYPES);
+        ResolvedMethod rawMethod1 = new ResolvedMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), null, nativeMethodMethod, null, ResolvedType.NO_TYPES);
 
         assertFalse(rawMethod.isNative());
         assertTrue(rawMethod1.isNative());
@@ -79,8 +69,8 @@ public class ResolvedMethodTest {
 
     @Test
     public void isSynchronized() {
-        ResolvedMethod rawMethod = new ResolvedMethod(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), null, toStringMethod, null, ResolvedType.NO_TYPES);
-        ResolvedMethod rawMethod1 = new ResolvedMethod(new ResolvedObjectType(ModifiersClass.class, null, null, ResolvedType.NO_TYPES), null, synchronizedMethodMethod, null, ResolvedType.NO_TYPES);
+        ResolvedMethod rawMethod = new ResolvedMethod(ResolvedObjectType.create(Object.class, null, null, null), null, toStringMethod, null, ResolvedType.NO_TYPES);
+        ResolvedMethod rawMethod1 = new ResolvedMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), null, synchronizedMethodMethod, null, ResolvedType.NO_TYPES);
 
         assertFalse(rawMethod.isSynchronized());
         assertTrue(rawMethod1.isSynchronized());
@@ -88,14 +78,14 @@ public class ResolvedMethodTest {
 
     @Test
     public void getReturnType() {
-        ResolvedObjectType string = new ResolvedObjectType(String.class, null, null, (ResolvedType[]) null);
+        ResolvedObjectType string = ResolvedObjectType.create(String.class, null, null, null);
         ResolvedMethod resolvedMethod = new ResolvedMethod(string, null, toStringMethod, string, null);
         assertEquals(string, resolvedMethod.getReturnType());
     }
 
     @Test
     public void getType() {
-        ResolvedObjectType string = new ResolvedObjectType(String.class, null, null, (ResolvedType[]) null);
+        ResolvedObjectType string = ResolvedObjectType.create(String.class, null, null, null);
         ResolvedMethod resolvedMethod = new ResolvedMethod(string, null, toStringMethod, string, null);
         assertEquals(string, resolvedMethod.getType());
         assertEquals(resolvedMethod.getReturnType(), resolvedMethod.getType());
@@ -103,7 +93,7 @@ public class ResolvedMethodTest {
 
     @Test
     public void getArgumentType() {
-        ResolvedObjectType string = new ResolvedObjectType(String.class, null, null, (ResolvedType[]) null);
+        ResolvedObjectType string = ResolvedObjectType.create(String.class, null, null, null);
         ResolvedMethod resolvedMethod = new ResolvedMethod(string, null, toStringMethod, string, null);
         assertNull(resolvedMethod.getArgumentType(-1));
         assertNull(resolvedMethod.getArgumentType(0));
@@ -112,7 +102,7 @@ public class ResolvedMethodTest {
 
     @Test
     public void equals() {
-        ResolvedObjectType string = new ResolvedObjectType(String.class, null, null, (ResolvedType[]) null);
+        ResolvedObjectType string = ResolvedObjectType.create(String.class, null, null, null);
         ResolvedMethod resolvedMethod = new ResolvedMethod(string, null, toStringMethod, string, null);
 
         // test referential equals
@@ -124,7 +114,7 @@ public class ResolvedMethodTest {
         // test unequal class
         assertFalse(resolvedMethod.equals("not a ResolvedMethod"));
 
-        ResolvedObjectType object = new ResolvedObjectType(Object.class, null, null, (ResolvedType[]) null);
+        ResolvedObjectType object = ResolvedObjectType.create(Object.class, null, null, null);
         ResolvedMethod resolvedMethod1 = new ResolvedMethod(object, null, toStringMethod, string, null);
         assertTrue(resolvedMethod.equals(resolvedMethod1));
 

@@ -1,20 +1,20 @@
 package com.fasterxml.classmate.types;
 
 import com.fasterxml.classmate.ResolvedType;
+
 import org.junit.Test;
 
 import static junit.framework.Assert.*;
 
 /**
- * User: blangel
- * Date: 4/12/12
- * Time: 6:58 PM
+ * @author blangel
  */
 public class ResolvedInterfaceTypeTest {
 
     private static interface Parent { }
 
     private static interface Child extends Parent {
+        @SuppressWarnings("unused")
         static final String test = "test";
         void getTest();
     }

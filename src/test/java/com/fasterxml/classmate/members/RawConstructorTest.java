@@ -1,8 +1,8 @@
 package com.fasterxml.classmate.members;
 
-import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
 import com.fasterxml.classmate.util.MethodKey;
+
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
@@ -10,9 +10,7 @@ import java.lang.reflect.Constructor;
 import static junit.framework.Assert.*;
 
 /**
- * User: blangel
- * Date: 4/13/12
- * Time: 11:50 AM
+ * @author blangel
  */
 public class RawConstructorTest {
 
@@ -25,6 +23,7 @@ public class RawConstructorTest {
         }
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void init() {
         try {
@@ -36,7 +35,7 @@ public class RawConstructorTest {
 
     @Test
     public void createKey() {
-        RawConstructor rawConstructor = new RawConstructor(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), stringConstructor);
+        RawConstructor rawConstructor = new RawConstructor(ResolvedObjectType.create(Object.class, null, null, null), stringConstructor);
         MethodKey methodKey = rawConstructor.createKey();
         assertNotNull(methodKey);
         assertEquals("<init>()", methodKey.toString());
@@ -45,7 +44,7 @@ public class RawConstructorTest {
     @Test
     public void equals() {
         // referential equality
-        RawConstructor rawConstructor = new RawConstructor(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), stringConstructor);
+        RawConstructor rawConstructor = new RawConstructor(ResolvedObjectType.create(Object.class, null, null, null), stringConstructor);
         assertTrue(rawConstructor.equals(rawConstructor));
 
         // null
@@ -55,11 +54,11 @@ public class RawConstructorTest {
         assertFalse(rawConstructor.equals("not a RawConstructor"));
 
         // equality via delegation to Method
-        RawConstructor rawConstructor1 = new RawConstructor(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), stringConstructor);
+        RawConstructor rawConstructor1 = new RawConstructor(ResolvedObjectType.create(String.class, null, null, null), stringConstructor);
         assertTrue(rawConstructor.equals(rawConstructor1));
         assertTrue(rawConstructor1.equals(rawConstructor));
 
-        RawConstructor rawConstructor2 = new RawConstructor(new ResolvedObjectType(String.class, null, null, ResolvedType.NO_TYPES), null);
+        RawConstructor rawConstructor2 = new RawConstructor(ResolvedObjectType.create(String.class, null, null, null), null);
         assertFalse(rawConstructor.equals(rawConstructor2));
         assertFalse(rawConstructor2.equals(rawConstructor));
         assertFalse(rawConstructor1.equals(rawConstructor2));
@@ -68,7 +67,7 @@ public class RawConstructorTest {
 
     @Test
     public void rawConstructorHashCode() {
-        RawConstructor rawConstructor = new RawConstructor(new ResolvedObjectType(Object.class, null, null, ResolvedType.NO_TYPES), stringConstructor);
+        RawConstructor rawConstructor = new RawConstructor(ResolvedObjectType.create(Object.class, null, null, null), stringConstructor);
         assertEquals(stringConstructor.getName().hashCode(), rawConstructor.hashCode());
     }
 

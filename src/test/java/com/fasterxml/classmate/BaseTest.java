@@ -27,10 +27,10 @@ public abstract class BaseTest extends TestCase
         verifyException(throwable, String.format(format, args));
     }
 
-    protected void matchMembers(ResolvedMember[] members, String[] names0)
+    protected void matchMembers(ResolvedMember<?>[] members, String[] names0)
     {
         List<String> names = Arrays.asList(names0);
-        for (ResolvedMember m : members) {
+        for (ResolvedMember<?> m : members) {
             String name = m.getName();
             if (!names.contains(name)) {
                 fail("Expected names to be from "+names+": got '"+name+"'");
