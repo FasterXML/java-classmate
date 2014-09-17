@@ -96,6 +96,12 @@ public class ResolvedObjectType extends ResolvedType
     {
         this(erased, bindings, (ResolvedType) superClass, interfaces);
     }
+
+    public static ResolvedObjectType create(Class<?> erased, TypeBindings bindings,
+            ResolvedType superClass, List<ResolvedType> interfaces)
+    {
+        return new ResolvedObjectType(erased, bindings, superClass, interfaces);
+    }
     
     @Override
     public boolean canCreateSubtypes() {

@@ -80,6 +80,8 @@ public class ResolvedTypeWithMembers
 
     protected ResolvedMethod[] _staticMethods = null;
 
+    protected ResolvedField[] _staticFields = null;
+
     protected ResolvedMethod[] _memberMethods = null;
 
     protected ResolvedField[] _memberFields = null;
@@ -157,6 +159,21 @@ public class ResolvedTypeWithMembers
     /**********************************************************************
      */
 
+    /**
+     * Method for finding all static fields of the main type (except for ones
+     * possibly filtered out by filter) and applying annotation overrides, if any,
+     * to annotations.
+     * 
+     * @since 1.2.0
+     */
+    public ResolvedField[] getStaticFields()
+    {
+        if (_staticFields == null) {
+            _staticFields = resolveStaticFields();
+        }
+        return _staticFields;
+    }
+    
     /**
      * Method for finding all static methods of the main type (except for ones
      * possibly filtered out by filter) and applying annotation overrides, if any,
@@ -290,39 +307,6 @@ public class ResolvedTypeWithMembers
         }
         return fields.values().toArray(new ResolvedField[fields.size()]);
     }
-    
-    /**
-     * Method that will actually resolve full information (types, annotations)
-     * for static methods, using configured filter.
-     */
-    protected ResolvedMethod[] resolveStaticMethods()
-    {
-        // First get static methods for main type, filter
-        LinkedHashMap<MethodKey, ResolvedMethod> methods = new LinkedHashMap<MethodKey, ResolvedMethod>();
-        for (RawMethod method : _mainType.getType().getStaticMethods()) {
-            if (_methodFilter == null || _methodFilter.include(method)) {
-                methods.put(method.createKey(), resolveMethod(method));
-            }
-        }
-        // then apply overrides (mix-ins):
-        for (HierarchicType type : overridesOnly()) {
-            for (RawMethod raw : type.getType().getStaticMethods()) {
-                ResolvedMethod method = methods.get(raw.createKey()); 
-                // must override something, otherwise to ignore
-                if (method != null) {
-                    for (Annotation ann : raw.getAnnotations()) {
-                        if (_annotationHandler.includeMethodAnnotation(ann)) {
-                            method.applyOverride(ann);
-                        }
-                    }
-                }
-            }
-        }
-        if (methods.size() == 0) {
-            return NO_RESOLVED_METHODS;
-        }
-        return methods.values().toArray(new ResolvedMethod[methods.size()]);
-    }
 
     protected ResolvedMethod[] resolveMemberMethods()
     {
@@ -435,6 +419,77 @@ public class ResolvedTypeWithMembers
             }
         }
 
+        if (methods.size() == 0) {
+            return NO_RESOLVED_METHODS;
+        }
+        return methods.values().toArray(new ResolvedMethod[methods.size()]);
+    }
+    
+    /**
+     * Method for fully resolving static field definitions and associated annotations.
+     * Neither field definitions nor associated annotations inherit, but we may
+     * still need to add annotation overrides, as well as filter out filters
+     * and annotations that caller is not interested in.
+     * 
+     * @since 1.2.0
+     */
+    protected ResolvedField[] resolveStaticFields()
+    {
+        // First get static methods for main type, filter
+        LinkedHashMap<String, ResolvedField> fields = new LinkedHashMap<String, ResolvedField>();
+        for (RawField field : _mainType.getType().getStaticFields()) {
+            if (_fieldFilter == null || _fieldFilter.include(field)) {
+                fields.put(field.getName(), resolveField(field));
+            }
+        }
+        // then apply overrides (mix-ins):
+        for (HierarchicType type : overridesOnly()) {
+            for (RawField raw : type.getType().getStaticFields()) {
+                ResolvedField field = fields.get(raw.getName()); 
+                // must override something, otherwise to ignore
+                if (field != null) {
+                    for (Annotation ann : raw.getAnnotations()) {
+                        if (_annotationHandler.includeFieldAnnotation(ann)) {
+                            field.applyOverride(ann);
+                        }
+                    }
+                }
+            }
+        }
+        // and that's it?
+        if (fields.isEmpty()) {
+            return NO_RESOLVED_FIELDS;
+        }
+        return fields.values().toArray(new ResolvedField[ fields.size()]);
+    }
+
+    /**
+     * Method that will actually resolve full information (types, annotations)
+     * for static methods, using configured filter.
+     */
+    protected ResolvedMethod[] resolveStaticMethods()
+    {
+        // First get static methods for main type, filter
+        LinkedHashMap<MethodKey, ResolvedMethod> methods = new LinkedHashMap<MethodKey, ResolvedMethod>();
+        for (RawMethod method : _mainType.getType().getStaticMethods()) {
+            if (_methodFilter == null || _methodFilter.include(method)) {
+                methods.put(method.createKey(), resolveMethod(method));
+            }
+        }
+        // then apply overrides (mix-ins):
+        for (HierarchicType type : overridesOnly()) {
+            for (RawMethod raw : type.getType().getStaticMethods()) {
+                ResolvedMethod method = methods.get(raw.createKey()); 
+                // must override something, otherwise to ignore
+                if (method != null) {
+                    for (Annotation ann : raw.getAnnotations()) {
+                        if (_annotationHandler.includeMethodAnnotation(ann)) {
+                            method.applyOverride(ann);
+                        }
+                    }
+                }
+            }
+        }
         if (methods.size() == 0) {
             return NO_RESOLVED_METHODS;
         }

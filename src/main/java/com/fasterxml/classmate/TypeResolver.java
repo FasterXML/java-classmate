@@ -36,7 +36,7 @@ public class TypeResolver implements Serializable
      * pre-create type for <code>java.lang.Object</code>
      */
     private final static ResolvedObjectType sJavaLangObject =
-        new ResolvedObjectType(Object.class, null, null, NO_TYPES);
+        ResolvedObjectType.create(Object.class, null, null, null);
 
     /**
      * Since number of primitive types is small, and they are frequently needed,

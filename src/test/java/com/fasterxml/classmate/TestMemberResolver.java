@@ -39,7 +39,7 @@ public class TestMemberResolver extends BaseTest
 
         protected String stringField;
 
-        protected static int staticIntField2;
+        protected static int staticIntFieldSub;
         
         public SubClass() { super(""); }
 
@@ -168,6 +168,10 @@ public class TestMemberResolver extends BaseTest
 
         ResolvedConstructor[] ctors = bean.getConstructors();
         assertEquals(2, ctors.length);
+
+        ResolvedField[] staticFields = bean.getStaticFields();
+        assertEquals(1, staticFields.length);
+        assertEquals("staticIntField", staticFields[0].getName());
     }
     
     /**
@@ -358,10 +362,15 @@ public class TestMemberResolver extends BaseTest
     {
         ResolvedMethod[] statics = bean.getStaticMethods();
         assertEquals(0, statics.length);
-        
+
         ResolvedMethod[] members = bean.getMemberMethods();
         assertEquals(2, members.length);
 
+        // Subtype has 1 static, base 1; only one from sub-type should be included
+        ResolvedField[] staticFields = bean.getStaticFields();
+        assertEquals(1, staticFields.length);
+        assertEquals("staticIntFieldSub", staticFields[0].getName());
+        
         ResolvedField[] fields = bean.getMemberFields();
         assertEquals(3, fields.length);
 

@@ -72,6 +72,7 @@ public class Annotations implements Serializable, Iterable<Annotation>
     /**********************************************************************
      */
 
+    @Override
     public Iterator<Annotation> iterator()
     {
         if (_annotations == null) {

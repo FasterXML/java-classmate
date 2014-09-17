@@ -3,8 +3,10 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
-1.1.1 (xx-xxx-2014)
+1.2.0 (16-Sep-2014)
 
+#22: ResolvedTypeWithMembers should expose static fields as well
+ (proposed by arikkfir@github)
 - Made `ResolvedMethod`, `ResolvedField` sortable to simplify tests
 - More unit tests, from Jackson type resolver fails
 
