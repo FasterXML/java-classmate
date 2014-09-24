@@ -4,6 +4,9 @@ ClassMate is a zero-dependency Java library for accurately introspecting type in
 
 Project is licensed under [BSD](http://www.opensource.org/licenses/bsd-license.php)
 
+Google group [java-classmate-users@groups.google.com](https://groups.google.com/forum/?hl=en#!forum/java-classmate-users)
+is used for questions and discussion around usage and development of this library.
+
 ## Documentation
 
 [Project wiki](/cowtowncoder/java-classmate/wiki) has Javadocs.
@@ -27,11 +30,13 @@ Pull Requests and we will get you through this formality.
 
 To use ClassMate via Maven, include following dependency:
 
-    <dependency>
-      <groupId>com.fasterxml</groupId>
-      <artifactId>classmate</artifactId>
-      <version>1.1.0</version>
-    </dependency>
+```xml
+<dependency>
+  <groupId>com.fasterxml</groupId>
+  <artifactId>classmate</artifactId>
+  <version>1.1.0</version>
+</dependency>
+```
 
 ### Non-Maven
 
