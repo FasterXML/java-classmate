@@ -60,6 +60,22 @@ public class TestMemberGenericTypes extends BaseTest
 
         public final static class SubType887<T extends Number> extends BaseType887<T> { }
     }
+
+    // Inspired by [jackson-databind#609]
+    static class EntityContainer {
+        RuleForm entity;
+        
+        @SuppressWarnings("unchecked")
+        public <T extends RuleForm> T getEntity() { return (T) entity; }
+        public <T extends RuleForm> void setEntity(T e) { entity = e; }
+    }
+
+    static class RuleForm {
+        public int value;
+
+        public RuleForm() { }
+        public RuleForm(int v) { value = v; }
+    }
     
     /*
     /**********************************************************************
@@ -286,5 +302,35 @@ public class TestMemberGenericTypes extends BaseTest
         assertEquals("value", f.getName());
         ResolvedType type = f.getType();
         assertEquals(Number.class, type.getErasedType());
+    }
+
+    public void testLocalBoundedType()
+    {
+        MemberResolver mr = new MemberResolver(typeResolver);
+        ResolvedType mainType = typeResolver.resolve(EntityContainer.class);
+        ResolvedTypeWithMembers bean = mr.resolve(mainType, null, null);
+
+        ResolvedMethod[] members = bean.getMemberMethods();
+        assertEquals(2, members.length);
+
+        ResolvedMethod getter, setter;
+        
+        if (members[0].getName().equals("getEntity")) {
+            getter = members[0];
+            setter = members[1];
+            assertEquals("setEntity", setter.getName());
+        } else  if (members[0].getName().equals("setEntity")) {
+            getter = members[1];
+            setter = members[0];
+            assertEquals("getEntity", getter.getName());
+        } else {
+            fail("Unexpected method: "+members[0].getName());
+            return; // never gets here
+        }
+
+        // but more importantly, types
+        assertEquals(RuleForm.class, getter.getReturnType().getErasedType());
+        assertEquals(1, setter.getArgumentCount());
+        assertEquals(RuleForm.class, setter.getArgumentType(0).getErasedType());
     }
 }
