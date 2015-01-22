@@ -2,7 +2,7 @@
 
 ClassMate is a zero-dependency Java library for accurately introspecting type information, including reliable resolution of generic type declarations for both classes ("types") and members (fields, methods and constructors).
 
-Project is licensed under [BSD](http://www.opensource.org/licenses/bsd-license.php)
+Project is licensed under [Apache 2](http://www.apache.org/licenses/LICENSE-2.0.txt).
 
 Google group [java-classmate-users@groups.google.com](https://groups.google.com/forum/?hl=en#!forum/java-classmate-users)
 is used for questions and discussion around usage and development of this library.
