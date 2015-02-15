@@ -15,7 +15,7 @@ public class Annotations implements Serializable, Iterable<Annotation>
 {
     private final Annotation[] NO_ANNOTATIONS = new Annotation[0];
      
-    protected HashMap<Class<? extends Annotation>,Annotation> _annotations;
+    protected LinkedHashMap<Class<? extends Annotation>,Annotation> _annotations;
 
     /*
     /**********************************************************************
@@ -32,7 +32,7 @@ public class Annotations implements Serializable, Iterable<Annotation>
     public void add(Annotation override)
     {
         if (_annotations == null) {
-            _annotations = new HashMap<Class<? extends Annotation>,Annotation>();
+            _annotations = new LinkedHashMap<Class<? extends Annotation>,Annotation>();
         }
         _annotations.put(override.annotationType(), override);
     }
@@ -44,7 +44,7 @@ public class Annotations implements Serializable, Iterable<Annotation>
     public void addAll(Annotations overrides)
     {
         if (_annotations == null) {
-            _annotations = new HashMap<Class<? extends Annotation>,Annotation>();
+            _annotations = new LinkedHashMap<Class<? extends Annotation>,Annotation>();
         }
         for (Annotation override : overrides._annotations.values()) {
             _annotations.put(override.annotationType(), override);
@@ -59,7 +59,7 @@ public class Annotations implements Serializable, Iterable<Annotation>
     {
         Class<? extends Annotation> type = defValue.annotationType();
         if (_annotations == null) {
-            _annotations = new HashMap<Class<? extends Annotation>,Annotation>();
+            _annotations = new LinkedHashMap<Class<? extends Annotation>,Annotation>();
             _annotations.put(type, defValue);
         } else if (!_annotations.containsKey(type)) {
             _annotations.put(type, defValue);
@@ -76,7 +76,7 @@ public class Annotations implements Serializable, Iterable<Annotation>
     public Iterator<Annotation> iterator()
     {
         if (_annotations == null) {
-            _annotations = new HashMap<Class<? extends Annotation>,Annotation>();
+            _annotations = new LinkedHashMap<Class<? extends Annotation>,Annotation>();
         }
         return _annotations.values().iterator();
     }
