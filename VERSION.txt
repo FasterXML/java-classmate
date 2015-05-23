@@ -3,7 +3,7 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
-1.2.0 (16-Sep-2014)
+1.2.0 (22-May-2015)
 
 #22: ResolvedTypeWithMembers should expose static fields as well
  (proposed by arikkfir@github)

@@ -70,15 +70,19 @@ public class AnnotationsTest {
         Annotation testAnnotation = thisMethod.getAnnotation(Test.class);
         annotations.addAsDefault(testAnnotation);
 
-        assertEquals("{interface org.junit.Test=@org.junit.Test(timeout=0, expected=class org.junit.Test$None)}", annotations.toString());
+        // order is unspecified as the internal representation is a HashMap; just assert the constituent parts are present
+        String asString = annotations.toString();
+        assertTrue(asString.contains("{interface org.junit.Test=@org.junit.Test("));
+        assertTrue(asString.contains("timeout=0"));
+        assertTrue(asString.contains("expected=class org.junit.Test$None"));
 
         Annotation markerAnnotation = thisMethod.getAnnotation(Marker.class);
         annotations.addAsDefault(markerAnnotation);
 
-        // order is unspecified as the internal representation is a HashMap; just assert the constituent parts are present
-        String asString = annotations.toString();
+        asString = annotations.toString();
         assertTrue(asString.contains("interface com.fasterxml.classmate.AnnotationsTest$Marker=@com.fasterxml.classmate.AnnotationsTest$Marker()"));
-        assertTrue(asString.contains("interface org.junit.Test=@org.junit.Test(timeout=0, expected=class org.junit.Test$None)"));
+        assertTrue(asString.contains("interface org.junit.Test=@org.junit.Test"));
+        assertTrue(asString.contains("timeout=0"));
+        assertTrue(asString.contains("expected=class org.junit.Test$None"));
     }
-
 }
