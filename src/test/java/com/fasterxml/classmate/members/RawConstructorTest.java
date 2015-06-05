@@ -23,7 +23,6 @@ public class RawConstructorTest {
         }
     }
 
-    @SuppressWarnings("unused")
     @Test
     public void init() {
         try {
