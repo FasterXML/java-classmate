@@ -9,7 +9,7 @@ is used for questions and discussion around usage and development of this librar
 
 ## Documentation
 
-[Project wiki](/cowtowncoder/java-classmate/wiki) has Javadocs.
+[Project wiki](/../../wiki) has Javadocs.
 
 External links that may help include:
 
@@ -40,7 +40,7 @@ To use ClassMate via Maven, include following dependency:
 
 ### Non-Maven
 
-Downloads available from [Project wiki](/cowtowncoder/java-classmate/wiki).
+Downloads available from [Project wiki](../../wiki).
 
 ### Resolving Class type information
 
