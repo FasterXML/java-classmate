@@ -4,7 +4,7 @@ ClassMate is a zero-dependency Java library for accurately introspecting type in
 
 Project is licensed under [Apache 2](http://www.apache.org/licenses/LICENSE-2.0.txt).
 
-Google group [java-classmate-users@groups.google.com](https://groups.google.com/forum/?hl=en#!forum/java-classmate-users)
+Google group [java-classmate-users@googlegroups.com](https://groups.google.com/forum/?hl=en#!forum/java-classmate-users)
 is used for questions and discussion around usage and development of this library.
 
 ## Documentation
