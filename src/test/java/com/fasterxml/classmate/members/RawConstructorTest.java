@@ -3,16 +3,16 @@ package com.fasterxml.classmate.members;
 import com.fasterxml.classmate.types.ResolvedObjectType;
 import com.fasterxml.classmate.util.MethodKey;
 
-import org.junit.Test;
-
 import java.lang.reflect.Constructor;
 
-import static junit.framework.Assert.*;
+import junit.framework.TestCase;
 
 /**
  * @author blangel
  */
-public class RawConstructorTest {
+public class RawConstructorTest
+    extends TestCase
+{
 
     private static final Constructor<String> stringConstructor;
     static {
@@ -23,25 +23,14 @@ public class RawConstructorTest {
         }
     }
 
-    @Test
-    public void init() {
-        try {
-            new RawConstructor(null, null);
-        } catch (NullPointerException npe) {
-            fail(npe.getMessage());
-        }
-    }
-
-    @Test
-    public void createKey() {
+    public void testCreateKey() {
         RawConstructor rawConstructor = new RawConstructor(ResolvedObjectType.create(Object.class, null, null, null), stringConstructor);
         MethodKey methodKey = rawConstructor.createKey();
         assertNotNull(methodKey);
         assertEquals("<init>()", methodKey.toString());
     }
 
-    @Test
-    public void equals() {
+    public void testEquals() {
         // referential equality
         RawConstructor rawConstructor = new RawConstructor(ResolvedObjectType.create(Object.class, null, null, null), stringConstructor);
         assertTrue(rawConstructor.equals(rawConstructor));
@@ -64,8 +53,7 @@ public class RawConstructorTest {
         assertFalse(rawConstructor2.equals(rawConstructor1));
     }
 
-    @Test
-    public void rawConstructorHashCode() {
+    public void testRawConstructorHashCode() {
         RawConstructor rawConstructor = new RawConstructor(ResolvedObjectType.create(Object.class, null, null, null), stringConstructor);
         assertEquals(stringConstructor.getName().hashCode(), rawConstructor.hashCode());
     }

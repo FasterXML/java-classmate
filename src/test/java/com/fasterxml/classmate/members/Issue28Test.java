@@ -2,21 +2,19 @@ package com.fasterxml.classmate.members;
 
 import java.util.List;
 
-import org.junit.Test;
+import junit.framework.TestCase;
 
 import com.fasterxml.classmate.*;
 
-import static junit.framework.Assert.*;
-
 // for issue #28, "ghost" type parameter:
 public class Issue28Test
+    extends TestCase
 {
     class A<T extends Number> {
         public void foo(T t) {
         }
     }
 
-    @Test
     public void testIssue28()
     {
         TypeResolver resolver = new TypeResolver();
