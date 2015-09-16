@@ -1,53 +1,15 @@
 package com.fasterxml.classmate;
 
+import java.lang.reflect.Field;
+import java.util.*;
+
 import com.fasterxml.classmate.types.ResolvedObjectType;
 import org.junit.Test;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import static junit.framework.Assert.*;
 
-/**
- * User: blangel
- * Date: 4/14/12
- * Time: 11:28 AM
- */
-public class TypeBindingsTest {
-
-    @Test
-    public void construction() throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException,
-            InvocationTargetException, InstantiationException
-    {
-
-        Constructor<?> constructor = TypeBindings.class.getDeclaredConstructor(String[].class, ResolvedType[].class);
-        constructor.setAccessible(true);
-
-        Field namesField = TypeBindings.class.getDeclaredField("_names");
-        Field typesField = TypeBindings.class.getDeclaredField("_types");
-        namesField.setAccessible(true);
-        typesField.setAccessible(true);
-
-        TypeBindings instance = (TypeBindings) constructor.newInstance(null, null);
-        assertEquals(0, ((String[]) namesField.get(instance)).length);
-        assertEquals(0, ((ResolvedType[]) typesField.get(instance)).length);
-
-        // test incompatible lengths
-        String[] names = new String[] { "one", "two" };
-        ResolvedType[] types = new ResolvedType[] { };
-        try {
-            constructor.newInstance(names, types);
-            fail("Expecting an IllegalArgumentException as names.length != types.length");
-        } catch (InvocationTargetException ite) {
-            assertEquals(IllegalArgumentException.class, ite.getTargetException().getClass());
-        }
-    }
-
+public class TypeBindingsTest
+{
     @Test
     public void create() throws NoSuchFieldException, IllegalAccessException {
         Field typesField = TypeBindings.class.getDeclaredField("_types");

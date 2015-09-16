@@ -177,7 +177,7 @@ public class TypeResolver implements Serializable
     /**
      * Factory method for constructing sub-classing specified type; class specified
      * as sub-class must be compatible according to basic Java inheritance rules
-     * (subtype must propery extend or implement specified supertype).
+     * (subtype must properly extend or implement specified supertype).
      *<p>
      * A typical use case here is to refine a generic type; for example, given
      * that we have generic type like <code>List&ltInteger></code>, but we want
@@ -471,16 +471,22 @@ public class TypeResolver implements Serializable
         // ideally should find it via bindings:
         String name = variable.getName();
         ResolvedType type = typeBindings.findBoundType(name);
+
         if (type != null) {
             return type;
         }
-        /* but if not, use bounds... note that approach here is simplistics; not taking
+        
+        /* but if not, use bounds... note that approach here is simplistic; not taking
          * into account possible multiple bounds, nor consider upper bounds.
          */
         /* 02-Mar-2011, tatu: As per issue#4, need to avoid self-reference cycles here;
          *   can be handled by (temporarily) adding binding:
          */
-        typeBindings = typeBindings.withAdditionalBinding(name, sJavaLangObject);
+        if (typeBindings.hasUnbound(name)) {
+            return sJavaLangObject;
+        }
+        typeBindings = typeBindings.withUnboundVariable(name);
+
         Type[] bounds = variable.getBounds();
         return _fromAny(context, bounds[0], typeBindings);
     }

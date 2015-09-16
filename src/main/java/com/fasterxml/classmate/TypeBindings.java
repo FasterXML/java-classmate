@@ -13,7 +13,7 @@ public final class TypeBindings
 
     private final static ResolvedType[] NO_TYPES = new ResolvedType[0];
 
-    private final static TypeBindings EMPTY = new TypeBindings(NO_STRINGS, NO_TYPES);
+    private final static TypeBindings EMPTY = new TypeBindings(NO_STRINGS, NO_TYPES, null);
 
     /**
      * Array of type (type variable) names.
@@ -25,6 +25,13 @@ public final class TypeBindings
      */
     private final ResolvedType[] _types;
 
+    /**
+     * Names of potentially unresolved type variables.
+     *
+     * @since 2.3
+     */
+    private final String[] _unboundVariables;
+    
     private final int _hashCode;
     
     /*
@@ -33,7 +40,7 @@ public final class TypeBindings
     /**********************************************************************
      */
     
-    private TypeBindings(String[] names, ResolvedType[] types)
+    private TypeBindings(String[] names, ResolvedType[] types, String[] uvars)
     {
         _names = (names == null) ? NO_STRINGS : names;
         _types = (types == null) ? NO_TYPES : types;
@@ -44,6 +51,7 @@ public final class TypeBindings
         for (int i = 0, len = _types.length; i < len; ++i) {
             h += _types[i].hashCode();
         }
+        _unboundVariables = uvars;
         _hashCode = h;
     }
 
@@ -84,23 +92,25 @@ public final class TypeBindings
                    +" with "+types.length+" type parameter"
                    +((types.length == 1) ? "" : "s")+": class expects "+names.length);
         }
-        return new TypeBindings(names, types);
+        return new TypeBindings(names, types, null);
     }
 
     /**
      * Method for creating an instance that has same bindings as this object,
-     * plus one additional binding
+     * plus an indicator for additional type variable that may be unbound within
+     * this context; this is needed to resolve recursive self-references.
+     * 
+     * @since 1.3 (renamed from "withAdditionalBinding" in 1.2)
      */
-    public TypeBindings withAdditionalBinding(String name, ResolvedType type)
+    public TypeBindings withUnboundVariable(String name)
     {
-        int len = _names.length;
-        String[] newNames = Arrays.copyOf(_names, len+1);
-        newNames[len] = name;
-        ResolvedType[] newTypes = Arrays.copyOf(_types, len+1);
-        newTypes[len] = type;
-        return new TypeBindings(newNames, newTypes);
+        int len = (_unboundVariables == null) ? 0 : _unboundVariables.length;
+        String[] names =  (len == 0)
+                ? new String[1] : Arrays.copyOf(_unboundVariables, len+1);
+        names[len] = name;
+        return new TypeBindings(_names, _types, names);
     }
-    
+
     /*
     /**********************************************************************
     /* Accessors
@@ -156,6 +166,20 @@ public final class TypeBindings
             return Collections.emptyList();
         }
         return Arrays.asList(_types);
+    }
+
+    /**
+     * @since 2.3
+     */
+    public boolean hasUnbound(String name) {
+        if (_unboundVariables != null) {
+            for (int i = _unboundVariables.length; --i >= 0; ) {
+                if (name.equals(_unboundVariables[i])) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /*
