@@ -2,8 +2,6 @@ package com.fasterxml.classmate.members;
 
 import com.fasterxml.classmate.types.ResolvedObjectType;
 
-import org.junit.Test;
-
 import java.lang.reflect.*;
 
 import junit.framework.TestCase;

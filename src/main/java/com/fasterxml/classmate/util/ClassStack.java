@@ -11,8 +11,8 @@ import com.fasterxml.classmate.types.ResolvedRecursiveType;
  */
 public final class ClassStack
 {
-    private final ClassStack _parent;
-    private final Class<?> _current;
+    protected final ClassStack _parent;
+    protected final Class<?> _current;
 
     private ArrayList<ResolvedRecursiveType> _selfRefs;
 
@@ -62,8 +62,10 @@ public final class ClassStack
     public ClassStack find(Class<?> cls)
     {
         if (_current == cls) return this;
-        if (_parent != null) {
-            return _parent.find(cls);
+        for (ClassStack curr = _parent; curr != null; curr = curr._parent) {
+            if (curr._current == cls) {
+                return curr;
+            }
         }
         return null;
     }
