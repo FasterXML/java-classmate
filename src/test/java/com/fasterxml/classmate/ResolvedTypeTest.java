@@ -1,17 +1,16 @@
 package com.fasterxml.classmate;
 
-import com.fasterxml.classmate.types.ResolvedArrayType;
-import com.fasterxml.classmate.types.ResolvedInterfaceType;
-import com.fasterxml.classmate.types.ResolvedObjectType;
-import org.junit.Test;
-
 import java.io.Serializable;
 import java.nio.CharBuffer;
 import java.util.List;
 
-import static junit.framework.Assert.*;
+import org.junit.Test;
 
-public class ResolvedTypeTest
+import com.fasterxml.classmate.types.ResolvedArrayType;
+import com.fasterxml.classmate.types.ResolvedInterfaceType;
+import com.fasterxml.classmate.types.ResolvedObjectType;
+
+public class ResolvedTypeTest extends BaseTest
 {
     // For [Issue#16]
 
@@ -22,7 +21,7 @@ public class ResolvedTypeTest
     private static class Zen16<A, B extends A>  { }
     
     @Test
-    public void canCreateSubtype() {
+    public void testCanCreateSubtype() {
         ResolvedObjectType stringType = ResolvedObjectType.create(String.class, null, null, null);
         assertTrue(stringType.canCreateSubtype(String.class));
         assertFalse(stringType.canCreateSubtype(CharBuffer.class));
@@ -40,13 +39,13 @@ public class ResolvedTypeTest
     }
 
     @Test
-    public void typeParametersFor() {
+    public void testtypeParametersFor() {
         ResolvedObjectType stringType = ResolvedObjectType.create(String.class, null, null, null);
         assertNull(stringType.typeParametersFor(CharBuffer.class));
     }
 
     @Test
-    public void findSupertype() {
+    public void testFindSupertype() {
         ResolvedInterfaceType comparableType = new ResolvedInterfaceType(Comparable.class, TypeBindings.create(String.class, ResolvedType.NO_TYPES), null);
         ResolvedObjectType stringType = new ResolvedObjectType(String.class, null, (ResolvedType) null, new ResolvedType[] { comparableType });
         assertNull(stringType.findSupertype(CharBuffer.class));
@@ -56,7 +55,7 @@ public class ResolvedTypeTest
     }
 
     @Test
-    public void isConcrete() {
+    public void testIsConcrete() {
         ResolvedObjectType stringType = ResolvedObjectType.create(String.class, null, null, null);
         assertTrue(stringType.isConcrete());
         ResolvedObjectType charBufferType = ResolvedObjectType.create(CharBuffer.class, null, null, null);
@@ -64,7 +63,7 @@ public class ResolvedTypeTest
     }
 
     @Test
-    public void accessors() {
+    public void testAccessors() {
         // the default accessor implementation is to return an empty-list; check for a new subtype
         ResolvedType type = new ResolvedType(String.class, null) {
             @Override public boolean canCreateSubtypes() {
