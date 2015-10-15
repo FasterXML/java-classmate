@@ -48,7 +48,6 @@ public class ResolvedRecursiveType extends ResolvedType
         }
         _referencedType = ref;
     }
-    
 
     /*
     /**********************************************************************
