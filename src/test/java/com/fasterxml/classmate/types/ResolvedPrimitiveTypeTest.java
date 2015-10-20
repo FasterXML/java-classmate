@@ -4,11 +4,7 @@ import org.junit.Test;
 
 import static junit.framework.Assert.*;
 
-/**
- * User: blangel
- * Date: 4/12/12
- * Time: 6:05 PM
- */
+@SuppressWarnings("deprecation")
 public class ResolvedPrimitiveTypeTest {
 
     private static interface Callback {

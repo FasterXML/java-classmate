@@ -4,11 +4,7 @@ import org.junit.Test;
 
 import static junit.framework.Assert.*;
 
-/**
- * User: blangel
- * Date: 4/13/12
- * Time: 10:30 AM
- */
+@SuppressWarnings("deprecation")
 public class TypePlaceHolderTest {
 
     @Test

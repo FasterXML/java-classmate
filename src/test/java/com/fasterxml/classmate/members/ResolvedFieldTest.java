@@ -9,11 +9,7 @@ import java.lang.reflect.Field;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
-/**
- * User: blangel
- * Date: 4/13/12
- * Time: 12:29 PM
- */
+@SuppressWarnings("deprecation")
 public class ResolvedFieldTest {
 
     @SuppressWarnings("unused")
