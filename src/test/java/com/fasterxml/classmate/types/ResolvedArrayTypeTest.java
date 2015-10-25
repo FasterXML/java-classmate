@@ -2,6 +2,7 @@ package com.fasterxml.classmate.types;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
+
 import org.junit.Test;
 
 import java.util.Collection;
@@ -10,9 +11,8 @@ import static junit.framework.Assert.*;
 
 /**
  * User: blangel
- * Date: 4/13/12
- * Time: 9:38 AM
  */
+@SuppressWarnings("deprecation")
 public class ResolvedArrayTypeTest {
 
     @Test

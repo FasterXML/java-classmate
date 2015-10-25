@@ -9,6 +9,7 @@ import static junit.framework.Assert.*;
 /**
  * @author blangel
  */
+@SuppressWarnings("deprecation")
 public class ResolvedInterfaceTypeTest {
 
     private static interface Parent { }

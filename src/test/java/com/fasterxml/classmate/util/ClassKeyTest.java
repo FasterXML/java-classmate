@@ -7,16 +7,15 @@ import static junit.framework.Assert.*;
 /**
  * @author blangel
  */
-public class ClassKeyTest {
-
-    @SuppressWarnings("serial")
+@SuppressWarnings({ "serial", "deprecation" })
+public class ClassKeyTest
+{
     private static class ClassKeySubclass extends ClassKey {
         private ClassKeySubclass(Class<?> clz) {
             super(clz);
         }
     }
 
-    @SuppressWarnings("unused")
     @Test
     public void nullClass() {
         try {
@@ -70,5 +69,4 @@ public class ClassKeyTest {
 
         assertTrue(key1.compareTo(key) < 0);
     }
-
 }

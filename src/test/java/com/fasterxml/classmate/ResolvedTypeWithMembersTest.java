@@ -15,9 +15,8 @@ import static junit.framework.Assert.*;
 
 /**
  * User: blangel
- * Date: 4/14/12
- * Time: 12:05 PM
  */
+@SuppressWarnings("deprecation")
 public class ResolvedTypeWithMembersTest {
 
     @Retention(RetentionPolicy.RUNTIME)

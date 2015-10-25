@@ -376,7 +376,7 @@ public class TypeResolver implements Serializable
         }
         return params[0];
     }
-    
+
     private ResolvedType _constructType(ClassStack context, Class<?> rawType, TypeBindings typeBindings)
     {
         // Ok: no easy shortcut, let's figure out type of type...
@@ -535,10 +535,4 @@ public class TypeResolver implements Serializable
         }
         return true;
     }
-    
-    /*
-    /**********************************************************************
-    /* Helper classes
-    /**********************************************************************
-     */
 }
