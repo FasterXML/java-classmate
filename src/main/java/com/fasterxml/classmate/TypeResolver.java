@@ -250,7 +250,6 @@ public class TypeResolver implements Serializable
         }
         // Ok, then, let's find and verify type assignments
         _resolveTypePlaceholders(supertype, rawSupertype);
-        
         // And then re-construct, if necessary
         if (paramCount == 0) { // if no type parameters, fine as is
             return resolvedSubtype;
@@ -259,9 +258,7 @@ public class TypeResolver implements Serializable
         ResolvedType[] typeParams = new ResolvedType[paramCount];
         for (int i = 0; i < paramCount; ++i) {
             ResolvedType t = placeholders[i].actualType();
-            /* Is it ok for it to be left unassigned? For now let's not
-             * allow that
-             */
+            // Is it ok for it to be left unassigned? For now let's not allow that
             if (t == null) {
                 throw new IllegalArgumentException("Failed to find type parameter #"+(i+1)+"/"
                         +paramCount+" for "+subtype.getName());
