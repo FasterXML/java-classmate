@@ -68,12 +68,6 @@ public class TypePlaceHolder extends ResolvedType
 
     /*
     /**********************************************************************
-    /* Accessors for raw (minimally procesed) members
-    /**********************************************************************
-     */
-    
-    /*
-    /**********************************************************************
     /* String representations
     /**********************************************************************
      */
@@ -97,5 +91,18 @@ public class TypePlaceHolder extends ResolvedType
     @Override
     public StringBuilder appendFullDescription(StringBuilder sb) {
         return appendBriefDescription(sb);
+    }
+
+    /*
+    /**********************************************************************
+    /* Other overrides
+    /**********************************************************************
+     */
+
+    // Important: make sure to avoid matches for cache lookups; one way is
+    // to handle it here; not the only one.
+    @Override public boolean equals(Object o) { // since 1.3.1
+        // should these ever match actually?
+        return (o == this);
     }
 }

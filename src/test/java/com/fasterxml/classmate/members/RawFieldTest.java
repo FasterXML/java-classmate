@@ -10,9 +10,7 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
-/**
- * @author blangel
- */
+@SuppressWarnings("deprecation")
 public class RawFieldTest {
 
     @SuppressWarnings("unused")

@@ -84,22 +84,36 @@ public class TestSubtypeResolution extends BaseTest
     // Similar to above, but via Collection, not List
     public void testMoreSpecificCollectionType()
     {
+        final Class<?> elemType = String.class;
+        
         List<ResolvedType> bindings;
-        ResolvedType supertype = typeResolver.resolve(Collection.class, String.class);
+        ResolvedType supertype = typeResolver.resolve(Collection.class, elemType);
         bindings = supertype.typeParametersFor(Collection.class);
         assertEquals(1, bindings.size());
-        assertSame(String.class, bindings.get(0).getErasedType());
+        assertSame(elemType, bindings.get(0).getErasedType());
 
-        ResolvedType subtype = typeResolver.resolveSubtype(supertype, ArrayList.class);
+        ResolvedType subtype;
+
         // and then with specialization too
+        subtype = typeResolver.resolveSubtype(supertype, ArrayList.class);
         bindings = subtype.typeParametersFor(List.class);
         assertEquals(1, bindings.size());
-        assertSame(String.class, bindings.get(0).getErasedType());
+        assertSame(elemType, bindings.get(0).getErasedType());
         bindings = supertype.typeParametersFor(Collection.class);
         assertEquals(1, bindings.size());
-        assertSame(String.class, bindings.get(0).getErasedType());
+        assertSame(elemType, bindings.get(0).getErasedType());
+
+        // and once more, but now to a generic type
+        // 25-Oct-2015, tatu: Seems like there's some caching issue here...
+        subtype = typeResolver.resolveSubtype(supertype, List.class);
+        bindings = subtype.typeParametersFor(List.class);
+        assertEquals(1, bindings.size());
+        assertSame(elemType, bindings.get(0).getErasedType());
+        bindings = supertype.typeParametersFor(Collection.class);
+        assertEquals(1, bindings.size());
+        assertSame(elemType, bindings.get(0).getErasedType());
     }
-    
+
     /*
     /**********************************************************************
     /* Unit tests, success, untyped/incomplete

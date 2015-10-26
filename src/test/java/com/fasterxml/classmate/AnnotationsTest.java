@@ -10,11 +10,7 @@ import java.lang.reflect.Method;
 import static junit.framework.Assert.*;
 import static org.junit.Assert.assertEquals;
 
-/**
- * User: blangel
- * Date: 4/13/12
- * Time: 1:21 PM
- */
+@SuppressWarnings("deprecation")
 public class AnnotationsTest {
 
     @Retention(RetentionPolicy.RUNTIME)

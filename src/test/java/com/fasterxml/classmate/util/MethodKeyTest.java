@@ -4,11 +4,7 @@ import org.junit.Test;
 
 import static junit.framework.Assert.*;
 
-/**
- * User: blangel
- * Date: 4/12/12
- * Time: 2:50 PM
- */
+@SuppressWarnings("deprecation")
 public class MethodKeyTest {
 
     @SuppressWarnings("serial")

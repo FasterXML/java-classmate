@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.*;
 
 import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.types.TypePlaceHolder;
 
 /**
  * Simple LRU cache used for storing up to specified number of most recently accessed
@@ -31,10 +32,24 @@ public class ResolvedTypeCache implements Serializable
      * Helper method for constructing reusable cache keys
      */
     public Key key(Class<?> simpleType, ResolvedType[] tp) {
+        int len = (tp == null) ? 0 : tp.length;
+        if (len == 0) {
+            return new Key(simpleType);
+        }
+        // 25-Oct-2015, tatu: Need to prevent caching of anything with TypePlaceHolder;
+        //   can cause problems otherwise as those are ephemeral/mutable containers
+        for (int i = 0; i < len; ++i) {
+            if (tp[i] instanceof TypePlaceHolder) {
+                return null;
+            }
+        }
         return new Key(simpleType, tp);
     }
     
     public synchronized ResolvedType find(Key key) {
+        if (key == null) {
+            throw new IllegalArgumentException("Null key not allowed");
+        }
         return _map.get(key);
     }
 
@@ -43,6 +58,9 @@ public class ResolvedTypeCache implements Serializable
     }
     
     public synchronized void put(Key key, ResolvedType type) {
+        if (key == null) {
+            throw new IllegalArgumentException("Null key not allowed");
+        }
         _map.put(key, type);
     }
 
@@ -51,8 +69,11 @@ public class ResolvedTypeCache implements Serializable
     /* Methods for unit tests
     /**********************************************************************
      */
-    
-    public void add(ResolvedType type)
+
+    /**
+     * Method only used by test code: do not use otherwise.
+     */
+    protected void addForTest(ResolvedType type)
     {
         List<ResolvedType> tp = type.getTypeParameters();
         ResolvedType[] tpa = tp.toArray(new ResolvedType[tp.size()]);
@@ -71,11 +92,9 @@ public class ResolvedTypeCache implements Serializable
     public static class Key
     {
         private final Class<?> _erasedType;
-        
         private final ResolvedType[] _typeParameters;
-        
         private final int _hashCode;
-        
+
         public Key(Class<?> simpleType) {
             this(simpleType, null);
         }
@@ -93,6 +112,24 @@ public class ResolvedTypeCache implements Serializable
                 h += tp.length;
             }
             _hashCode = h;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("[CacheKey: ");
+            sb.append(_erasedType.getName())
+                .append('(');
+            if (_typeParameters != null) {
+                for (int i = 0; i < _typeParameters.length; ++i) {
+                    if (i > 0) {
+                        sb.append(',');
+                    }
+                    sb.append(_typeParameters[i]);
+                }
+            }
+            sb.append(")]");
+            return sb.toString();
         }
         
         @Override

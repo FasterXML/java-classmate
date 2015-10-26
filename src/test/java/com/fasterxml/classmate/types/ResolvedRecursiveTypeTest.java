@@ -4,11 +4,7 @@ import org.junit.Test;
 
 import static junit.framework.Assert.*;
 
-/**
- * User: blangel
- * Date: 4/13/12
- * Time: 9:59 AM
- */
+@SuppressWarnings("deprecation")
 public class ResolvedRecursiveTypeTest {
 
     private static abstract class AbstractClass { }

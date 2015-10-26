@@ -339,15 +339,20 @@ public class TypeResolver implements Serializable
             // no, can just add
             context = context.child(rawType);
         }
-        
+
         // If not, already recently resolved?
         ResolvedType[] typeParameters = typeBindings.typeParameterArray();
         ResolvedTypeCache.Key key = _resolvedTypes.key(rawType, typeParameters);
-                
-        type = _resolvedTypes.find(key);
-        if (type == null) {
+        // 25-Oct-2015, tatu: one twist; if any TypePlaceHolders included, key will NOT be created,
+        //   which means that caching should not be used (since type is mutable)
+        if (key == null) {
             type = _constructType(context, rawType, typeBindings);
-            _resolvedTypes.put(key, type);
+        } else {
+            type = _resolvedTypes.find(key);
+            if (type == null) {
+                type = _constructType(context, rawType, typeBindings);
+                _resolvedTypes.put(key, type);
+            }
         }
         context.resolveSelfReferences(type);
         return type;

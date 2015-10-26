@@ -11,6 +11,7 @@ import static junit.framework.Assert.*;
 /**
  * @author blangel
  */
+@SuppressWarnings("deprecation")
 public class ResolvedConstructorTest {
 
     private static final Constructor<String> stringConstructor;

@@ -16,6 +16,7 @@ public class ClassKeyTest
         }
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void nullClass() {
         try {

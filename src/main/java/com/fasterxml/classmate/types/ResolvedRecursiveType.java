@@ -145,4 +145,24 @@ public class ResolvedRecursiveType extends ResolvedType
         // should never get called, but just in case, only print brief description
         return appendBriefDescription(sb);
     }
+
+    /*
+    /**********************************************************************
+    /* Other overrides
+    /**********************************************************************
+     */
+    
+    @Override public boolean equals(Object o)
+    {
+        if (!super.equals(o)) {
+            return false;
+        }
+        // not sure if we should match at all, but definitely need this
+        // additional part if we do:
+        ResolvedRecursiveType other = (ResolvedRecursiveType) o;
+        if (_referencedType == null) {
+            return other._referencedType == null;
+        }
+        return _referencedType.equals(other._referencedType);
+    }
 }

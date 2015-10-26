@@ -3,6 +3,11 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
+1.3.1 (25-Oct-2015)
+
+- Fix a problem with caching of subtype-extended types, causing problems
+  due to mutable `TypePlaceHolder`
+
 1.3.0 (16-Sep-2015)
 
 #28: Parametrised classes does not resolve method types properly

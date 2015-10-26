@@ -5,11 +5,7 @@ import org.junit.Test;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertSame;
 
-/**
- * User: blangel
- * Date: 4/13/12
- * Time: 2:49 PM
- */
+@SuppressWarnings("deprecation")
 public class StdConfigurationTest {
 
     @Test
