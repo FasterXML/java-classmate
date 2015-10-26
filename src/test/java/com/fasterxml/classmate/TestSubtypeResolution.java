@@ -16,7 +16,7 @@ public class TestSubtypeResolution extends BaseTest
      */
 
     static class IntArrayList extends ArrayList<Integer> { }
-    
+
     static class StringIntMap extends HashMap<String,Integer> { }
 
     interface StringKeyMap<VT> extends Map<String,VT> { }
@@ -49,10 +49,60 @@ public class TestSubtypeResolution extends BaseTest
         // Let's use a single instance for all tests, to increase chance of seeing failures
         typeResolver = new TypeResolver();
     }
+ 
+    /*
+    /**********************************************************************
+    /* Unit tests, success, simple
+    /**********************************************************************
+     */
+
+    /**
+     * Test to ensure a properly parameterized {@link List} can be be made
+     * more specific while still keeping parameterization.
+     */
+    public void testMoreSpecificListType()
+    {
+        ResolvedType supertype = typeResolver.resolve(List.class, Integer.class);
+        // First verify original bindings are correct
+        List<ResolvedType> bindings = supertype.typeParametersFor(List.class);
+        assertEquals(1, bindings.size());
+        assertSame(Integer.class, bindings.get(0).getErasedType());
+        bindings = supertype.typeParametersFor(Collection.class);
+        assertEquals(1, bindings.size());
+        assertSame(Integer.class, bindings.get(0).getErasedType());
+
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, ArrayList.class);
+        // and then with specialization too
+        bindings = subtype.typeParametersFor(List.class);
+        assertEquals(1, bindings.size());
+        assertSame(Integer.class, bindings.get(0).getErasedType());
+        bindings = supertype.typeParametersFor(Collection.class);
+        assertEquals(1, bindings.size());
+        assertSame(Integer.class, bindings.get(0).getErasedType());
+    }
+
+    // Similar to above, but via Collection, not List
+    public void testMoreSpecificCollectionType()
+    {
+        List<ResolvedType> bindings;
+        ResolvedType supertype = typeResolver.resolve(Collection.class, String.class);
+        bindings = supertype.typeParametersFor(Collection.class);
+        assertEquals(1, bindings.size());
+        assertSame(String.class, bindings.get(0).getErasedType());
+
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, ArrayList.class);
+        // and then with specialization too
+        bindings = subtype.typeParametersFor(List.class);
+        assertEquals(1, bindings.size());
+        assertSame(String.class, bindings.get(0).getErasedType());
+        bindings = supertype.typeParametersFor(Collection.class);
+        assertEquals(1, bindings.size());
+        assertSame(String.class, bindings.get(0).getErasedType());
+    }
     
     /*
     /**********************************************************************
-    /* Unit tests, success
+    /* Unit tests, success, untyped/incomplete
     /**********************************************************************
      */
 
@@ -69,6 +119,35 @@ public class TestSubtypeResolution extends BaseTest
         assertSame(String.class, bindings.get(0).getErasedType());
         assertSame(Integer.class, bindings.get(1).getErasedType());
     }
+
+    /**
+     * Let's test that we can also resolve to incomplete types; might
+     * be useful occasionally
+     */
+    public void testValidIncompleteSubtype()
+    {
+        ResolvedType supertype = typeResolver.resolve(Map.class, String.class, Long.class);
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, StringKeyMap.class);
+        assertSame(StringKeyMap.class, subtype.getErasedType());
+
+        TypeBindings bindings = subtype.getTypeBindings();
+        assertEquals(1, bindings.size());
+        assertSame(Long.class, bindings.getBoundType(0).getErasedType());
+
+        // And should see full types for Map
+        ResolvedType actualSupertype = subtype.findSupertype(Map.class);
+        assertSame(Map.class, actualSupertype.getErasedType());
+        bindings = actualSupertype.getTypeBindings();
+        assertEquals(2, bindings.size());
+        assertSame(String.class, bindings.getBoundType(0).getErasedType());
+        assertSame(Long.class, bindings.getBoundType(1).getErasedType());
+    }
+
+    /*
+    /**********************************************************************
+    /* Unit tests, success, generic
+    /**********************************************************************
+     */
 
     public void testValidGenericSubClass()
     {
@@ -135,29 +214,6 @@ public class TestSubtypeResolution extends BaseTest
         tb = listType.getTypeBindings();
         assertEquals(1, tb.size());
         assertSame(String.class, tb.getBoundType(0).getErasedType());
-    }
-    
-    /**
-     * Let's test that we can also resolve to incomplete types; might
-     * be useful occasionally
-     */
-    public void testValidIncompleteSubtype()
-    {
-        ResolvedType supertype = typeResolver.resolve(Map.class, String.class, Long.class);
-        ResolvedType subtype = typeResolver.resolveSubtype(supertype, StringKeyMap.class);
-        assertSame(StringKeyMap.class, subtype.getErasedType());
-
-        TypeBindings bindings = subtype.getTypeBindings();
-        assertEquals(1, bindings.size());
-        assertSame(Long.class, bindings.getBoundType(0).getErasedType());
-
-        // And should see full types for Map
-        ResolvedType actualSupertype = subtype.findSupertype(Map.class);
-        assertSame(Map.class, actualSupertype.getErasedType());
-        bindings = actualSupertype.getTypeBindings();
-        assertEquals(2, bindings.size());
-        assertSame(String.class, bindings.getBoundType(0).getErasedType());
-        assertSame(Long.class, bindings.getBoundType(1).getErasedType());
     }
 
     // inspired by [JACKSON-677]
