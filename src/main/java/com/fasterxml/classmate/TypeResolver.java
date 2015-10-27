@@ -207,7 +207,7 @@ public class TypeResolver implements Serializable
      * @throws IllegalArgumentException If this type can be extended in general, but not into specified sub-class
      * @throws UnsupportedOperationException If this type can not be sub-classed
      */
-    public ResolvedType resolveSubtype(ResolvedType supertype, Class<?> subtype)
+    public ResolvedType resolveSubtype(ResolvedType supertype, final Class<?> subtype)
         throws IllegalArgumentException, UnsupportedOperationException
     {
         // first: if it's a recursive reference, find out referred-to type
@@ -216,15 +216,15 @@ public class TypeResolver implements Serializable
             supertype = refType;
         }
         // Then, trivial check for case where subtype is supertype...
-        if (supertype.getErasedType() == subtype) {
+        final Class<?> superclass = supertype.getErasedType();
+        if (superclass == subtype) { // unlikely but cheap check so let's just do it
             return supertype;
         }
-        
+        // First: can not sub-class primitives, or array types
         if (!supertype.canCreateSubtypes()) {
             throw new UnsupportedOperationException("Can not subtype primitive or array types (type "+supertype.getFullDescription()+")");
         }
-        // In general, must be able to subtype as per JVM rules:
-        Class<?> superclass = supertype.getErasedType();
+        // And in general must be able to subtype as per JVM rules:
         if (!superclass.isAssignableFrom(subtype)) {
             throw new IllegalArgumentException("Can not sub-class "+supertype.getBriefDescription()
                     +" into "+subtype.getName());
@@ -257,18 +257,18 @@ public class TypeResolver implements Serializable
             resolvedSubtype = _fromClass(null, subtype,
                     TypeBindings.create(subtype, resolvedParams));
         }
-        ResolvedType rawSupertype = resolvedSubtype.findSupertype(superclass);
-        if (rawSupertype == null) { // sanity check, should never occur
+        ResolvedType resolvedSupertype = resolvedSubtype.findSupertype(superclass);
+        if (resolvedSupertype == null) { // sanity check, should never occur
             throw new IllegalArgumentException("Internal error: unable to locate supertype ("+subtype.getName()+") for type "+supertype.getBriefDescription());
         }
         // Ok, then, let's find and verify type assignments
-        _resolveTypePlaceholders(supertype, rawSupertype);
+        _resolveTypePlaceholders(supertype, resolvedSupertype);
         // And then re-construct, if necessary
         if (paramCount == 0) { // if no type parameters, fine as is
             return resolvedSubtype;
         }
         // but with type parameters, need to reconstruct
-        ResolvedType[] typeParams = new ResolvedType[paramCount];
+        final ResolvedType[] typeParams = new ResolvedType[paramCount];
         for (int i = 0; i < paramCount; ++i) {
             ResolvedType t = placeholders[i].actualType();
             // Is it ok for it to be left unassigned? For now let's not allow that
@@ -515,11 +515,14 @@ public class TypeResolver implements Serializable
     /**
      * Method called to verify that types match; and if there are any placeholders,
      * replace them in <code>actualType</code>.
+     *
+     * @param sourceType Original base type used for specification/refinement
+     * @param actualType Base type instance after re-resolving, possibly containing type placeholders
      */
-    private void _resolveTypePlaceholders(ResolvedType expectedType, ResolvedType actualType)
+    private void _resolveTypePlaceholders(ResolvedType sourceType, ResolvedType actualType)
         throws IllegalArgumentException
     {
-        List<ResolvedType> expectedTypes = expectedType.getTypeParameters();
+        List<ResolvedType> expectedTypes = sourceType.getTypeParameters();
         List<ResolvedType> actualTypes = actualType.getTypeParameters();
         for (int i = 0, len = expectedTypes.size(); i < len; ++i) {
             ResolvedType exp = expectedTypes.get(i);
