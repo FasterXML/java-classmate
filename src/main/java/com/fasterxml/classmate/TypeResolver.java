@@ -236,13 +236,26 @@ public class TypeResolver implements Serializable
 
         if (paramCount == 0) { // no generics
             placeholders = null;
-            resolvedSubtype = resolve(subtype);
+            // 26-Oct-2015, tatu: Used to do "full" call:
+//            resolvedSubtype = resolve(subtype);
+            // but should be able to streamline it as:
+            resolvedSubtype = _fromClass(null, subtype, TypeBindings.emptyBindings());
+
         } else {
             placeholders = new TypePlaceHolder[paramCount];
             for (int i = 0; i < paramCount; ++i) {
                 placeholders[i] = new TypePlaceHolder(i);
             }
-            resolvedSubtype = resolve(subtype, placeholders);            
+            // 26-Oct-2015, tatu: Used to do "full" call:
+//            resolvedSubtype = resolve(subtype, placeholders);            
+            // but let's actually inline it:
+            ResolvedType[] resolvedParams = new ResolvedType[paramCount];
+            TypeBindings bindings = TypeBindings.emptyBindings();
+            for (int i = 0; i < paramCount; ++i) {
+                resolvedParams[i] = _fromAny(null, placeholders[i], bindings);
+            }
+            resolvedSubtype = _fromClass(null, subtype,
+                    TypeBindings.create(subtype, resolvedParams));
         }
         ResolvedType rawSupertype = resolvedSubtype.findSupertype(superclass);
         if (rawSupertype == null) { // sanity check, should never occur
