@@ -471,12 +471,17 @@ public class TestTypeResolver extends BaseTest
         ResolvedType resolvedType = typeResolver.resolve(TypeResolver.class);
         MemberResolver memberResolver = new MemberResolver(typeResolver);
         memberResolver.setMethodFilter(new Filter<RawMethod>() {
+            // 26-Oct-2015, tatu: Quite fragile, probably shouldn't use
             @Override public boolean include(RawMethod element) {
-                return "_typesMatch".equals(element.getName());
+                return "_verifyAndResolve".equals(element.getName());
             }
         });
         ResolvedTypeWithMembers resolvedTypeWithMembers = memberResolver.resolve(resolvedType, null, null);
-        ResolvedMethod typesMatchResolvedMethod = resolvedTypeWithMembers.getMemberMethods()[0];
+        ResolvedMethod[] methods = resolvedTypeWithMembers.getMemberMethods();
+        if (methods.length == 0) {
+            fail("Missing methods: should find one");
+        }
+        ResolvedMethod typesMatchResolvedMethod = methods[0];
         Method typesMatchMethod = typesMatchResolvedMethod.getRawMember();
         typesMatchMethod.setAccessible(true);
 

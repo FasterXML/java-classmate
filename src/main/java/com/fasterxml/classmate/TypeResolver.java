@@ -296,11 +296,11 @@ public class TypeResolver implements Serializable
         if (mainType instanceof Class<?>) {
             return _fromClass(context, (Class<?>) mainType, typeBindings);
         }
-        if (mainType instanceof ResolvedType) {
-            return (ResolvedType) mainType;
-        }
         if (mainType instanceof ParameterizedType) {
             return _fromParamType(context, (ParameterizedType) mainType, typeBindings);
+        }
+        if (mainType instanceof ResolvedType) { // Esp. TypePlaceHolder
+            return (ResolvedType) mainType;
         }
         if (mainType instanceof GenericType<?>) {
             return _fromGenericType(context, (GenericType<?>) mainType, typeBindings);
@@ -500,7 +500,8 @@ public class TypeResolver implements Serializable
      */
 
     /**
-     * Method called to verify that types match; and if there are
+     * Method called to verify that types match; and if there are any placeholders,
+     * replace them in <code>actualType</code>.
      */
     private void _resolveTypePlaceholders(ResolvedType expectedType, ResolvedType actualType)
         throws IllegalArgumentException
@@ -510,21 +511,22 @@ public class TypeResolver implements Serializable
         for (int i = 0, len = expectedTypes.size(); i < len; ++i) {
             ResolvedType exp = expectedTypes.get(i);
             ResolvedType act = actualTypes.get(i);
-            if (!_typesMatch(exp, act)) {
+            if (!_verifyAndResolve(exp, act)) {
                 throw new IllegalArgumentException("Type parameter #"+(i+1)+"/"+len+" differs; expected "
                         +exp.getBriefDescription()+", got "+act.getBriefDescription());
             }
         }
     }
 
-    private boolean _typesMatch(ResolvedType exp, ResolvedType act)
+    private boolean _verifyAndResolve(ResolvedType exp, ResolvedType act)
     {
-        // Simple equality check, except for one thing: place holders for 'act'
+        // See if we have an actual type placeholder to resolve; if yes, replace
         if (act instanceof TypePlaceHolder) {
             ((TypePlaceHolder) act).actualType(exp);
             return true;
         }
-        // but due to recursive nature can't call equality...
+        // if not, try to verify compatibility. But note that we can not
+        // use simple equality as we need to resolve recursively
         if (exp.getErasedType() != act.getErasedType()) {
             return false;
         }
@@ -534,7 +536,7 @@ public class TypeResolver implements Serializable
         for (int i = 0, len = expectedTypes.size(); i < len; ++i) {
             ResolvedType exp2 = expectedTypes.get(i);
             ResolvedType act2 = actualTypes.get(i);
-            if (!_typesMatch(exp2, act2)) {
+            if (!_verifyAndResolve(exp2, act2)) {
                 return false;
             }
         }

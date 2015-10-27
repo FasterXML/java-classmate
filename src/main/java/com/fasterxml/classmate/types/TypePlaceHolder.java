@@ -14,7 +14,8 @@ public class TypePlaceHolder extends ResolvedType
     protected final int _ordinal;
 
     /**
-     * Type assigned during wildcard resolution
+     * Type assigned during wildcard resolution (which follows type
+     * structure resolution)
      */
     protected ResolvedType _actualType;
     
