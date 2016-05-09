@@ -11,9 +11,9 @@ import java.io.Serializable;
  * >http://gafter.blogspot.com/2006/12/super-type-tokens.html</a>,
  *<p>
  * Usage is by sub-classing: here is one way to instantiate reference
- * to generic type <code>List&lt;Integer></code>:
+ * to generic type <code>List&lt;Integer&gt;</code>:
  *<pre>
- *  GenericType type = new GenericType&lt;List&lt;Integer>>() { };
+ *  GenericType type = new GenericType&lt;List&lt;Integer&gt;&gt;() { };
  *</pre>
  * which can be passed to methods that accept <code>GenericReference</code>.
  */

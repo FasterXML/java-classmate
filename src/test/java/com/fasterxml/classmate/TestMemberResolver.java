@@ -318,7 +318,7 @@ public class TestMemberResolver extends BaseTest
         assertEquals(2, typesWithOverrides.size());
     }
 
-    public void testGatherTypesWithInterfaces() throws IllegalAccessException, InvocationTargetException
+    public void testGatherTypesWithInterfaces() throws Exception
     {
         ResolvedType resolvedType = typeResolver.resolve(MemberResolver.class);
         MemberResolver memberResolver = new MemberResolver(typeResolver);
@@ -350,6 +350,15 @@ public class TestMemberResolver extends BaseTest
         gatherTypesMethod.invoke(memberResolver, currentType, seenTypes, types);
         assertEquals(2, seenTypes.size());
         assertEquals(2, types.size());
+    }
+
+    public void testJavaLangObject30() throws Exception
+    {
+        MemberResolver memberResolver = new MemberResolver(typeResolver);
+
+        ResolvedType type = typeResolver.resolve(Object.class);
+        ResolvedTypeWithMembers members = memberResolver.resolve(type, null, null);
+        assertNotNull(members);
     }
 
     /*

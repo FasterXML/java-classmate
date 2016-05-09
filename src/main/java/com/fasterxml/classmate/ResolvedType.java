@@ -60,7 +60,7 @@ public abstract class ResolvedType
      */
     
     /**
-     * Returns type-erased Class<?> that this resolved type has.
+     * Returns type-erased Class&lt;?&gt; that this resolved type has.
      */
     public Class<?> getErasedType() { return _erasedType; }
 
@@ -76,7 +76,7 @@ public abstract class ResolvedType
     /**
      * Accessor that must be used to find out actual type in
      * case of "self-reference"; case where type refers
-     * recursive to itself (like, <code>T implements Comparable&lt;T></code>).
+     * recursive to itself (like, <code>T implements Comparable&lt;T&gt;</code>).
      * For all other types returns null but for self-references "real" type.
      * Separate accessor is provided to avoid accidental infinite loops.
      */

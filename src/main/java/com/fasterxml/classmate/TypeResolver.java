@@ -94,7 +94,7 @@ public class TypeResolver implements Serializable
      *</pre>
      * which would be equivalent to
      *<pre>
-     *  ResolvedType type = TypeResolver.resolve(new GenericType&lt;List&lt;Integer>>() { });
+     *  ResolvedType type = TypeResolver.resolve(new GenericType&lt;List&lt;Integer&gt;&gt;() { });
      *</pre>
      * Note that you can mix different types of type parameters, whether already
      * resolved ({@link ResolvedType}), type-erased ({@link java.lang.Class}) or
@@ -180,7 +180,7 @@ public class TypeResolver implements Serializable
      * (subtype must properly extend or implement specified supertype).
      *<p>
      * A typical use case here is to refine a generic type; for example, given
-     * that we have generic type like <code>List&ltInteger></code>, but we want
+     * that we have generic type like <code>List&lt;Integer&gt;</code>, but we want
      * a more specific implementation type like
      * class <code>ArrayList</code> but with same parameterization (here just <code>Integer</code>),
      * we could achieve it by:
@@ -288,10 +288,12 @@ public class TypeResolver implements Serializable
      */
 
     /**
-     * Helper method that can be used to checked whether given resolved type
+     * Convenience method that can be used to checked whether given resolved type
      * (with erased type of <code>java.lang.Object</code>) is a placeholder
      * for "self-reference"; these are nasty recursive ("self") types
      * needed with some interfaces
+     *
+     * @param type Type to check
      */
     public static boolean isSelfReference(ResolvedType type)
     {
