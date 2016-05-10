@@ -28,7 +28,7 @@ public class ResolvedTypeWithMembers
     private final static ResolvedMethod[] NO_RESOLVED_METHODS = new ResolvedMethod[0];
     private final static ResolvedField[] NO_RESOLVED_FIELDS = new ResolvedField[0];
     private final static ResolvedConstructor[] NO_RESOLVED_CONSTRUCTORS = new ResolvedConstructor[0];
-    
+
     /**
      * Default annotation configuration is to ignore all annotations types.
      */
@@ -44,7 +44,7 @@ public class ResolvedTypeWithMembers
      * Handler for resolving annotation information
      */
     protected final AnnotationHandler _annotationHandler;
-    
+
     /**
      * Leaf of the type hierarchy, i.e. type from which this hierarchy
      * was generated.
@@ -66,12 +66,12 @@ public class ResolvedTypeWithMembers
      * Filter to use for selecting constructors to include
      */
     protected Filter<RawConstructor> _constructorFilter;
-    
+
     /**
      * Filter to use for selecting methods to include
      */
     protected Filter<RawMethod> _methodFilter;
-    
+
     /*
     /**********************************************************************
     /* Lazily constructed members
@@ -93,7 +93,7 @@ public class ResolvedTypeWithMembers
     /* Life cycle at this point
     /**********************************************************************
      */
-    
+
     public ResolvedTypeWithMembers(TypeResolver typeResolver, AnnotationConfiguration annotationConfig,
             HierarchicType mainType, HierarchicType[] types,
             Filter<RawConstructor> constructorFilter, Filter<RawField> fieldFilter, Filter<RawMethod> methodFilter)

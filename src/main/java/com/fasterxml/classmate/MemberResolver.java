@@ -117,17 +117,29 @@ public class MemberResolver implements Serializable
             AnnotationConfiguration annotationConfig,
             AnnotationOverrides annotationOverrides)
     {
-        // First: flatten basic type hierarchy (highest to lowest precedence)
+        List<ResolvedType> types = new ArrayList<ResolvedType>();
         HashSet<ClassKey> seenTypes = new HashSet<ClassKey>();
-        ArrayList<ResolvedType> types = new ArrayList<ResolvedType>();
-        _gatherTypes(mainType, seenTypes, types);
+
+        // First: flatten basic type hierarchy (highest to lowest precedence)
+        
+        // 09-May-2016, tatu: Special case, from [#30] is that of `Object.class`, which
+        //   by default settings has no parentage. Not 100% sure this is proper fix, but
+        //   it does take care of the immediate problem.
+        if (!_cfgIncludeLangObject && (mainType.getErasedType() == Object.class)) {
+            types = new ArrayList<ResolvedType>(1);
+            types.add(mainType);
+            seenTypes.add(new ClassKey(Object.class));
+        } else {
+            types = new ArrayList<ResolvedType>();
+            _gatherTypes(mainType, seenTypes, types);
+        }
 
         // Second step: inject mix-ins (keeping order from highest to lowest)
         HierarchicType[] htypes;
         HierarchicType mainHierarchicType = null;
-
+        
         // Third step: add mix-ins (if any), reverse order (lowest to highest precedence)
-        if (annotationOverrides == null) { // just create hierarchic instances:
+        if (annotationOverrides == null) { // just create hierarchic instances
             int len = types.size();
             htypes = new HierarchicType[len];
             for (int i = 0; i < len; ++i) {
@@ -156,8 +168,8 @@ public class MemberResolver implements Serializable
             htypes = typesWithMixins.toArray(new HierarchicType[typesWithMixins.size()]);
         }
         // And that's about all we need to do; rest computed lazily
-        return new ResolvedTypeWithMembers(_typeResolver, annotationConfig, mainHierarchicType, htypes,
-                _constructorFilter, _fieldFilter, _methodFilter);
+        return new ResolvedTypeWithMembers(_typeResolver, annotationConfig, mainHierarchicType,
+                htypes, _constructorFilter, _fieldFilter, _methodFilter);
     }
 
     private void _addOverrides(List<HierarchicType> typesWithOverrides, Set<ClassKey> seenTypes, Class<?> override)
@@ -201,7 +213,8 @@ public class MemberResolver implements Serializable
     /**********************************************************************
      */
     
-    protected void _gatherTypes(ResolvedType currentType, Set<ClassKey> seenTypes, List<ResolvedType> types)
+    protected void _gatherTypes(ResolvedType currentType, Set<ClassKey> seenTypes,
+            List<ResolvedType> types)
     {
         // may get called with null if no parent type
         if (currentType == null) {
@@ -209,7 +222,7 @@ public class MemberResolver implements Serializable
         }
         Class<?> raw = currentType.getErasedType();
         // Also, don't include Object.class unless that's ok
-        if (!_cfgIncludeLangObject && raw == Object.class) {
+        if (!_cfgIncludeLangObject && (raw == Object.class)) {
             return;
         }
         // Finally, only include first instance of an interface, so:
