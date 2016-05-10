@@ -283,8 +283,8 @@ public class TestSubtypeResolution extends BaseTest
     {
         ResolvedType supertype = typeResolver.resolve(Map.class, String.class, Integer.class);
         try {
-            typeResolver.resolveSubtype(supertype, StringLongMap.class);
-            fail("Expected failure");
+            ResolvedType t = typeResolver.resolveSubtype(supertype, StringLongMap.class);
+            fail("Expected failure, got: "+t);
         } catch (IllegalArgumentException e) {
             verifyException(e, "Type parameter #2/2 differs; expected java.lang.Integer");
         }

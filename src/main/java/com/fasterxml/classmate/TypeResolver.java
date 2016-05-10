@@ -261,7 +261,7 @@ public class TypeResolver implements Serializable
         if (resolvedSupertype == null) { // sanity check, should never occur
             throw new IllegalArgumentException("Internal error: unable to locate supertype ("+subtype.getName()+") for type "+supertype.getBriefDescription());
         }
-        // Ok, then, let's find and verify type assignments
+        // Ok, then, let's find and verify type assignments; resolve type holders if any
         _resolveTypePlaceholders(supertype, resolvedSupertype);
         // And then re-construct, if necessary
         if (paramCount == 0) { // if no type parameters, fine as is
