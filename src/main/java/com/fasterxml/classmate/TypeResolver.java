@@ -410,6 +410,13 @@ public class TypeResolver implements Serializable
                     _resolveSuperInterfaces(context, rawType, typeBindings));
             
         }
+        // for issue 33: if the type has no type parameters,
+        // don't include typeBindings in the ResolvedType
+        if (rawType.getTypeParameters().length == 0) {
+            return new ResolvedObjectType(rawType, null,
+                    _resolveSuperClass(context, rawType, typeBindings),
+                    _resolveSuperInterfaces(context, rawType, typeBindings));
+        }
         return new ResolvedObjectType(rawType, typeBindings,
                 _resolveSuperClass(context, rawType, typeBindings),
                 _resolveSuperInterfaces(context, rawType, typeBindings));
