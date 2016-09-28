@@ -9,7 +9,6 @@ import com.fasterxml.classmate.members.RawMethod;
 
 public class ResolvedInterfaceType extends ResolvedType
 {
-
     /**
      * List of interfaces this type implements; may be empty but never null
      */

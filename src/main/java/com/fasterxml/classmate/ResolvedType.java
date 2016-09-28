@@ -91,7 +91,7 @@ public abstract class ResolvedType
     /**
      * Returns ordered list of interfaces (in declaration order) that this type
      * implements.
-     * 
+     *
      * @return List of interfaces this type implements, if any; empty list if none
      */
     public abstract List<ResolvedType> getImplementedInterfaces();

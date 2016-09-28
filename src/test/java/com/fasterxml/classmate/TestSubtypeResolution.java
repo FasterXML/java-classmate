@@ -178,7 +178,7 @@ public class TestSubtypeResolution extends BaseTest
 
         // and must look the same in other respects too:
         assertEquals("Ljava/util/HashMap<Ljava/lang/String;Ljava/lang/Long;>;", subtype.getSignature());
-        assertEquals("java.util.HashMap<java.lang.String,java.lang.Long> extends java.util.AbstractMap<java.lang.String,java.lang.Long> implements java.util.Map<java.lang.String,java.lang.Long>,java.lang.Cloneable<java.lang.String,java.lang.Long>,java.io.Serializable<java.lang.String,java.lang.Long>",
+        assertEquals("java.util.HashMap<java.lang.String,java.lang.Long> extends java.util.AbstractMap<java.lang.String,java.lang.Long> implements java.util.Map<java.lang.String,java.lang.Long>,java.lang.Cloneable,java.io.Serializable",
                 subtype.getFullDescription());
     }
 

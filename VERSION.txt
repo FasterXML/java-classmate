@@ -3,6 +3,11 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
+1.3.3 (28-Sep-2016)
+
+#33: "ghost" type parameter in field
+ (reported, fix contributed by web-online@github)
+
 1.3.2 (25-Sep-2016)
 
 #30: ArrayIndexOutOfBoundsException when resolving Object.class

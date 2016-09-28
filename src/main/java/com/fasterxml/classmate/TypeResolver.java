@@ -404,18 +404,16 @@ public class TypeResolver implements Serializable
             ResolvedType elementType = _fromAny(context, rawType.getComponentType(), typeBindings);
             return new ResolvedArrayType(rawType, typeBindings, elementType);
         }
+        // Work-around/fix for [#33]: if the type has no type parameters, don't include
+        // typeBindings in the ResolvedType
+        if (!typeBindings.isEmpty() && rawType.getTypeParameters().length == 0) {
+            typeBindings = TypeBindings.emptyBindings();
+        }
         // For other types super interfaces are needed...
         if (rawType.isInterface()) {
             return new ResolvedInterfaceType(rawType, typeBindings,
                     _resolveSuperInterfaces(context, rawType, typeBindings));
             
-        }
-        // for issue 33: if the type has no type parameters,
-        // don't include typeBindings in the ResolvedType
-        if (rawType.getTypeParameters().length == 0) {
-            return new ResolvedObjectType(rawType, null,
-                    _resolveSuperClass(context, rawType, typeBindings),
-                    _resolveSuperInterfaces(context, rawType, typeBindings));
         }
         return new ResolvedObjectType(rawType, typeBindings,
                 _resolveSuperClass(context, rawType, typeBindings),
