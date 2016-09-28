@@ -7,7 +7,7 @@
     </parent>
     <artifactId>classmate</artifactId>
     <name>ClassMate</name>
-    <version>1.3.3</version>
+    <version>1.3.4-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>Library for introspecting types with full generic information
         including resolving of field and method types.
@@ -17,7 +17,7 @@
         <connection>scm:git:git@github.com:cowtowncoder/java-classmate.git</connection>
         <developerConnection>scm:git:git@github.com:cowtowncoder/java-classmate.git</developerConnection>
         <url>http://github.com/cowtowncoder/java-classmate</url>
-      <tag>classmate-1.3.3</tag>
+      <tag>HEAD</tag>
   </scm>
     <developers>
         <developer>
