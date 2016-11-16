@@ -1,7 +1,9 @@
 package com.fasterxml.classmate;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.classmate.members.RawMember;
 import com.fasterxml.classmate.members.ResolvedMember;
@@ -40,7 +42,7 @@ public abstract class BaseTest extends TestCase
 
     protected void matchRawMembers(Iterable<? extends RawMember> members, String[] names0)
     {
-        List<String> names = Arrays.asList(names0);
+        Set<String> names = new HashSet<String>(Arrays.asList(names0));
         for (RawMember m : members) {
             String name = m.getName();
             if (!names.contains(name)) {

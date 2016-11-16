@@ -55,17 +55,30 @@ public class ResolvedObjectTypeTest extends BaseTest
 
         ResolvedObjectType stringType = ResolvedObjectType.create(String.class, null, objectType, Collections.<ResolvedType>emptyList());
         staticFields = stringType.getStaticFields();
-        /* 13-May-2013, tatu: Looks like Java 7 will add fourth, "HASHING_SEED"?
-         */
+        // 13-May-2013, tatu: Looks like Java 7 will add fourth, "HASHING_SEED"?
+
         // serialVersionUID & serialPersistentFields & CASE_INSENSITIVE_ORDER
         int count = staticFields.size();
-        if (3 != count) { // 3 for 1.6
-            if (4 != count) { // 4 for 1.7
-                fail("Expected 3 (JDK 1.6) or 4 (1.7) static fields, got "+count+"; fields: "+staticFields);
-            }
+
+        switch (count) {
+        case 3: // Java 6
+            matchRawMembers(staticFields, new String[] {
+                    "serialVersionUID", "serialPersistentFields", "CASE_INSENSITIVE_ORDER"
+            });
+            break;
+        case 4: // Java 7/8
             matchRawMembers(staticFields, new String[] {
                     "serialVersionUID", "serialPersistentFields", "CASE_INSENSITIVE_ORDER", "HASHING_SEED"
             });
+            break;
+        case 6: // Java 9
+            matchRawMembers(staticFields, new String[] {
+                    "serialVersionUID", "serialPersistentFields", "CASE_INSENSITIVE_ORDER",
+                    "COMPACT_STRINGS", "LATIN1", "UTF16"
+            });
+            break;
+        default:
+            fail("Expected 3 (JDK 1.6), 4 (1.7/1.8) or 6 (1.9) static fields, got "+count+"; fields: "+staticFields);
         }
     }
 

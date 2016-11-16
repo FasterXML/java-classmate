@@ -70,7 +70,10 @@ public class AnnotationsTest {
         String asString = annotations.toString();
         assertTrue(asString.contains("{interface org.junit.Test=@org.junit.Test("));
         assertTrue(asString.contains("timeout=0"));
-        assertTrue(asString.contains("expected=class org.junit.Test$None"));
+
+        // 15-Nov-2016, tatu: Java 9 changes description slightly, need to modify
+        assertTrue(asString.contains("expected=class org.junit.Test$None") // until Java 8
+                || asString.contains("expected=org.junit.Test$None"));
 
         Annotation markerAnnotation = thisMethod.getAnnotation(Marker.class);
         annotations.addAsDefault(markerAnnotation);
@@ -79,6 +82,8 @@ public class AnnotationsTest {
         assertTrue(asString.contains("interface com.fasterxml.classmate.AnnotationsTest$Marker=@com.fasterxml.classmate.AnnotationsTest$Marker()"));
         assertTrue(asString.contains("interface org.junit.Test=@org.junit.Test"));
         assertTrue(asString.contains("timeout=0"));
-        assertTrue(asString.contains("expected=class org.junit.Test$None"));
+        // 15-Nov-2016, tatu: Java 9 changes description slightly, need to modify
+        assertTrue(asString.contains("expected=class org.junit.Test$None")
+                || asString.contains("expected=org.junit.Test$None"));
     }
 }
