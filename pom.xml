@@ -12,11 +12,11 @@
     <description>Library for introspecting types with full generic information
         including resolving of field and method types.
     </description>
-    <url>http://github.com/cowtowncoder/java-classmate</url>
+    <url>http://github.com/FasterXML/java-classmate</url>
     <scm>
-        <connection>scm:git:git@github.com:cowtowncoder/java-classmate.git</connection>
-        <developerConnection>scm:git:git@github.com:cowtowncoder/java-classmate.git</developerConnection>
-        <url>http://github.com/cowtowncoder/java-classmate</url>
+        <connection>scm:git:git@github.com:FasterXML/java-classmate.git</connection>
+        <developerConnection>scm:git:git@github.com:FasterXML/java-classmate.git</developerConnection>
+        <url>http://github.com/FasterXML/java-classmate</url>
       <tag>HEAD</tag>
   </scm>
     <developers>
@@ -71,6 +71,17 @@ com.fasterxml.classmate.*;version=${project.version}
 
     <build>
         <plugins>
+            <!-- As per [#38] add `Automatic-Module-Name` -->
+            <plugin>
+              <groupId>org.apache.felix</groupId>
+              <artifactId>maven-bundle-plugin</artifactId>
+              <configuration>
+		<instructions combine.children="merge">
+		  <Automatic-Module-Name>com.fasterxml.classmate</Automatic-Module-Name>
+		</instructions>
+              </configuration>
+            </plugin>
+
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.2</version>
@@ -103,7 +114,7 @@ com.fasterxml.classmate.*;version=${project.version}
                     <encoding>UTF-8</encoding>
                     <maxmemory>512m</maxmemory>
                     <links>
-	 	      <link>http://docs.oracle.com/javase/7/docs/api/</link>
+	 	      <link>http://docs.oracle.com/javase/8/docs/api/</link>
                     </links>
                  </configuration>
                  <executions>
