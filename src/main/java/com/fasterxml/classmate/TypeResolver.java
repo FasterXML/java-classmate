@@ -233,35 +233,29 @@ public class TypeResolver implements Serializable
         ResolvedType resolvedSubtype;
         int paramCount = subtype.getTypeParameters().length;
         TypePlaceHolder[] placeholders;
+        TypeBindings tbForPlaceholders;
 
         if (paramCount == 0) { // no generics
             placeholders = null;
             // 26-Oct-2015, tatu: Used to do "full" call:
 //            resolvedSubtype = resolve(subtype);
-            // but should be able to streamline it as:
-            resolvedSubtype = _fromClass(null, subtype, TypeBindings.emptyBindings());
-
+            // but should be able to streamline
+            tbForPlaceholders = TypeBindings.emptyBindings();
         } else {
             placeholders = new TypePlaceHolder[paramCount];
-            for (int i = 0; i < paramCount; ++i) {
-                placeholders[i] = new TypePlaceHolder(i);
-            }
-            // 26-Oct-2015, tatu: Used to do "full" call:
-//            resolvedSubtype = resolve(subtype, placeholders);            
-            // but let's actually inline it:
             ResolvedType[] resolvedParams = new ResolvedType[paramCount];
-            TypeBindings bindings = TypeBindings.emptyBindings();
             for (int i = 0; i < paramCount; ++i) {
-                resolvedParams[i] = _fromAny(null, placeholders[i], bindings);
+                resolvedParams[i] = placeholders[i] = new TypePlaceHolder(i);
             }
-            resolvedSubtype = _fromClass(null, subtype,
-                    TypeBindings.create(subtype, resolvedParams));
+            tbForPlaceholders = TypeBindings.create(subtype, resolvedParams);
         }
+        resolvedSubtype = _fromClass(null, subtype, tbForPlaceholders);
         ResolvedType resolvedSupertype = resolvedSubtype.findSupertype(superclass);
         if (resolvedSupertype == null) { // sanity check, should never occur
             throw new IllegalArgumentException("Internal error: unable to locate supertype ("+subtype.getName()+") for type "+supertype.getBriefDescription());
         }
         // Ok, then, let's find and verify type assignments; resolve type holders if any
+        // (and yes, even for no-type-parameters case)
         _resolveTypePlaceholders(supertype, resolvedSupertype);
         // And then re-construct, if necessary
         if (paramCount == 0) { // if no type parameters, fine as is
@@ -272,6 +266,9 @@ public class TypeResolver implements Serializable
         for (int i = 0; i < paramCount; ++i) {
             ResolvedType t = placeholders[i].actualType();
             // Is it ok for it to be left unassigned? For now let's not allow that
+            // 18-Oct-2017, tatu: Highly likely that we'll need to allow this, substitute with "unknown" --
+            //    had to do that in Jackson. Occurs when subtype is generic, with "bogus" type declared
+            //    but not bound in supertype(s). But leaving checking in for now.
             if (t == null) {
                 throw new IllegalArgumentException("Failed to find type parameter #"+(i+1)+"/"
                         +paramCount+" for "+subtype.getName());
@@ -280,7 +277,7 @@ public class TypeResolver implements Serializable
         }
         return resolve(subtype, typeParams);
     }
-    
+
     /*
     /**********************************************************************
     /* Misc other methods
@@ -299,7 +296,7 @@ public class TypeResolver implements Serializable
     {
         return (type instanceof ResolvedRecursiveType);
     }
-    
+
     /*
     /**********************************************************************
     /* Internal methods, second-level factory methods
