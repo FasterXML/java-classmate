@@ -1,7 +1,7 @@
 ## Overview
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.fasterxml/classmate/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.fasterxml/classmate/)
-[![Javadoc](https://javadoc-emblem.rhcloud.com/doc/com.fasterxml/classmate/badge.svg)](http://www.javadoc.io/doc/com.fasterxml/classmate)
+[![Javadoc](https://javadoc.io/badge/com.fasterxml/classmate.svg)](http://www.javadoc.io/doc/com.fasterxml/classmate)
 
 ClassMate is a zero-dependency Java library for accurately introspecting type information, including reliable resolution of generic type declarations for both classes ("types") and members (fields, methods and constructors).
 
