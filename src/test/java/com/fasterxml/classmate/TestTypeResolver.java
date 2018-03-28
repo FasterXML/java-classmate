@@ -7,7 +7,7 @@ import com.fasterxml.classmate.members.RawMethod;
 import com.fasterxml.classmate.members.ResolvedMethod;
 import com.fasterxml.classmate.types.*;
 import com.fasterxml.classmate.util.ClassKey;
-import com.fasterxml.classmate.util.ResolvedTypeCache;
+import com.fasterxml.classmate.util.ResolvedTypeKey;
 
 @SuppressWarnings("serial")
 public class TestTypeResolver extends BaseTest
@@ -378,7 +378,7 @@ public class TestTypeResolver extends BaseTest
         }
         // add a mock class to force 'internal-error' case
         Object subclass = new Object() { };
-        typeResolver._resolvedTypes.put(new ResolvedTypeCache.Key(subclass.getClass()), new ResolvedObjectType(subclass.getClass(), null, (ResolvedType) null, ResolvedType.NO_TYPES) {
+        typeResolver._resolvedTypes.put(new ResolvedTypeKey(subclass.getClass()), new ResolvedObjectType(subclass.getClass(), null, (ResolvedType) null, ResolvedType.NO_TYPES) {
             @Override public ResolvedType findSupertype(Class<?> erasedSupertype) {
                 return null;
             }
@@ -395,7 +395,7 @@ public class TestTypeResolver extends BaseTest
         subclass = new Params<Object>();
         final ResolvedType finalSuperType = supertype;
         TypeBindings typeBindings = TypeBindings.emptyBindings(); // force failure of parameter resolution
-        typeResolver._resolvedTypes.put(new ResolvedTypeCache.Key(subclass.getClass()), new ResolvedObjectType(subclass.getClass(),
+        typeResolver._resolvedTypes.put(new ResolvedTypeKey(subclass.getClass()), new ResolvedObjectType(subclass.getClass(),
                 typeBindings, (ResolvedType) null, ResolvedType.NO_TYPES) {
             @Override public ResolvedType findSupertype(Class<?> erasedSupertype) {
                 return finalSuperType;

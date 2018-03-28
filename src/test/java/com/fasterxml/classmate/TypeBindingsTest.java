@@ -88,7 +88,8 @@ public class TypeBindingsTest
         assertFalse(instance.equals(null));
 
         // test different classes
-        assertFalse(instance.equals("not a TypeBindings"));
+        Object strKey = "not a TypeBindings";
+        assertFalse(instance.equals(strKey));
 
         // test no types
         TypeBindings instance1 = TypeBindings.create(Object.class, (List<ResolvedType>) null);

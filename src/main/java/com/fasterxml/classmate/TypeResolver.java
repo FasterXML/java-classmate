@@ -7,7 +7,9 @@ import java.util.*;
 import com.fasterxml.classmate.types.*;
 import com.fasterxml.classmate.util.ClassKey;
 import com.fasterxml.classmate.util.ClassStack;
+import com.fasterxml.classmate.util.LRUTypeCache;
 import com.fasterxml.classmate.util.ResolvedTypeCache;
+import com.fasterxml.classmate.util.ResolvedTypeKey;
 
 /**
  * Object that is used for resolving generic type information of a class
@@ -64,20 +66,40 @@ public class TypeResolver implements Serializable
      */
     
     /**
-     * Simple cache of types resolved by this resolved; capped to last 200 resolved types.
+     * Simple cache of types resolved by this resolver.
      * Caching works because type instances themselves are mostly immutable;
      * and properly synchronized in cases where transient data (raw members) are
      * accessed.
      */
-    protected final ResolvedTypeCache _resolvedTypes = new ResolvedTypeCache(200);
+    protected final ResolvedTypeCache _resolvedTypes;
 
     /*
     /**********************************************************************
     /* Life cycle
     /**********************************************************************
      */
-    
-    public TypeResolver() { }
+
+    /**
+     * Constructs type cache; equivalent to:
+     *<pre> 
+     *   TypeResolver(ResolvedTypeCache.lruCache(200));
+     *</pre>
+     */
+    public TypeResolver() {
+        this(ResolvedTypeCache.lruCache(200));
+    }
+
+    /**
+     * Constructor that specifies type cache to use.
+     *
+     * @param typeCache Cache to use for avoiding repeated resolution of already resolved
+     *    types
+     *
+     * @since 1.4
+     */
+    public TypeResolver(ResolvedTypeCache typeCache) {
+        _resolvedTypes = typeCache;
+    }
 
     /*
     /**********************************************************************
@@ -354,7 +376,7 @@ public class TypeResolver implements Serializable
 
         // If not, already recently resolved?
         ResolvedType[] typeParameters = typeBindings.typeParameterArray();
-        ResolvedTypeCache.Key key = _resolvedTypes.key(rawType, typeParameters);
+        ResolvedTypeKey key = _resolvedTypes.key(rawType, typeParameters);
         // 25-Oct-2015, tatu: one twist; if any TypePlaceHolders included, key will NOT be created,
         //   which means that caching should not be used (since type is mutable)
         if (key == null) {

@@ -12,51 +12,73 @@ import java.util.Set;
 
 public class TestResolvedTypeCache extends TestCase
 {
-
-    private static class KeySubclass extends ResolvedTypeCache.Key {
+    private static class KeySubclass extends ResolvedTypeKey {
         private KeySubclass(Class<?> simpleType) {
             super(simpleType);
         }
     }
 
-    public void testSimpleCaching()
+    public void testSimpleLRUCaching()
     {
-        ResolvedTypeCache cache = new ResolvedTypeCache(2);
+        LRUTypeCache cache = (LRUTypeCache) ResolvedTypeCache.lruCache(2);
+        _testSimple(cache, true);
+    }
+
+    public void testSimpleConcurrentCaching()
+    {
+        ConcurrentTypeCache cache = (ConcurrentTypeCache) ResolvedTypeCache.concurrentCache(2);
+        _testSimple(cache, false);
+    }
+
+    private void _testSimple(ResolvedTypeCache cache, boolean lru) {
         assertEquals(0, cache.size());
         // bogus, just needed for testing:
         ResolvedType type1 = new ResolvedInterfaceType(Map.class, null, null);
-        cache.addForTest(type1);
+        cache._addForTest(type1);
         assertEquals(1, cache.size());
         // re-adding won't change anything:
-        cache.addForTest(type1);
+        cache._addForTest(type1);
         assertEquals(1, cache.size());
         ResolvedType type2 = new ResolvedInterfaceType(Set.class, null, null);
-        cache.addForTest(type2);
+        cache._addForTest(type2);
         assertEquals(2, cache.size());
         ResolvedType type3 = new ResolvedInterfaceType(List.class, null, null);
-        cache.addForTest(type3);
-        assertEquals(2, cache.size());
+        cache._addForTest(type3);
+
+        // when full, behavior varies
+        if (lru) {
+            // will just replace oldest
+            assertEquals(2, cache.size());
+        } else {
+            assertEquals(1, cache.size());
+        }
 
         // should now only have types 2 and 3 available
         ResolvedType found1 = cache.find(cache.key(Map.class));
         ResolvedType found2 = cache.find(cache.key(Set.class));
         ResolvedType found3 = cache.find(cache.key(List.class));
+
         assertNull(found1);
-        assertSame(type2, found2);
-        assertSame(type3, found3);
+        if (lru) {
+            assertSame(type2, found2);
+            assertSame(type3, found3);
+        } else {
+            assertNull(found2);
+            assertSame(type3, found3);
+        }
     }
-
+    
     @SuppressWarnings("unused")
-    public void testKeyEquals() {
-
+    public void testKeyEquals()
+    {
         try {
-            new ResolvedTypeCache.Key(null);
+            new ResolvedTypeKey(null);
             fail("Expecting a NullPointerException.");
         } catch (NullPointerException npe) {
             // expected
         }
 
-        ResolvedTypeCache.Key key = new ResolvedTypeCache.Key(String.class);
+        ResolvedTypeKey key = new ResolvedTypeKey(String.class);
 
         // test referential equality
         assertTrue(key.equals(key));
@@ -65,48 +87,48 @@ public class TestResolvedTypeCache extends TestCase
         assertFalse(key.equals(null));
 
         // test unequal class
-        assertFalse(key.equals("test"));
+        Object strKey = "test";
+        assertFalse(key.equals(strKey));
 
         // test subclass
         assertFalse(key.equals(new KeySubclass(String.class)));
 
         // test unequal resolve-class
-        ResolvedTypeCache.Key key1 = new ResolvedTypeCache.Key(Object.class);
+        ResolvedTypeKey key1 = new ResolvedTypeKey(Object.class);
         assertFalse(key.equals(key1));
 
         // test equal resolve-class
-        ResolvedTypeCache.Key key2 = new ResolvedTypeCache.Key(String.class);
+        ResolvedTypeKey key2 = new ResolvedTypeKey(String.class);
         assertTrue(key.equals(key2));
 
         // test equal, 0-length resolved-type array change to null
-        ResolvedTypeCache.Key key3 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] {  });
+        ResolvedTypeKey key3 = new ResolvedTypeKey(String.class, new ResolvedType[] {  });
         assertTrue(key.equals(key3));
 
         // test unequal, null other type-parameters
-        ResolvedTypeCache.Key key4 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] { ResolvedObjectType.create(String.class, null, null, null)} );
+        ResolvedTypeKey key4 = new ResolvedTypeKey(String.class, new ResolvedType[] { ResolvedObjectType.create(String.class, null, null, null)} );
         assertFalse(key.equals(key4));
         assertFalse(key4.equals(key));
 
         // test unequal, type-parameters length
-        ResolvedTypeCache.Key key5 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] {
+        ResolvedTypeKey key5 = new ResolvedTypeKey(String.class, new ResolvedType[] {
                 ResolvedObjectType.create(String.class, null, null, null),
                 ResolvedObjectType.create(Object.class, null, null, null)
         });
         assertFalse(key4.equals(key5));
 
         // test unequal type-parameters
-        ResolvedTypeCache.Key key6 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] {
+        ResolvedTypeKey key6 = new ResolvedTypeKey(String.class, new ResolvedType[] {
                 ResolvedObjectType.create(Object.class, null, null, null),
                 ResolvedObjectType.create(String.class, null, null, null)
         });
         assertFalse(key5.equals(key6));
 
         // test equal type-parameters
-        ResolvedTypeCache.Key key7 = new ResolvedTypeCache.Key(String.class, new ResolvedType[] {
+        ResolvedTypeKey key7 = new ResolvedTypeKey(String.class, new ResolvedType[] {
                 ResolvedObjectType.create(Object.class, null, null, null),
                 ResolvedObjectType.create(String.class, null, null, null)
         });
         assertTrue(key6.equals(key7));
-
     }
 }
