@@ -3,11 +3,19 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
+1.4.1 (not yet released)
+
+#43: Missing synchronization on `ResolvedObjectType#getConstructors`
+ (reported by pkwarren@github)
+
+1.4.0 (27-Mar-2018)
+
+#41: Make cache used by `TypeResolver` pluggable; offer concurrent
+  variant in addition to LRU
+
 1.3.4 (09-Sep-2017)
 
 #38: Add `Automatic-Module-Name` for JDK9 interoperability
-#40: Make cache used by `TypeResolver` pluggable; offer concurrent
-  variant in addition to LRU
 
 1.3.3 (28-Sep-2016)
 

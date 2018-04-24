@@ -230,7 +230,7 @@ public class ResolvedObjectType extends ResolvedType
     } 
 
     @Override
-    public List<RawConstructor> getConstructors()
+    public synchronized List<RawConstructor> getConstructors()
     {
         if (_constructors == null) {
             _constructors = _getConstructors();
