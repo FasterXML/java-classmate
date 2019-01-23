@@ -101,7 +101,7 @@ public class Annotations implements Serializable, Iterable<Annotation>
          if (_annotations == null || _annotations.isEmpty()) {
               return NO_ANNOTATIONS;
          }
-         return _annotations.values().toArray(new Annotation[_annotations.size()]);
+         return _annotations.values().toArray(new Annotation[0]);
     }
 
     /**

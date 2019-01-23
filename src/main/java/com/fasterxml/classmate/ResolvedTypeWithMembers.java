@@ -258,7 +258,7 @@ public class ResolvedTypeWithMembers
         if (constructors.size() == 0) {
             return NO_RESOLVED_CONSTRUCTORS;
         }
-        return constructors.values().toArray(new ResolvedConstructor[constructors.size()]);
+        return constructors.values().toArray(new ResolvedConstructor[0]);
     }
 
     /**
@@ -305,7 +305,7 @@ public class ResolvedTypeWithMembers
         if (fields.size() == 0) {
             return NO_RESOLVED_FIELDS;
         }
-        return fields.values().toArray(new ResolvedField[fields.size()]);
+        return fields.values().toArray(new ResolvedField[0]);
     }
 
     protected ResolvedMethod[] resolveMemberMethods()
@@ -422,7 +422,7 @@ public class ResolvedTypeWithMembers
         if (methods.size() == 0) {
             return NO_RESOLVED_METHODS;
         }
-        return methods.values().toArray(new ResolvedMethod[methods.size()]);
+        return methods.values().toArray(new ResolvedMethod[0]);
     }
     
     /**
@@ -460,7 +460,7 @@ public class ResolvedTypeWithMembers
         if (fields.isEmpty()) {
             return NO_RESOLVED_FIELDS;
         }
-        return fields.values().toArray(new ResolvedField[ fields.size()]);
+        return fields.values().toArray(new ResolvedField[0]);
     }
 
     /**
@@ -493,7 +493,7 @@ public class ResolvedTypeWithMembers
         if (methods.size() == 0) {
             return NO_RESOLVED_METHODS;
         }
-        return methods.values().toArray(new ResolvedMethod[methods.size()]);
+        return methods.values().toArray(new ResolvedMethod[0]);
     }
 
     /*

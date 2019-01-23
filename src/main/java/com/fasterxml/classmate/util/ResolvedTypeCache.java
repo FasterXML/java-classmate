@@ -68,7 +68,7 @@ public abstract class ResolvedTypeCache implements Serializable
     protected void _addForTest(ResolvedType type)
     {
         List<ResolvedType> tp = type.getTypeParameters();
-        ResolvedType[] tpa = tp.toArray(new ResolvedType[tp.size()]);
+        ResolvedType[] tpa = tp.toArray(new ResolvedType[0]);
         put(key(type.getErasedType(), tpa), type);
     }
 }
