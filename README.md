@@ -29,7 +29,7 @@ Pull Requests and we will get you through this formality.
 
 ## Usage
 
-### Maven dep
+### Maven dependency
 
 To use ClassMate via Maven, include following dependency:
 
@@ -37,9 +37,14 @@ To use ClassMate via Maven, include following dependency:
 <dependency>
   <groupId>com.fasterxml</groupId>
   <artifactId>classmate</artifactId>
-  <version>1.4.0</version>
+  <version>1.5.0</version>
 </dependency>
 ```
+
+### Java 9 module
+
+Module name to use for Java 9 and above is `com.fasterxml.classmate`; `module-info` included
+from version `1.5.0` on.
 
 ### Non-Maven
 
