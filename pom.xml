@@ -7,7 +7,7 @@
     </parent>
     <artifactId>classmate</artifactId>
     <name>ClassMate</name>
-    <version>1.5.0-SNAPSHOT</version>
+    <version>1.5.0</version>
     <packaging>bundle</packaging>
     <description>Library for introspecting types with full generic information
         including resolving of field and method types.
@@ -17,7 +17,7 @@
         <connection>scm:git:git@github.com:FasterXML/java-classmate.git</connection>
         <developerConnection>scm:git:git@github.com:FasterXML/java-classmate.git</developerConnection>
         <url>http://github.com/FasterXML/java-classmate</url>
-	<tag>HEAD</tag>
+	<tag>classmate-1.5.0</tag>
     </scm>
     <developers>
         <developer>
