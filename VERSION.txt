@@ -3,10 +3,11 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
-1.4.1 (not yet released)
+1.5.0 (23-Mar-2019)
 
 #43: Missing synchronization on `ResolvedObjectType#getConstructors`
  (reported by pkwarren@github)
+- Add JDK9+ module-info using Moditect plugin
 
 1.4.0 (27-Mar-2018)
 
