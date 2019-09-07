@@ -56,7 +56,7 @@ public class ResolvedObjectType extends ResolvedType
     {
         this(erased, bindings, superClass,
                 (interfaces == null || interfaces.isEmpty()) ? NO_TYPES :
-                interfaces.toArray(new ResolvedType[interfaces.size()]));
+                interfaces.toArray(new ResolvedType[0]));
     }
 
     public ResolvedObjectType(Class<?> erased, TypeBindings bindings,

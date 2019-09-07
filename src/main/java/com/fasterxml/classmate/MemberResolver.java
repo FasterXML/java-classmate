@@ -165,7 +165,7 @@ public class MemberResolver implements Serializable
                 }
                 typesWithMixins.add(ht);
             }
-            htypes = typesWithMixins.toArray(new HierarchicType[typesWithMixins.size()]);
+            htypes = typesWithMixins.toArray(new HierarchicType[0]);
         }
         // And that's about all we need to do; rest computed lazily
         return new ResolvedTypeWithMembers(_typeResolver, annotationConfig, mainHierarchicType,

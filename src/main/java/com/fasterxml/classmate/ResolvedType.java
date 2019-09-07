@@ -359,7 +359,7 @@ public abstract class ResolvedType
         if (fields.isEmpty()) {
             return NO_FIELDS;
         }
-        return fields.toArray(new RawField[fields.size()]);
+        return fields.toArray(new RawField[0]);
     }
 
     /**
@@ -379,7 +379,7 @@ public abstract class ResolvedType
         if (methods.isEmpty()) {
             return NO_METHODS;
         }
-        return methods.toArray(new RawMethod[methods.size()]);
+        return methods.toArray(new RawMethod[0]);
     }
 
     protected RawConstructor[] _getConstructors()
@@ -394,6 +394,6 @@ public abstract class ResolvedType
         if (ctors.isEmpty()) {
             return NO_CONSTRUCTORS;
         }
-        return ctors.toArray(new RawConstructor[ctors.size()]);
+        return ctors.toArray(new RawConstructor[0]);
     }
 }
