@@ -51,13 +51,13 @@ com.fasterxml.classmate.*;version=${project.version}
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
     <organization>
         <name>fasterxml.com</name>
-        <url>http://fasterxml.com</url>
+        <url>https://fasterxml.com</url>
     </organization>
 
     <dependencies>
@@ -114,7 +114,7 @@ com.fasterxml.classmate.*;version=${project.version}
                     <encoding>UTF-8</encoding>
                     <maxmemory>512m</maxmemory>
                     <links>
-	 	      <link>http://docs.oracle.com/javase/8/docs/api/</link>
+	 	      <link>https://docs.oracle.com/javase/8/docs/api/</link>
                     </links>
                  </configuration>
                  <executions>
