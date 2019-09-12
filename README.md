@@ -1,14 +1,17 @@
 ## Overview
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.fasterxml/classmate/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.fasterxml/classmate/)
-[![Javadoc](https://javadoc.io/badge/com.fasterxml/classmate.svg)](http://www.javadoc.io/doc/com.fasterxml/classmate)
-
 ClassMate is a zero-dependency Java library for accurately introspecting type information, including reliable resolution of generic type declarations for both classes ("types") and members (fields, methods and constructors).
 
 Project is licensed under [Apache 2](http://www.apache.org/licenses/LICENSE-2.0.txt).
 
 Google group [java-classmate-users@googlegroups.com](https://groups.google.com/forum/?hl=en#!forum/java-classmate-users)
 is used for questions and discussion around usage and development of this library.
+
+## Status
+
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.fasterxml/classmate/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.fasterxml/classmate/)
+[![Javadoc](https://javadoc.io/badge/com.fasterxml/classmate.svg)](http://www.javadoc.io/doc/com.fasterxml/classmate)
+[![Tidelift](https://tidelift.com/badges/package/maven/com.fasterxml:classmate)](https://tidelift.com/subscription/pkg/maven-com-fasterxml-classmate?utm_source=maven-com-fasterxml-classmate&utm_medium=referral&utm_campaign=readme)
 
 ## Documentation
 
