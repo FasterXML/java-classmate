@@ -4,9 +4,6 @@ ClassMate is a zero-dependency Java library for accurately introspecting type in
 
 Project is licensed under [Apache 2](http://www.apache.org/licenses/LICENSE-2.0.txt).
 
-Google group [java-classmate-users@googlegroups.com](https://groups.google.com/forum/?hl=en#!forum/java-classmate-users)
-is used for questions and discussion around usage and development of this library.
-
 ## Status
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.fasterxml/classmate/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.fasterxml/classmate/)
@@ -18,8 +15,7 @@ is used for questions and discussion around usage and development of this librar
 There are 2 types of support available:
 
 * Community support via mailing lists: [java-classmate-user](https://groups.google.com/forum/#!forum/java-classmate-users)
-* Optional Commercial Support is available via [Tidelift Subscriptions](https://tidelift.com/subscription/pkg/mav\
-en-com-fasterxml-classmate?utm_source=maven-com-fasterxml-classmate&utm_medium=referral&utm_campaign=readme)
+* Optional Commercial Support is available via [Tidelift Subscriptions](https://tidelift.com/subscription/pkg/maven-com-fasterxml-classmate?utm_source=maven-com-fasterxml-classmate&utm_medium=referral&utm_campaign=readme)
 
 ## Contributing
 
