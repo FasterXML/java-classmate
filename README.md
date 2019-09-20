@@ -13,6 +13,23 @@ is used for questions and discussion around usage and development of this librar
 [![Javadoc](https://javadoc.io/badge/com.fasterxml/classmate.svg)](http://www.javadoc.io/doc/com.fasterxml/classmate)
 [![Tidelift](https://tidelift.com/badges/package/maven/com.fasterxml:classmate)](https://tidelift.com/subscription/pkg/maven-com-fasterxml-classmate?utm_source=maven-com-fasterxml-classmate&utm_medium=referral&utm_campaign=readme)
 
+## Support
+
+There are 2 types of support available:
+
+* Community support via mailing lists: [java-classmate-user](https://groups.google.com/forum/#!forum/java-classmate-users)
+* Optional Commercial Support is available via [Tidelift Subscriptions](https://tidelift.com/subscription/pkg/mav\
+en-com-fasterxml-classmate?utm_source=maven-com-fasterxml-classmate&utm_medium=referral&utm_campaign=readme)
+
+## Contributing
+
+Contributions are welcome (of course!); we require a simple one-page CLA to help simplify distribution
+(corporate users want to know how contributions are handled), one per contributor. Feel free to submit
+Pull Requests and we will get you through this formality.
+
+One special case is that for reporting possible security issues ("vulnerabilities"), we recommend filing a
+[Tidelift security contact](https://tidelift.com/security) (NOTE: you do NOT have to be a subscriber to do this).
+
 ## Documentation
 
 [Project wiki](/../../wiki) has Javadocs.
@@ -21,12 +38,6 @@ External links that may help include:
 
 * [Resolving Generic Types with Classmate](http://www.cowtowncoder.com/blog/archives/2012/04/entry_471.html) (some simple usage examples)
 * [Problem with java.lang.reflect.Type](http://www.cowtowncoder.com/blog/archives/2010/12/entry_436.html) (explanation of issues ClassMate was written to solve)
-
-## Contributing
-
-Contributions are welcome (of course!); we require a simple one-page CLA to help simplify distribution
-(corporate users want to know how contributions are handled), one per contributor. Feel free to submit
-Pull Requests and we will get you through this formality.
 
 -----
 
