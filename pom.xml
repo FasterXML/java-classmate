@@ -87,9 +87,8 @@ com.fasterxml.classmate.*;version=${project.version}
             <configuration>
               <serverId>sonatype-nexus-staging</serverId>
               <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-<!--
+              <!-- 19-Oct-2019, tatu: from output -->
               <stagingProfileId>b34f19b9cc6224</stagingProfileId>
--->
             </configuration>
           </plugin>
 
