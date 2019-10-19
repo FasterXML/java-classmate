@@ -71,6 +71,8 @@ com.fasterxml.classmate.*;version=${project.version}
     </dependencies>
 
     <build>
+        <plugins>
+
           <!-- 19-Oct-2019, tatu: Copied from
 
            https://github.com/stephenc/git-timestamp-maven-plugin/blob/master/pom.xml#L327-L337
@@ -91,7 +93,6 @@ com.fasterxml.classmate.*;version=${project.version}
             </configuration>
           </plugin>
 
-        <plugins>
             <!-- As per [#38] add `Automatic-Module-Name` -->
             <plugin>
               <groupId>org.apache.felix</groupId>
