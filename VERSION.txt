@@ -3,6 +3,11 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
+1.5.1 (20-Oct-2019)
+
+- Patch release to satisfy odd metadata requirements of a security tool
+  (wrt https/http for `url` in pom.xml)
+
 1.5.0 (23-Mar-2019)
 
 #43: Missing synchronization on `ResolvedObjectType#getConstructors`
