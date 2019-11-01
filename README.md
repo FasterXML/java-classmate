@@ -12,10 +12,15 @@ Project is licensed under [Apache 2](http://www.apache.org/licenses/LICENSE-2.0.
 
 ## Support
 
-There are 2 types of support available:
+### Community support
 
-* Community support via mailing lists: [java-classmate-user](https://groups.google.com/forum/#!forum/java-classmate-users)
-* Optional Commercial Support is available via [Tidelift Subscriptions](https://tidelift.com/subscription/pkg/maven-com-fasterxml-classmate?utm_source=maven-com-fasterxml-classmate&utm_medium=referral&utm_campaign=readme)
+Classmate is supported by the community via the mailing list: [java-classmate-user](https://groups.google.com/forum/#!forum/java-classmate-users)
+
+### Enterprise support
+
+Available as part of the Tidelift Subscription.
+
+The maintainers of `classmate` and thousands of other packages are working with Tidelift to deliver commercial support and maintenance for the open source dependencies you use to build your applications. Save time, reduce risk, and improve code health, while paying the maintainers of the exact dependencies you use. [Learn more.](https://tidelift.com/subscription/pkg/maven-com-fasterxml-classmate?utm_source=maven-com-fasterxml-classmate&utm_medium=referral&utm_campaign=enterprise&utm_term=repo)
 
 ## Contributing
 
