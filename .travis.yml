@@ -1,9 +1,18 @@
+os: linux
+arch:
+  - amd64
+  - ppc64le
 language: java
 
 # 23-Mar-2019, tatu: With 1.5.0, must build with JDK8 or above
 jdk:
   - openjdk8
   - openjdk11
+
+addons:
+  apt:
+    packages:
+      - maven
 
 # whitelist
 branches:
