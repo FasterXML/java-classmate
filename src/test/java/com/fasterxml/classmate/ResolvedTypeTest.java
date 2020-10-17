@@ -14,11 +14,11 @@ public class ResolvedTypeTest extends BaseTest
 {
     // For [Issue#16]
 
-    private static class Foo16 extends Bar16 { }
+    static class Foo16 extends Bar16 { }
 
-    private static class Bar16 extends Zen16<Bar16, Foo16> { }
+    static class Bar16 extends Zen16<Bar16, Foo16> { }
 
-    private static class Zen16<A, B extends A>  { }
+    static class Zen16<A, B extends A>  { }
     
     @Test
     public void testCanCreateSubtype() {

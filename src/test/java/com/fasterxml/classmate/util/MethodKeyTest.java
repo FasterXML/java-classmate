@@ -2,14 +2,13 @@ package com.fasterxml.classmate.util;
 
 import org.junit.Test;
 
-import static junit.framework.Assert.*;
+import static org.junit.Assert.*;
 
-@SuppressWarnings("deprecation")
 public class MethodKeyTest {
 
     @SuppressWarnings("serial")
     private static class MethodKeySubclass extends MethodKey {
-        private MethodKeySubclass(String name) {
+        MethodKeySubclass(String name) {
             super(name);
         }
     }
@@ -25,7 +24,7 @@ public class MethodKeyTest {
         assertFalse(key1.equals(null));
 
         // test unequal class
-        assertFalse(key1.equals("test"));
+        assertFalse(key1.equals((Object) "test"));
 
         // test subclass
         MethodKeySubclass methodKeySubclass = new MethodKeySubclass("test");

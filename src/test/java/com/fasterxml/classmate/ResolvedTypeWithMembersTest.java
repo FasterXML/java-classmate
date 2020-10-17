@@ -20,24 +20,24 @@ import static junit.framework.Assert.*;
 public class ResolvedTypeWithMembersTest {
 
     @Retention(RetentionPolicy.RUNTIME)
-    private static @interface Marker { }
+    static @interface Marker { }
 
     @Retention(RetentionPolicy.RUNTIME)
-    private static @interface MarkerB { }
+    static @interface MarkerB { }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Inherited
-    private static @interface MarkerC { }
+    static @interface MarkerC { }
 
     @SuppressWarnings("unused")
-    private static class MixinCandidate {
+    static class MixinCandidate {
         private static void staticOverride() { }
         private String shadowed;
         private MixinCandidate() { }
         protected String getShadowed() { return shadowed; }
     }
 
-    private static class MixinA {
+    static class MixinA {
         @Marker
         private static void staticOverride() { }
 
@@ -45,7 +45,7 @@ public class ResolvedTypeWithMembersTest {
         private String shadowed;
 
         @Marker
-        private MixinA() { }
+        MixinA() { }
 
         @Marker
         protected String getShadowed() { return shadowed; }
@@ -54,17 +54,17 @@ public class ResolvedTypeWithMembersTest {
         protected String inherited() { return ""; }
     }
 
-    private static class MixinB {
+    static class MixinB {
         @MarkerB
         protected String getShadowed() { return null; }
     }
 
-    private static class MixinC {
+    static class MixinC {
         @MarkerB
         protected String getShadowed() { return null; }
     }
 
-    private static class MixinD {
+    static class MixinD {
 
         @Marker
         private String field;
@@ -76,7 +76,7 @@ public class ResolvedTypeWithMembersTest {
         protected String getShadowed() { return null; }
     }
 
-    private static class MixinASubclass extends MixinA {
+    static class MixinASubclass extends MixinA {
 
         @Override protected String getShadowed() { return super.getShadowed(); }
 

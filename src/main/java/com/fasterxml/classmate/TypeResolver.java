@@ -7,7 +7,6 @@ import java.util.*;
 import com.fasterxml.classmate.types.*;
 import com.fasterxml.classmate.util.ClassKey;
 import com.fasterxml.classmate.util.ClassStack;
-import com.fasterxml.classmate.util.LRUTypeCache;
 import com.fasterxml.classmate.util.ResolvedTypeCache;
 import com.fasterxml.classmate.util.ResolvedTypeKey;
 

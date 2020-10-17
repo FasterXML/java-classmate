@@ -12,8 +12,8 @@ import java.util.Set;
 
 public class TestResolvedTypeCache extends TestCase
 {
-    private static class KeySubclass extends ResolvedTypeKey {
-        private KeySubclass(Class<?> simpleType) {
+    static class KeySubclass extends ResolvedTypeKey {
+        KeySubclass(Class<?> simpleType) {
             super(simpleType);
         }
     }
@@ -68,7 +68,6 @@ public class TestResolvedTypeCache extends TestCase
         }
     }
     
-    @SuppressWarnings("unused")
     public void testKeyEquals()
     {
         try {

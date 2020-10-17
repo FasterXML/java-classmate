@@ -2,21 +2,20 @@ package com.fasterxml.classmate.util;
 
 import org.junit.Test;
 
-import static junit.framework.Assert.*;
+import static org.junit.Assert.*;
 
 /**
  * @author blangel
  */
-@SuppressWarnings({ "serial", "deprecation" })
+@SuppressWarnings({ "serial" })
 public class ClassKeyTest
 {
-    private static class ClassKeySubclass extends ClassKey {
-        private ClassKeySubclass(Class<?> clz) {
+    static class ClassKeySubclass extends ClassKey {
+        ClassKeySubclass(Class<?> clz) {
             super(clz);
         }
     }
 
-    @SuppressWarnings("unused")
     @Test
     public void nullClass() {
         try {

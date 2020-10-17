@@ -6,12 +6,11 @@ import org.junit.Test;
 
 import java.lang.reflect.Constructor;
 
-import static junit.framework.Assert.*;
+import static org.junit.Assert.*;
 
 /**
  * @author blangel
  */
-@SuppressWarnings("deprecation")
 public class ResolvedConstructorTest {
 
     private static final Constructor<String> stringConstructor;
@@ -25,7 +24,6 @@ public class ResolvedConstructorTest {
         }
     }
 
-    @SuppressWarnings("unused")
     @Test
     public void init() {
         try {
