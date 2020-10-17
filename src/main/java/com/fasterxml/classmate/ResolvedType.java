@@ -97,6 +97,26 @@ public abstract class ResolvedType
     public abstract List<ResolvedType> getImplementedInterfaces();
 
     /**
+     * Returns Ordered list of parent, current and interfaces of this type.
+     *
+     * @return List of parent, current and interfaces of this type containing at least current type
+     */
+    public List<ResolvedType> getAllTypes() {
+        List<ResolvedType> allTypes = new ArrayList<ResolvedType>();
+        ResolvedType parentClass = getParentClass();
+        if (parentClass != null) {
+            allTypes.add(parentClass);
+        }
+        allTypes.add(this);
+        List<ResolvedType> implementedInterfaces = getImplementedInterfaces();
+        if (implementedInterfaces != null) {
+            allTypes.addAll(implementedInterfaces);
+        }
+
+        return allTypes;
+    };
+
+    /**
      * Returns list of generic type declarations for this type, in order they
      * are declared in class description.
      */

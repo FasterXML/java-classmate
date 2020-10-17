@@ -19,7 +19,13 @@ public class ResolvedTypeTest extends BaseTest
     private static class Bar16 extends Zen16<Bar16, Foo16> { }
 
     private static class Zen16<A, B extends A>  { }
-    
+
+    private static class ClassWithInterfaces implements FirstInterface, SecondInterface { }
+
+    interface FirstInterface {}
+
+    interface SecondInterface {}
+
     @Test
     public void testCanCreateSubtype() {
         ResolvedObjectType stringType = ResolvedObjectType.create(String.class, null, null, null);
@@ -139,5 +145,20 @@ public class ResolvedTypeTest extends BaseTest
 
         assertEquals(Bar16.class, params.get(0).getErasedType());
         assertEquals(Foo16.class, params.get(1).getErasedType());
+    }
+
+    @Test
+    public void testFindAllClasses() {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType type = resolver.resolve(ClassWithInterfaces.class);
+
+        List<ResolvedType> allTypes = type.getAllTypes();
+
+        assertNotNull(allTypes);
+        assertEquals(4, allTypes.size());
+        assertEquals(Object.class, allTypes.get(0).getErasedType());
+        assertEquals(ClassWithInterfaces.class, allTypes.get(1).getErasedType());
+        assertEquals(FirstInterface.class, allTypes.get(2).getErasedType());
+        assertEquals(SecondInterface.class, allTypes.get(3).getErasedType());
     }
 }
