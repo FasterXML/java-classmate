@@ -106,4 +106,9 @@ public class TypePlaceHolder extends ResolvedType
         // should these ever match actually?
         return (o == this);
     }
+
+    // Only for compliance purposes: lgtm.com complains if only equals overridden
+    @Override public int hashCode() {
+        return _ordinal;
+    }
 }

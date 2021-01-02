@@ -165,4 +165,9 @@ public class ResolvedRecursiveType extends ResolvedType
         }
         return _referencedType.equals(other._referencedType);
     }
+
+    // Only for compliance purposes: lgtm.com complains if only equals overridden
+    @Override public int hashCode() {
+        return super.hashCode();
+    }
 }
