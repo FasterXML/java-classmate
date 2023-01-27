@@ -117,7 +117,7 @@ public class MemberResolver implements Serializable
             AnnotationConfiguration annotationConfig,
             AnnotationOverrides annotationOverrides)
     {
-        List<ResolvedType> types = new ArrayList<ResolvedType>();
+        List<ResolvedType> types;
         HashSet<ClassKey> seenTypes = new HashSet<ClassKey>();
 
         // First: flatten basic type hierarchy (highest to lowest precedence)
