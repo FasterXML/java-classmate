@@ -5,6 +5,8 @@ Release notes:
 
 1.5.2 (not yet released)
 
+#70: Remove dead allocation
+ (reported by Dave B, @mebigfatguy)
 - Oss-parent to version 43 (junit version, javadoc links, jacoco)
 
 1.5.1 (20-Oct-2019)
