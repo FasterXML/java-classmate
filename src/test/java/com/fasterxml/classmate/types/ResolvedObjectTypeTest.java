@@ -61,14 +61,9 @@ public class ResolvedObjectTypeTest extends BaseTest
         int count = staticFields.size();
 
         switch (count) {
-        case 3: // Java 6
+        case 3: // Java 8
             matchRawMembers(staticFields, new String[] {
                     "serialVersionUID", "serialPersistentFields", "CASE_INSENSITIVE_ORDER"
-            });
-            break;
-        case 4: // Java 7/8
-            matchRawMembers(staticFields, new String[] {
-                    "serialVersionUID", "serialPersistentFields", "CASE_INSENSITIVE_ORDER", "HASHING_SEED"
             });
             break;
         case 6: // Java 9
@@ -77,8 +72,14 @@ public class ResolvedObjectTypeTest extends BaseTest
                     "COMPACT_STRINGS", "LATIN1", "UTF16"
             });
             break;
+        case 7: // Java 17
+            matchRawMembers(staticFields, new String[] {
+                    "serialVersionUID", "serialPersistentFields", "REPL", "CASE_INSENSITIVE_ORDER",
+                    "COMPACT_STRINGS", "LATIN1", "UTF16"
+            });
+            break;
         default:
-            fail("Expected 3 (JDK 1.6), 4 (1.7/1.8) or 6 (1.9) static fields, got "+count+"; fields: "+staticFields);
+            fail("Expected 4 (1.7/1.8), 7 (Java 9/11/14) or 7 (17+) static fields, got "+count+"; fields: "+staticFields);
         }
     }
 

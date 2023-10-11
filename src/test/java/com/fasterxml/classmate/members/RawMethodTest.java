@@ -91,8 +91,9 @@ public class RawMethodTest {
         assertNotNull(methodKey);
     }
 
+    @SuppressWarnings("unlikely-arg-type")
     @Test
-    public void equals() {
+    public void testEquals() {
         // referential equality
         RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
         assertTrue(rawMethod.equals(rawMethod));

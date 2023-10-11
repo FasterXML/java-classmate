@@ -58,6 +58,7 @@ ClassMate versions 1.7 and above require Java 8 to run
 #### JPMS compatibility
 
 ClassMate versions 1.5 and above contain `module-info.class` information to work with JPMS.
+Module name to use is `com.fasterxml.classmate`.
 
 ## Usage
 
@@ -72,11 +73,6 @@ To use ClassMate via Maven, include following dependency:
   <version>1.6.0</version>
 </dependency>
 ```
-
-### Java 9 module
-
-Module name to use for Java 9 and above is `com.fasterxml.classmate`; `module-info` included
-from version `1.5.0` on.
 
 ### Non-Maven
 
