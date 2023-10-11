@@ -3,6 +3,10 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
+1.7.0 (not yet released)
+
+#75: Move JDK baseline to Java 8
+
 1.6.0 (10-Oct-2023)
 
 #70: Remove dead allocation
