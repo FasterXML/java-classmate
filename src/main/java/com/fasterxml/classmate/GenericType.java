@@ -1,7 +1,5 @@
 package com.fasterxml.classmate;
 
-import java.io.Serializable;
-
 /**
  * This class is used to pass full generics type information, and
  * avoid problems with type erasure (that basically removes most
@@ -16,10 +14,13 @@ import java.io.Serializable;
  *  GenericType type = new GenericType&lt;List&lt;Integer&gt;&gt;() { };
  *</pre>
  * which can be passed to methods that accept <code>GenericReference</code>.
+ *<p>
+ * NOTE: before version 1.6 implemented {@link java.io.Serializable}.
+ * Removed due to
+ * <a href="https://github.com/FasterXML/java-classmate/issues/73">issue #73</a>.
  */
-@SuppressWarnings("serial")
 public abstract class GenericType<T>
-    implements Serializable, java.lang.reflect.Type
+    implements java.lang.reflect.Type
 {
     protected GenericType() { }
 }

@@ -3,11 +3,11 @@
     <parent>
         <groupId>com.fasterxml</groupId>
         <artifactId>oss-parent</artifactId>
-        <version>43</version>
+        <version>55</version>
     </parent>
     <artifactId>classmate</artifactId>
     <name>ClassMate</name>
-    <version>1.5.2-SNAPSHOT</version>
+    <version>1.6.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>Library for introspecting types with full generic information
         including resolving of field and method types.
@@ -82,7 +82,7 @@ com.fasterxml.classmate.*;version=${project.version}
           <plugin>
             <groupId>org.sonatype.plugins</groupId>
             <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>1.6.6</version>
+            <version>1.6.13</version>
             <extensions>true</extensions>
             <configuration>
               <serverId>sonatype-nexus-staging</serverId>
