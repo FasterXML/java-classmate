@@ -32,12 +32,24 @@ public class TestTypeDescriptions extends BaseTest
         assertEquals("Ljava/lang/Object;", objectType.getSignature());
 
         ResolvedType stringType = typeResolver.resolve(String.class);
-        /* Interesting thing with "simple" type like java.lang.String is that
-         * it has recursive type self-reference (via Comparable<T>)
-         */
-        assertEquals("java.lang.String extends java.lang.Object"
-                +" implements java.io.Serializable,java.lang.Comparable<java.lang.String>,java.lang.CharSequence",
-                stringType.getFullDescription());
+        // Interesting thing with "simple" type like java.lang.String is that
+        // it has recursive type self-reference (via Comparable<T>)
+
+        final String stringDesc = stringType.getFullDescription();
+
+        // 10-Oct-2023, tatu: With JDK 17, get even more stuff... Start with pre-17 desc:
+        if (stringDesc.equals("java.lang.String extends java.lang.Object"
+                +" implements java.io.Serializable,java.lang.Comparable<java.lang.String>,java.lang.CharSequence"
+                )) {
+            ;
+            // But then allow JDK 17 variant
+        } else if (stringDesc.equals("java.lang.String extends java.lang.Object"
+                    +" implements java.io.Serializable,java.lang.Comparable<java.lang.String>,java.lang.CharSequence"
+                    +",java.lang.constant.Constable,java.lang.constant.ConstantDesc"
+                    )) {
+        } else {
+            fail("Full String description not matching one of expected signatures: "+stringDesc);
+        }
         assertEquals("Ljava/lang/String;", stringType.getErasedSignature());
         assertEquals("Ljava/lang/String;", stringType.getSignature());
     }
@@ -56,7 +68,6 @@ public class TestTypeDescriptions extends BaseTest
         assertEquals("boolean", boolType.getFullDescription());
     }
 
-    @SuppressWarnings("serial")
     public void testGenericTypes()
     {
         ResolvedType mapType = typeResolver.resolve(new GenericType<Map<Long,Boolean>>() { });
