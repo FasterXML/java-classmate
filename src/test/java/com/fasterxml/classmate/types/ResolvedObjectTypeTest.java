@@ -61,9 +61,9 @@ public class ResolvedObjectTypeTest extends BaseTest
         int count = staticFields.size();
 
         switch (count) {
-        case 4: // Java 8
+        case 3: // Java 8
             matchRawMembers(staticFields, new String[] {
-                    "serialVersionUID", "serialPersistentFields", "CASE_INSENSITIVE_ORDER", "HASHING_SEED"
+                    "serialVersionUID", "serialPersistentFields", "CASE_INSENSITIVE_ORDER"
             });
             break;
         case 6: // Java 9
