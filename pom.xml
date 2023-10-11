@@ -7,7 +7,7 @@
     </parent>
     <artifactId>classmate</artifactId>
     <name>ClassMate</name>
-    <version>1.6.1-SNAPSHOT</version>
+    <version>1.7.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>Library for introspecting types with full generic information
         including resolving of field and method types.
@@ -34,7 +34,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.jdk>1.6</version.jdk>
+        <version.jdk>1.8</version.jdk>
 
 	<osgi.export>com.fasterxml.classmate;version=${project.version},
 com.fasterxml.classmate.*;version=${project.version}
@@ -111,7 +111,6 @@ com.fasterxml.classmate.*;version=${project.version}
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                  <artifactId>maven-javadoc-plugin</artifactId>
-                 <version>${version.plugin.javadoc}</version>
                  <configuration>
                     <source>${version.jdk}</source>
                     <target>${version.jdk}</target>

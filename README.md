@@ -6,9 +6,14 @@ Project is licensed under [Apache 2](http://www.apache.org/licenses/LICENSE-2.0.
 
 ## Status
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.fasterxml/classmate/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.fasterxml/classmate/)
-[![Javadoc](https://javadoc.io/badge/com.fasterxml/classmate.svg)](http://www.javadoc.io/doc/com.fasterxml/classmate)
-[![Tidelift](https://tidelift.com/badges/package/maven/com.fasterxml:classmate)](https://tidelift.com/subscription/pkg/maven-com-fasterxml-classmate?utm_source=maven-com-fasterxml-classmate&utm_medium=referral&utm_campaign=readme)
+| Type | Status |
+| ---- | ------ |
+| Build (CI) |  [![Build (github)](https://github.com/FasterXML/java-classmate/actions/workflows/main.yml/badge.svg)](https://github.com/FasterXML/java-classmate/actions/workflows/main.yml) |
+| Artifact | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.fasterxml/classmate/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.fasterxml/classmate/) |
+| OSS Sponsorship |  [![Tidelift](https://tidelift.com/badges/package/maven/com.fasterxml:classmate)](https://tidelift.com/subscription/pkg/maven-com-fasterxml-classmate?utm_source=maven-com-fasterxml-classmate&utm_medium=referral&utm_campaign=readme) |
+| JavaDocs | [![Javadoc](https://javadoc.io/badge/com.fasterxml/classmate.svg)](http://www.javadoc.io/doc/com.fasterxml/classmate) |
+| Code coverage (master) | [![codecov.io](https://codecov.io/github/FasterXML/java-classmate/coverage.svg?branch=master)](https://codecov.io/github/FasterXML/java-classmate?branch=master) |
+| OpenSSF Score | [![OpenSSF  Scorecard](https://api.securityscorecards.dev/projects/github.com/FasterXML/java-classmate/badge)](https://securityscorecards.dev/viewer/?uri=github.com/FasterXML/java-classmate) |
 
 ## Support
 
@@ -42,6 +47,18 @@ External links that may help include:
 
 -----
 
+## Compatibility
+
+#### JDK baseline
+
+ClassMate versions up to 1.6 require Java 6 to run.
+
+ClassMate versions 1.7 and above require Java 8 to run
+
+#### JPMS compatibility
+
+ClassMate versions 1.5 and above contain `module-info.class` information to work with JPMS.
+
 ## Usage
 
 ### Maven dependency
@@ -52,7 +69,7 @@ To use ClassMate via Maven, include following dependency:
 <dependency>
   <groupId>com.fasterxml</groupId>
   <artifactId>classmate</artifactId>
-  <version>1.5.1</version>
+  <version>1.6.0</version>
 </dependency>
 ```
 
