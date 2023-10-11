@@ -107,19 +107,6 @@ com.fasterxml.classmate.*;version=${project.version}
                     <target>${version.jdk}</target>
                 </configuration>
             </plugin>
-            <plugin><!-- plug-in to attach source bundle in repo -->
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>${version.plugin.source}</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -129,7 +116,6 @@ com.fasterxml.classmate.*;version=${project.version}
                     <source>${version.jdk}</source>
                     <target>${version.jdk}</target>
                     <encoding>UTF-8</encoding>
-                    <maxmemory>512m</maxmemory>
                     <links>
 	 	      <link>https://docs.oracle.com/javase/8/docs/api/</link>
                     </links>
