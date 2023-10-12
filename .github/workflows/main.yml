@@ -3,12 +3,14 @@ on:
   push:
     branches:
     - master
+    - "1.6"
     paths-ignore:
     - "README.md"
     - "release-notes/*"
   pull_request:
     branches:
     - master
+    - "1.6"
 permissions:
   contents: read
 jobs:
