@@ -6,6 +6,7 @@ Release notes:
 1.7.0 (not yet released)
 
 #75: Move JDK baseline to Java 8
+- Remove `Automatic-Module-Name` since we provide proper module-info
 
 1.6.0 (10-Oct-2023)
 

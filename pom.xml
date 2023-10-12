@@ -40,8 +40,6 @@
 com.fasterxml.classmate.*;version=${project.version}
 </osgi.export>
 	<osgi.private>com.fasterxml.classmate.util.*</osgi.private>
-
-	<jdk.module.name>com.fasterxml.classmate</jdk.module.name>
     </properties>
 
     <!-- Licensing -->
@@ -88,17 +86,6 @@ com.fasterxml.classmate.*;version=${project.version}
               <stagingProfileId>b34f19b9cc6224</stagingProfileId>
             </configuration>
           </plugin>
-
-            <!-- As per [#38] add `Automatic-Module-Name` -->
-            <plugin>
-              <groupId>org.apache.felix</groupId>
-              <artifactId>maven-bundle-plugin</artifactId>
-              <configuration>
-		<instructions combine.children="merge">
-		  <Automatic-Module-Name>${jdk.module.name}</Automatic-Module-Name>
-		</instructions>
-              </configuration>
-            </plugin>
 
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
