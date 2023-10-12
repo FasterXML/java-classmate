@@ -139,6 +139,28 @@ com.fasterxml.classmate.*;version=${project.version}
 		</execution>
               </executions>
 	    </plugin>
+
+            <!-- 11-Oct-2023, tatu: Try to produce Code coverage: -->
+            <plugin>
+              <groupId>org.jacoco</groupId>
+              <artifactId>jacoco-maven-plugin</artifactId>
+              <executions>
+               <execution>
+                 <goals>
+                   <goal>prepare-agent</goal>
+                 </goals>
+               </execution>
+               <!-- attached to Maven test phase -->
+               <execution>
+                 <id>report</id>
+                 <phase>test</phase>
+                 <goals>
+                   <goal>report</goal>
+                 </goals>
+               </execution>
+             </executions>
+           </plugin>
+
         </plugins>
     </build>
     <profiles>

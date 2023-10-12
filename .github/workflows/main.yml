@@ -33,7 +33,7 @@ jobs:
         java-version: ${{ matrix.java_version }}
         cache: 'maven'
     - name: Build
-      run: ./mvnw -B -q -ff -ntp verify
+      run: ./mvnw -B -ff -ntp clean verify
     - name: Generate code coverage
       if: github.event_name != 'pull_request' && matrix.java_version == '8'
       run: ./mvnw -B -q -ff -ntp test
