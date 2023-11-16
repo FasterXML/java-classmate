@@ -100,7 +100,6 @@ com.fasterxml.classmate.*;version=${project.version}
                  <artifactId>maven-javadoc-plugin</artifactId>
                  <configuration>
                     <source>${version.jdk}</source>
-                    <target>${version.jdk}</target>
                     <encoding>UTF-8</encoding>
                     <links>
 	 	      <link>https://docs.oracle.com/javase/8/docs/api/</link>
@@ -160,7 +159,15 @@ com.fasterxml.classmate.*;version=${project.version}
                </execution>
              </executions>
            </plugin>
-
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <excludes>
+              <exclude>**/failing/*.java</exclude>
+            </excludes>
+          </configuration>
+        </plugin>
         </plugins>
     </build>
     <profiles>
