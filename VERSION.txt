@@ -6,6 +6,8 @@ Release notes:
 1.7.0 (not yet released)
 
 #75: Move JDK baseline to Java 8
+ (contributed by Dave B, @mebigfatguy)
+#83: Simplify code by not calling `Set.contains()` before `add()`
 - Remove `Automatic-Module-Name` since we provide proper module-info
 
 1.6.0 (10-Oct-2023)

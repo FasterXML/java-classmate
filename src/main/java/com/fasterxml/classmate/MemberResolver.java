@@ -175,8 +175,7 @@ public class MemberResolver implements Serializable
     private void _addOverrides(List<HierarchicType> typesWithOverrides, Set<ClassKey> seenTypes, Class<?> override)
     {
         ClassKey key = new ClassKey(override);
-        if (!seenTypes.contains(key)) {
-            seenTypes.add(key);
+        if (seenTypes.add(key)) {
             ResolvedType resolvedOverride = _typeResolver.resolve(override);
             typesWithOverrides.add(new HierarchicType(resolvedOverride, true, typesWithOverrides.size()));
             for (ResolvedType r : resolvedOverride.getImplementedInterfaces()) { // interfaces?
@@ -194,8 +193,7 @@ public class MemberResolver implements Serializable
         Class<?> raw = override.getErasedType();
         if (!_cfgIncludeLangObject && Object.class == raw) return;
         ClassKey key = new ClassKey(raw);
-        if (!seenTypes.contains(key)) {
-            seenTypes.add(key);
+        if (seenTypes.add(key)) {
             typesWithOverrides.add(new HierarchicType(override, true, typesWithOverrides.size()));
             for (ResolvedType r : override.getImplementedInterfaces()) { // interfaces?
                 _addOverrides(typesWithOverrides, seenTypes, r);
@@ -227,11 +225,10 @@ public class MemberResolver implements Serializable
         }
         // Finally, only include first instance of an interface, so:
         ClassKey key = new ClassKey(currentType.getErasedType());
-        if (seenTypes.contains(key)) {
+        if (!seenTypes.add(key)) {
             return;
         }
         // If all good so far, append
-        seenTypes.add(key);
         types.add(currentType);
         /* and check supertypes; starting with interfaces. Why interfaces?
          * So that "highest" interfaces get priority; otherwise we'd recurse
