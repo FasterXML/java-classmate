@@ -3,7 +3,7 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
-1.7.0 (not yet released)
+1.7.0 (02-Jan-2024)
 
 #51: `TypeResolver.resolve(Long[].class)` should not return a `ResolvedType`
   whose parent type is null
