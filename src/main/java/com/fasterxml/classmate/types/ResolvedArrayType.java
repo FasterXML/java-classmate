@@ -7,8 +7,21 @@ import com.fasterxml.classmate.TypeBindings;
 
 public final class ResolvedArrayType extends ResolvedType
 {
-    protected final ResolvedType _elementType;
+    /**
+     * All Java Arrays extend {@link java.lang.Object} so we need
+     * a reference
+     *<p>
+     * Note that direct construction is used instead of construction via
+     * {@link TypeResolver} due to complexity of doing latter: {@code java.lang.Object}
+     * also does not implement any interfaces so this should be safe enough.
+     *
+     * @since 1.7
+     */
+    private final static ResolvedObjectType PARENT_TYPE =
+            ResolvedObjectType.create(Object.class, null, null, null);
     
+    protected final ResolvedType _elementType;
+
     /*
     /**********************************************************************
     /* Life cycle
@@ -34,7 +47,7 @@ public final class ResolvedArrayType extends ResolvedType
      */
     
     @Override
-    public ResolvedType getParentClass() { return null; }
+    public ResolvedType getParentClass() { return PARENT_TYPE; }
     
     @Override
     public ResolvedType getSelfReferencedType() { return null; }
@@ -69,7 +82,7 @@ public final class ResolvedArrayType extends ResolvedType
 
     /*
     /**********************************************************************
-    /* Accessors for raw (minimally procesed) members
+    /* Accessors for raw (minimally processed) members
     /**********************************************************************
      */
 

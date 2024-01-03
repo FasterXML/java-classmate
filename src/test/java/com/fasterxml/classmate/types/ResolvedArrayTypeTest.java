@@ -7,12 +7,11 @@ import org.junit.Test;
 
 import java.util.Collection;
 
-import static junit.framework.Assert.*;
+import static org.junit.Assert.*;
 
 /**
  * User: blangel
  */
-@SuppressWarnings("deprecation")
 public class ResolvedArrayTypeTest {
 
     @Test
@@ -33,7 +32,9 @@ public class ResolvedArrayTypeTest {
     @Test
     public void getParentClass() {
         ResolvedArrayType arrayType = new ResolvedArrayType(Object.class, null, null);
-        assertNull(arrayType.getParentClass());
+        // With [classmate#51]:
+        assertNotNull(arrayType.getParentClass());
+        assertEquals(Object.class, arrayType.getParentClass().getErasedType());
     }
 
     @Test

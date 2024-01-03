@@ -5,6 +5,9 @@ Release notes:
 
 1.7.0 (not yet released)
 
+#51: `TypeResolver.resolve(Long[].class)` should not return a `ResolvedType`
+  whose parent type is null
+ (reported by @ljnelson)
 #75: Move JDK baseline to Java 8
  (contributed by Dave B, @mebigfatguy)
 #83: Simplify code by not calling `Set.contains()` before `add()`

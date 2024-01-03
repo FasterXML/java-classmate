@@ -83,20 +83,6 @@ public class ResolvedObjectType extends ResolvedType
         _modifiers = erased.getModifiers();
     }
 
-    @Deprecated // since 1.1; removed from 1.2 -- kept for binary backwards compatibility
-    public ResolvedObjectType(Class<?> erased, TypeBindings bindings,
-            ResolvedObjectType superClass, List<ResolvedType> interfaces)
-    {
-        this(erased, bindings, (ResolvedType) superClass, interfaces);
-    }
-
-    @Deprecated // since 1.1; removed from 1.2 -- kept for binary backwards compatibility
-    public ResolvedObjectType(Class<?> erased, TypeBindings bindings,
-            ResolvedObjectType superClass, ResolvedType[] interfaces)
-    {
-        this(erased, bindings, (ResolvedType) superClass, interfaces);
-    }
-
     public static ResolvedObjectType create(Class<?> erased, TypeBindings bindings,
             ResolvedType superClass, List<ResolvedType> interfaces)
     {
