@@ -3,7 +3,7 @@
     <parent>
         <groupId>com.fasterxml</groupId>
         <artifactId>oss-parent</artifactId>
-        <version>56</version>
+        <version>68</version>
     </parent>
     <artifactId>classmate</artifactId>
     <name>ClassMate</name>
@@ -67,26 +67,11 @@ com.fasterxml.classmate.*;version=${project.version}
 
     <build>
         <plugins>
-
-          <!-- 19-Oct-2019, tatu: Copied from
-
-           https://github.com/stephenc/git-timestamp-maven-plugin/blob/master/pom.xml#L327-L337
-
-               to simplify releases. I hope.
-            -->
-          <plugin>
-            <groupId>org.sonatype.plugins</groupId>
-            <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>1.6.13</version>
-            <extensions>true</extensions>
-            <configuration>
-              <serverId>sonatype-nexus-staging</serverId>
-              <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-              <!-- 19-Oct-2019, tatu: from output -->
-              <stagingProfileId>b34f19b9cc6224</stagingProfileId>
-            </configuration>
-          </plugin>
-
+            <!-- 26-Sep-2025, tatu: Ensure we use new Sonatype Central Portal: -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+            </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
