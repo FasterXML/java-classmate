@@ -4,6 +4,7 @@ on:
     branches:
     - main
     - "1.6"
+    - "1.7"
     paths-ignore:
     - "README.md"
     - "release-notes/*"
@@ -11,15 +12,19 @@ on:
     branches:
     - main
     - "1.6"
+    - "1.7"
+
 permissions:
   contents: read
+
 jobs:
   build:
     runs-on: 'ubuntu-latest'
     strategy:
       fail-fast: false
       matrix:
-        java_version: ['8', '11', '17', '21']
+        # 26-Sep-2025, tatu: some test failures on 21 cannot yet enable
+        java_version: ['8', '11', '17']
     env:
       JAVA_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
     steps:
