@@ -7,7 +7,7 @@
     </parent>
     <artifactId>classmate</artifactId>
     <name>ClassMate</name>
-    <version>1.7.2-SNAPSHOT</version>
+    <version>1.8.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>Library for introspecting types with full generic information
         including resolving of field and method types.
