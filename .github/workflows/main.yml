@@ -23,8 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 26-Sep-2025, tatu: some test failures on 21 cannot yet enable
-        java_version: ['8', '11', '17', '21']
+        java_version: ['8', '11', '17', '21', '25']
     env:
       JAVA_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
     steps:
