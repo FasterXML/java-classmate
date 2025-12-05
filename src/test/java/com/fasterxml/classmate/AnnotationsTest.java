@@ -7,17 +7,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
 
-import static junit.framework.Assert.*;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
-@SuppressWarnings("deprecation")
-public class AnnotationsTest {
-
+public class AnnotationsTest
+{
     @Retention(RetentionPolicy.RUNTIME)
     private static @interface Marker { }
 
     @Test @Marker
-    public void addAsDefault() throws NoSuchMethodException {
+    public void addAsDefault() throws Exception {
         Annotations annotations = new Annotations();
         Method thisMethod = AnnotationsTest.class.getDeclaredMethod("addAsDefault");
 
@@ -39,7 +37,7 @@ public class AnnotationsTest {
     }
 
     @Test
-    public void size() throws NoSuchMethodException {
+    public void size() throws Exception {
         Annotations annotations = new Annotations();
         Method thisMethod = AnnotationsTest.class.getDeclaredMethod("addAsDefault");
 
@@ -57,7 +55,7 @@ public class AnnotationsTest {
     }
 
     @Test
-    public void annotationsToSize() throws NoSuchMethodException {
+    public void annotationsToSize() throws Exception {
         Annotations annotations = new Annotations();
         Method thisMethod = AnnotationsTest.class.getDeclaredMethod("addAsDefault");
 
@@ -67,23 +65,42 @@ public class AnnotationsTest {
         annotations.addAsDefault(testAnnotation);
 
         // order is unspecified as the internal representation is a HashMap; just assert the constituent parts are present
-        String asString = annotations.toString();
+        String asString = _normalize(annotations.toString());
         assertTrue(asString.contains("{interface org.junit.Test=@org.junit.Test("));
         assertTrue(asString.contains("timeout=0"));
 
         // 15-Nov-2016, tatu: Java 9 changes description slightly, need to modify
-        assertTrue(asString.contains("expected=class org.junit.Test$None") // until Java 8
-                || asString.contains("expected=org.junit.Test$None"));
+        // 05-Dec-2025, tatu: Java 21 adds further variation
+        if (!(asString.contains("expected=class org.junit.Test.None") // until Java 8
+                || asString.contains("expected=org.junit.Test.None"))) {
+            fail("No 'expected' in: "+asString);
+        }
 
         Annotation markerAnnotation = thisMethod.getAnnotation(Marker.class);
         annotations.addAsDefault(markerAnnotation);
 
-        asString = annotations.toString();
-        assertTrue(asString.contains("interface com.fasterxml.classmate.AnnotationsTest$Marker=@com.fasterxml.classmate.AnnotationsTest$Marker()"));
+        asString = _normalize(annotations.toString());
+
+        String exp = "interface com.fasterxml.classmate.AnnotationsTest.Marker=@com.fasterxml.classmate.AnnotationsTest.Marker()";
+        if (!asString.contains(exp)) {
+            fail("Expected: ["+exp+"]\nin ["+asString+"]");
+        }
         assertTrue(asString.contains("interface org.junit.Test=@org.junit.Test"));
         assertTrue(asString.contains("timeout=0"));
         // 15-Nov-2016, tatu: Java 9 changes description slightly, need to modify
-        assertTrue(asString.contains("expected=class org.junit.Test$None")
-                || asString.contains("expected=org.junit.Test$None"));
+        // 05-Dec-2025, tatu: Java 21 adds further variation
+        if (!(asString.contains("expected=class org.junit.Test.None") // until Java 8
+                || asString.contains("expected=org.junit.Test.None"))) {
+            fail("No 'expected' in: "+asString);
+        }
+    }
+
+    private static String _normalize(String str) {
+        // 05-Dec-2025, tatu: Java 21 changes from "org.junit.Test$None" to "org.junit.Test.None"
+        String str2;
+        while ((str2 = str.replace('$', '.')) != str) {
+            str = str2;
+        }
+        return str;
     }
 }

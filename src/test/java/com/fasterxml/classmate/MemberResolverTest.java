@@ -8,7 +8,7 @@ import com.fasterxml.classmate.members.*;
 import com.fasterxml.classmate.types.ResolvedObjectType;
 import com.fasterxml.classmate.util.ClassKey;
 
-public class TestMemberResolver extends BaseTest
+public class MemberResolverTest extends BaseTest
 {
     /*
     /**********************************************************************
@@ -214,7 +214,11 @@ public class TestMemberResolver extends BaseTest
         mr.setIncludeLangObject(true);
 
         simpleResolvedTypeWithMembers = mr.resolve(simpleResolvedType, null, null);
-        assertEquals(12, simpleResolvedTypeWithMembers.getMemberMethods().length);
+        // With JDK < 21, 12 member methods, 21+ 13
+        int methodCount = simpleResolvedTypeWithMembers.getMemberMethods().length;
+        if (methodCount < 12 || methodCount > 13) {
+            fail("Expected [12, 13] methods, got: "+methodCount);
+        }
         assertEquals(1, simpleResolvedTypeWithMembers.getMemberFields().length);
     }
 
@@ -225,7 +229,12 @@ public class TestMemberResolver extends BaseTest
         mr.setIncludeLangObject(true);
 
         ResolvedTypeWithMembers simpleResolvedTypeWithMembers = mr.resolve(simpleResolvedType, null, null);
-        assertEquals(12, simpleResolvedTypeWithMembers.getMemberMethods().length);
+        // With JDK < 21, 12 member methods, 21+ 13
+        int methodCount = simpleResolvedTypeWithMembers.getMemberMethods().length;
+        if (methodCount < 12 || methodCount > 13) {
+            fail("Expected [12, 13] methods, got: "+methodCount);
+        }
+
         assertEquals(1, simpleResolvedTypeWithMembers.getMemberFields().length);
         assertEquals(2, simpleResolvedTypeWithMembers.getConstructors().length);
 
@@ -253,7 +262,12 @@ public class TestMemberResolver extends BaseTest
         });
 
         simpleResolvedTypeWithMembers = mr.resolve(simpleResolvedType, null, null);
-        assertEquals(12, simpleResolvedTypeWithMembers.getMemberMethods().length);
+
+        // With JDK < 21, 12 member methods, 21+ 13
+        methodCount = simpleResolvedTypeWithMembers.getMemberMethods().length;
+        if (methodCount < 12 || methodCount > 13) {
+            fail("Expected [12, 13] methods, got: "+methodCount);
+        }
         assertEquals(0, simpleResolvedTypeWithMembers.getMemberFields().length);
         assertEquals(2, simpleResolvedTypeWithMembers.getConstructors().length);
 
@@ -267,7 +281,11 @@ public class TestMemberResolver extends BaseTest
         });
 
         simpleResolvedTypeWithMembers = mr.resolve(simpleResolvedType, null, null);
-        assertEquals(12, simpleResolvedTypeWithMembers.getMemberMethods().length);
+        // With JDK < 21, 12 member methods, 21+ 13
+        methodCount = simpleResolvedTypeWithMembers.getMemberMethods().length;
+        if (methodCount < 12 || methodCount > 13) {
+            fail("Expected [12, 13] methods, got: "+methodCount);
+        }
         assertEquals(1, simpleResolvedTypeWithMembers.getMemberFields().length);
         assertEquals(1, simpleResolvedTypeWithMembers.getConstructors().length);
     }
