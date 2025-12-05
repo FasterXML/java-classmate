@@ -18,9 +18,14 @@ package com.fasterxml.classmate;
  * NOTE: before version 1.6 implemented {@link java.io.Serializable}.
  * Removed due to
  * <a href="https://github.com/FasterXML/java-classmate/issues/73">issue #73</a>.
+ *<p>
+ * NOTE: before version 1.8 implemented {@link java.lang.reflect.Type}.
+ * Removed due to
+ * <a href="https://github.com/FasterXML/java-classmate/issues/76">issue #76</a>.
  */
 public abstract class GenericType<T>
-    implements java.lang.reflect.Type
+    // 05-Dec-2025, tatu: [classmate#76] Removed this from 1.8
+    //implements java.lang.reflect.Type
 {
     protected GenericType() { }
 }
