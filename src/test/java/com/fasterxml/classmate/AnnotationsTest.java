@@ -89,8 +89,7 @@ public class AnnotationsTest
         assertTrue(asString.contains("timeout=0"));
         // 15-Nov-2016, tatu: Java 9 changes description slightly, need to modify
         // 05-Dec-2025, tatu: Java 21 adds further variation
-        if (!(asString.contains("expected=class org.junit.Test$None") // until Java 8
-                || asString.contains("expected=org.junit.Test$None") // Java 9 - 17
+        if (!(asString.contains("expected=class org.junit.Test.None") // until Java 8
                 || asString.contains("expected=org.junit.Test.None"))) {
             fail("No 'expected' in: "+asString);
         }
