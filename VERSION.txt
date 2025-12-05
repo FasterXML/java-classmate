@@ -3,6 +3,11 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
+1.7.1 (26-Sep-2025)
+
+- Branch "master" renamed as "main"
+- Update to `oss-parent` v69 to switch to Central Portal publishing
+
 1.7.0 (02-Jan-2024)
 
 #51: `TypeResolver.resolve(Long[].class)` should not return a `ResolvedType`
