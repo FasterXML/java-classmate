@@ -13,7 +13,7 @@ import com.fasterxml.classmate.util.ResolvedTypeKey;
 /**
  * Object that is used for resolving generic type information of a class
  * so that it is accessible using simple API. Resolved types are also starting
- * point for accessing resolved (generics aware) return and argument types
+ * point for accessing resolved (generics-aware) return and argument types
  * of class members (methods, fields, constructors).
  *<p>
  * Note that resolver instances are stateful in that resolvers cache resolved
