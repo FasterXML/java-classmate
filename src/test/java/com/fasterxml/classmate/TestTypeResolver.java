@@ -498,7 +498,27 @@ public class TestTypeResolver extends BaseTest
         assertFalse((Boolean) typesMatchMethod.invoke(typeResolver, matchAListResolved, matchBListResolved));
         assertFalse((Boolean) typesMatchMethod.invoke(typeResolver, matchBListResolved, matchAListResolved));
     }
-    
+
+    public void testMultiDimensionalGenericArrays() throws Exception
+    {
+        ResolvedType resolvedType = typeResolver.resolve(new GenericType<List<String>[][]>() { });
+        assertEquals(List[][].class, resolvedType.getErasedType());
+        assertEquals(Collections.emptyList(), resolvedType.getTypeParameters());
+        assertTrue(resolvedType.isArray());
+        ResolvedArrayType arrayType = (ResolvedArrayType) resolvedType;
+        ResolvedType inner1 = arrayType.getArrayElementType();
+        assertEquals(List[].class, inner1.getErasedType());
+        assertTrue(inner1.isArray());
+        ResolvedArrayType arrayType2 = (ResolvedArrayType) inner1;
+        ResolvedType inner2 = arrayType2.getArrayElementType();
+        assertEquals(List.class, inner2.getErasedType());
+        List<ResolvedType> inner2TypeParams = inner2.getTypeParameters();
+        assertEquals(1, inner2TypeParams.size());
+        assertEquals(String.class, inner2TypeParams.get(0).getErasedType());
+
+        assertEquals("java.util.List<java.lang.String>[][]", resolvedType.toString());
+    }
+
     /*
     /**********************************************************************
     /* Helper methods
