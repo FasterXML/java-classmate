@@ -3,6 +3,10 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
+1.8.0 (not yet released)
+
+-
+
 1.7.1 (26-Sep-2025)
 
 - Branch "master" renamed as "main"
