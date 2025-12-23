@@ -5,7 +5,8 @@ Release notes:
 
 1.8.0 (not yet released)
 
--
+#76: Make `GenericType<T>` not implement `java.lang.reflect.Type`
+ (requested by @garretwilson)
 
 1.7.1 (26-Sep-2025)
 
