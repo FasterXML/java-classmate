@@ -12,7 +12,7 @@ import com.fasterxml.classmate.types.ResolvedObjectType;
 
 public class ResolvedTypeTest extends BaseTest
 {
-    // For [Issue#16]
+    // For [classmate#16]
 
     static class Foo16 extends Bar16 { }
 
@@ -35,11 +35,10 @@ public class ResolvedTypeTest extends BaseTest
         assertFalse(arrayType.canCreateSubtype(String[].class));
         assertFalse(arrayType.canCreateSubtype(CharBuffer[].class));
         assertFalse(arrayType.canCreateSubtype(String.class));
-
     }
 
     @Test
-    public void testtypeParametersFor() {
+    public void testTypeParametersFor() {
         ResolvedObjectType stringType = ResolvedObjectType.create(String.class, null, null, null);
         assertNull(stringType.typeParametersFor(CharBuffer.class));
     }
@@ -113,7 +112,7 @@ public class ResolvedTypeTest extends BaseTest
         assertEquals(0, type.getStaticFields().size());
     }
 
-    // For [Issue#16]
+    // For [classmate#16]
     @Test
     public void testIssue16()
     {
