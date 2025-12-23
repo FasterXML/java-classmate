@@ -427,6 +427,21 @@ public class TypeResolver implements Serializable
         if (!typeBindings.isEmpty() && rawType.getTypeParameters().length == 0) {
             typeBindings = TypeBindings.emptyBindings();
         }
+        // [classmate#53]: Handle raw generic types - resolve type parameters to their bounds
+        if (typeBindings.isEmpty() && rawType.getTypeParameters().length > 0) {
+            TypeVariable<?>[] vars = rawType.getTypeParameters();
+            ResolvedType[] types = new ResolvedType[vars.length];
+            for (int i = 0; i < vars.length; ++i) {
+                // Resolve each type parameter to its bound (similar to _fromVariable)
+                TypeVariable<?> var = vars[i];
+                String name = var.getName();
+                // Avoid self-reference cycles by marking as unbound during resolution
+                TypeBindings tempBindings = typeBindings.withUnboundVariable(name);
+                Type[] bounds = var.getBounds();
+                types[i] = _fromAny(context, bounds[0], tempBindings);
+            }
+            typeBindings = TypeBindings.create(rawType, types);
+        }
         // For other types super interfaces are needed...
         if (rawType.isInterface()) {
             return new ResolvedInterfaceType(rawType, typeBindings,

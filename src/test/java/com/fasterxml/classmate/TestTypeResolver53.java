@@ -1,4 +1,4 @@
-package com.fasterxml.classmate.failing;
+package com.fasterxml.classmate;
 
 import java.util.Arrays;
 import java.util.Comparator;
