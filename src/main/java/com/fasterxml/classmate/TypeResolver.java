@@ -422,10 +422,28 @@ public class TypeResolver implements Serializable
             ResolvedType elementType = _fromAny(context, rawType.getComponentType(), typeBindings);
             return new ResolvedArrayType(rawType, typeBindings, elementType);
         }
-        // Work-around/fix for [#33]: if the type has no type parameters, don't include
-        // typeBindings in the ResolvedType
-        if (!typeBindings.isEmpty() && rawType.getTypeParameters().length == 0) {
-            typeBindings = TypeBindings.emptyBindings();
+        final TypeVariable<?>[] rawTypeParameters = rawType.getTypeParameters();
+        // [classmate#53]: Handle raw generic types - resolve type parameters to their bounds
+        if (typeBindings.isEmpty()) {
+            if (rawTypeParameters.length > 0) {
+                ResolvedType[] types = new ResolvedType[rawTypeParameters.length];
+                for (int i = 0; i < rawTypeParameters.length; ++i) {
+                    // Resolve each type parameter to its bound (similar to _fromVariable)
+                    TypeVariable<?> var = rawTypeParameters[i];
+                    String name = var.getName();
+                    // Avoid self-reference cycles by marking as unbound during resolution
+                    TypeBindings tempBindings = typeBindings.withUnboundVariable(name);
+                    Type[] bounds = var.getBounds();
+                    types[i] = _fromAny(context, bounds[0], tempBindings);
+                }
+                typeBindings = TypeBindings.create(rawType, types);
+            }
+        } else {
+            // Work-around/fix for [classmate#33]: if the type has no type parameters,
+            // don't include typeBindings in the ResolvedType
+            if (rawTypeParameters.length == 0) {
+                typeBindings = TypeBindings.emptyBindings();
+            }
         }
         // For other types super interfaces are needed...
         if (rawType.isInterface()) {

@@ -5,7 +5,8 @@ Release notes:
 
 1.8.0 (not yet released)
 
--
+#53: Allow for subtype resolution with unknown generics
+ (reported by Carsten W, @CarstenWickner)
 
 1.7.1 (26-Sep-2025)
 
