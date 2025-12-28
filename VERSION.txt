@@ -3,7 +3,7 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
-1.8.0 (not yet released)
+1.7.2 (27-Dec-2025)
 
 #53: Allow for subtype resolution with unknown generics
  (reported by Carsten W, @CarstenWickner)
