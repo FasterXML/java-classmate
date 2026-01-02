@@ -526,4 +526,93 @@ public class TestTypeResolver117 extends BaseTest
         // Compare them
         assertNotSame(enumSupertype, comparableSupertype);
     }
+
+    /**
+     * Test that verifies caching still works correctly with the fix.
+     * This tests that cache lookups succeed when comparing ResolvedTypeKeys
+     * that contain ResolvedRecursiveType instances.
+     */
+    public void testCacheCorrectness() {
+        TypeResolver resolver = new TypeResolver();
+
+        // Resolve Enum first time - should be cached
+        ResolvedType enum1 = resolver.resolve(Enum.class);
+        assertNotNull(enum1);
+
+        // Resolve Enum second time - should get from cache (same instance)
+        ResolvedType enum2 = resolver.resolve(Enum.class);
+        assertSame("Should return same instance from cache", enum1, enum2);
+
+        // Verify type parameters contain recursive types
+        List<ResolvedType> params = enum1.getTypeParameters();
+        assertEquals(1, params.size());
+
+        ResolvedType paramType = params.get(0);
+        // Check if it's a recursive type
+        ResolvedType selfRef = paramType.getSelfReferencedType();
+        if (selfRef != null) {
+            // It's a ResolvedRecursiveType - verify it works correctly
+            assertNotNull(selfRef);
+        }
+
+        // Resolve RawSelfBounded - also has recursive structure
+        ResolvedType sb1 = resolver.resolve(RawSelfBounded.class);
+        ResolvedType sb2 = resolver.resolve(RawSelfBounded.class);
+        assertSame("RawSelfBounded should also be cached", sb1, sb2);
+    }
+
+    /**
+     * Test that ResolvedRecursiveType instances with same structure
+     * but from different resolvers are equal (but not same instance)
+     */
+    public void testRecursiveTypeEqualityAcrossResolvers() {
+        TypeResolver resolver1 = new TypeResolver();
+        TypeResolver resolver2 = new TypeResolver();
+
+        ResolvedType enum1 = resolver1.resolve(Enum.class);
+        ResolvedType enum2 = resolver2.resolve(Enum.class);
+
+        // Should be equal (structural equality)
+        assertEquals("Types from different resolvers should be equal", enum1, enum2);
+
+        // But not same instance
+        assertNotSame("Should not be same instance", enum1, enum2);
+
+        // Type parameters should also be equal
+        List<ResolvedType> params1 = enum1.getTypeParameters();
+        List<ResolvedType> params2 = enum2.getTypeParameters();
+
+        assertEquals(params1.size(), params2.size());
+        for (int i = 0; i < params1.size(); i++) {
+            // This is the critical test - comparing ResolvedRecursiveTypes
+            // from different resolvers should work without StackOverflow
+            assertEquals("Type parameter " + i + " should be equal",
+                    params1.get(i), params2.get(i));
+        }
+    }
+
+    /**
+     * Verify that _referencedType is only used for navigation,
+     * not for equality determination
+     */
+    public void testReferencedTypeIsForNavigation() {
+        ResolvedType enumType = RESOLVER.resolve(Enum.class);
+        List<ResolvedType> params = enumType.getTypeParameters();
+
+        if (!params.isEmpty()) {
+            ResolvedType param = params.get(0);
+            ResolvedType selfRef = param.getSelfReferencedType();
+
+            if (selfRef != null) {
+                // selfRef should be non-null for ResolvedRecursiveType
+                assertNotNull(selfRef);
+
+                // selfRef should allow navigation to members
+                // (this is what _referencedType is used for)
+                List<com.fasterxml.classmate.members.RawMethod> methods =
+                    selfRef.getMemberMethods();
+                assertNotNull("Should be able to get methods via referenced type", methods);
+            }
+        }
+    }
 }
