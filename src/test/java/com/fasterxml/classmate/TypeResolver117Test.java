@@ -16,7 +16,7 @@ import com.fasterxml.classmate.members.ResolvedMethod;
  * raw generic types by binding type parameters to their bounds. This can create
  * circular dependencies in ResolvedRecursiveType instances.
  */
-public class TestTypeResolver117 extends BaseTest
+public class TypeResolver117Test extends BaseTest
 {
     protected final TypeResolver RESOLVER = new TypeResolver();
 

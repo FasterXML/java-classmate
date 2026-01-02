@@ -10,7 +10,7 @@ import com.fasterxml.classmate.util.ClassKey;
 import com.fasterxml.classmate.util.ResolvedTypeKey;
 
 @SuppressWarnings("serial")
-public class TestTypeResolver extends BaseTest
+public class TypeResolverTest extends BaseTest
 {
     /*
     /**********************************************************************
