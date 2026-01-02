@@ -3,6 +3,11 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
+1.7.3 (02-Jan-2026)
+
+#117: Regression in 1.7.2 (wrt #53) causes `StackOverflowError` for some recursive types
+ (reported by Marcin E)
+
 1.7.2 (27-Dec-2025)
 
 #53: Allow for subtype resolution with unknown generics

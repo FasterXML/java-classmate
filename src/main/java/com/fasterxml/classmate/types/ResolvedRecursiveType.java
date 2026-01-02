@@ -154,16 +154,12 @@ public class ResolvedRecursiveType extends ResolvedType
     
     @Override public boolean equals(Object o)
     {
-        if (!super.equals(o)) {
-            return false;
-        }
-        // not sure if we should match at all, but definitely need this
-        // additional part if we do:
-        ResolvedRecursiveType other = (ResolvedRecursiveType) o;
-        if (_referencedType == null) {
-            return other._referencedType == null;
-        }
-        return _referencedType.equals(other._referencedType);
+        // [classmate#117]: Do NOT compare _referencedType to avoid infinite recursion
+        // super.equals() already compares class type, erased type, and type bindings,
+        // which is sufficient for determining equality of recursive types.
+        // Comparing _referencedType causes StackOverflowError when comparing types
+        // from different TypeResolver instances.
+        return super.equals(o);
     }
 
     // Only for compliance purposes: lgtm.com complains if only equals overridden
