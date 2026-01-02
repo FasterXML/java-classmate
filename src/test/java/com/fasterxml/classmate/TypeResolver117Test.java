@@ -1,6 +1,8 @@
 package com.fasterxml.classmate;
 
 import java.util.List;
+
+import com.fasterxml.classmate.members.RawMethod;
 import com.fasterxml.classmate.members.ResolvedMethod;
 
 /**
@@ -19,12 +21,6 @@ import com.fasterxml.classmate.members.ResolvedMethod;
 public class TypeResolver117Test extends BaseTest
 {
     protected final TypeResolver RESOLVER = new TypeResolver();
-
-    // [classmate#117] StackOverflowError with recursive types
-    // The classic recursive type pattern: T extends SelfBounded<T>
-    // When resolving raw types, the fix for #53 creates TypeBindings by
-    // resolving T to its bound (SelfBounded<T>), which creates infinite recursion
-    // in equals() methods
 
     // Test with a custom recursive type similar to Enum<E extends Enum<E>>
     static interface SelfReferential<T extends SelfReferential<T>> {
@@ -609,8 +605,7 @@ public class TypeResolver117Test extends BaseTest
 
                 // selfRef should allow navigation to members
                 // (this is what _referencedType is used for)
-                List<com.fasterxml.classmate.members.RawMethod> methods =
-                    selfRef.getMemberMethods();
+                List<RawMethod> methods = selfRef.getMemberMethods();
                 assertNotNull("Should be able to get methods via referenced type", methods);
             }
         }
