@@ -9,9 +9,8 @@ import java.lang.reflect.Field;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
-@SuppressWarnings("deprecation")
-public class ResolvedFieldTest {
-
+public class ResolvedFieldTest
+{
     @SuppressWarnings("unused")
     private static class ModifiersClass {
         private static String test;

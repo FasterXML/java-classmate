@@ -4,9 +4,8 @@ import org.junit.Test;
 
 import static junit.framework.Assert.*;
 
-@SuppressWarnings("deprecation")
-public class TypePlaceHolderTest {
-
+public class TypePlaceHolderTest
+{
     @Test
     public void canCreateSubtypes() {
         TypePlaceHolder placeHolder = new TypePlaceHolder(0);

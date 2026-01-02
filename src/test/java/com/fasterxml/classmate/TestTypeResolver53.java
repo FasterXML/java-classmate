@@ -1,13 +1,6 @@
 package com.fasterxml.classmate;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-
-import com.fasterxml.classmate.BaseTest;
-import com.fasterxml.classmate.ResolvedType;
-import com.fasterxml.classmate.TypeResolver;
+import java.util.*;
 
 // for [classmate#53]: Raw Comparator
 public class TestTypeResolver53 extends BaseTest
@@ -24,7 +17,8 @@ public class TestTypeResolver53 extends BaseTest
     @SuppressWarnings("rawtypes")
     static abstract class BoundedRaw extends BoundedComparable { }
 
-    static abstract class NestedRaw extends java.util.ArrayList<Map> { }
+    @SuppressWarnings({ "rawtypes", "serial" })
+    static abstract class NestedRaw extends ArrayList<Map> { }
 
     protected final TypeResolver RESOLVER = new TypeResolver();
 

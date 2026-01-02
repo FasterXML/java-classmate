@@ -17,9 +17,8 @@ import static junit.framework.Assert.*;
 /**
  * @author blangel
  */
-@SuppressWarnings("deprecation")
-public class ResolvedMemberTest {
-
+public class ResolvedMemberTest
+{
     @Retention(RetentionPolicy.RUNTIME)
     private static @interface Decorate { }
 

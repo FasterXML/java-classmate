@@ -12,9 +12,8 @@ import static junit.framework.Assert.*;
 /**
  * @author blangel
  */
-@SuppressWarnings("deprecation")
-public class RawMethodTest {
-
+public class RawMethodTest
+{
     private static class ModifiersClass {
         private strictfp void strictfpMethod() { }
         private native void nativeMethod();

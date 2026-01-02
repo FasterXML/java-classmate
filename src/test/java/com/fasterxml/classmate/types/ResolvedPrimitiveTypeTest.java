@@ -4,9 +4,8 @@ import org.junit.Test;
 
 import static junit.framework.Assert.*;
 
-@SuppressWarnings("deprecation")
-public class ResolvedPrimitiveTypeTest {
-
+public class ResolvedPrimitiveTypeTest
+{
     private static interface Callback {
         void test(ResolvedPrimitiveType primitiveType);
     }

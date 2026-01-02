@@ -4,9 +4,8 @@ import org.junit.Test;
 
 import static junit.framework.Assert.*;
 
-@SuppressWarnings("deprecation")
-public class ResolvedRecursiveTypeTest {
-
+public class ResolvedRecursiveTypeTest
+{
     private static abstract class AbstractClass { }
 
     @SuppressWarnings("unused")
