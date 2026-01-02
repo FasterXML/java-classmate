@@ -3,7 +3,7 @@ package com.fasterxml.classmate;
 import java.util.*;
 
 // for [classmate#53]: Raw Comparator
-public class TestTypeResolver53 extends BaseTest
+public class TypeResolver53Test extends BaseTest
 {
     @SuppressWarnings("rawtypes")
     static abstract class Comparator53 implements Comparator { }
