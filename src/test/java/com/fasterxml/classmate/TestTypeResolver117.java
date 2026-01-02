@@ -1,6 +1,7 @@
 package com.fasterxml.classmate;
 
 import java.util.List;
+import com.fasterxml.classmate.members.ResolvedMethod;
 
 /**
  * Test for [classmate#117]: StackOverflowError in 1.7.2 with recursive types
@@ -283,5 +284,246 @@ public class TestTypeResolver117 extends BaseTest
         // c) The issue manifests only with certain JDK versions or configurations
 
         assertTrue("Issue #117 tests completed without StackOverflowError", true);
+    }
+
+    /**
+     * Test using MemberResolver which might trigger more complex resolution
+     * and cache lookups
+     */
+    public void testMemberResolverWithRecursiveTypes() {
+        MemberResolver memberResolver = new MemberResolver(RESOLVER);
+
+        // Resolve a type that has recursive bounds
+        ResolvedType rt = RESOLVER.resolve(RawSelfBounded.class);
+
+        // Get members which forces resolution of method return types, parameter types, etc.
+        ResolvedTypeWithMembers members = memberResolver.resolve(rt, null, null);
+        assertNotNull(members);
+
+        // Access methods to trigger lazy resolution
+        ResolvedMethod[] methods = members.getMemberMethods();
+        assertNotNull(methods);
+    }
+
+    /**
+     * Test MemberResolver with java.lang.Enum
+     */
+    public void testMemberResolverWithEnum() {
+        MemberResolver memberResolver = new MemberResolver(RESOLVER);
+
+        // Resolve raw Enum
+        ResolvedType rt = RESOLVER.resolve(Enum.class);
+
+        // Get members - this might trigger the stack overflow
+        ResolvedTypeWithMembers members = memberResolver.resolve(rt, null, null);
+        assertNotNull(members);
+
+        ResolvedMethod[] methods = members.getMemberMethods();
+        assertNotNull(methods);
+    }
+
+    /**
+     * Test with multiple TypeResolver instances to ensure no cross-cache issues
+     */
+    public void testMultipleResolvers() {
+        TypeResolver resolver1 = new TypeResolver();
+        TypeResolver resolver2 = new TypeResolver();
+
+        ResolvedType rt1 = resolver1.resolve(RawSelfBounded.class);
+        ResolvedType rt2 = resolver2.resolve(RawSelfBounded.class);
+
+        // These should be equal even from different resolvers
+        assertEquals(rt1, rt2);
+    }
+
+    /**
+     * Test that specifically tries to trigger cache comparison by
+     * resolving the same type multiple times
+     */
+    public void testCacheLookupWithRecursiveTypes() {
+        // First resolution - should cache it
+        ResolvedType rt1 = RESOLVER.resolve(Enum.class);
+
+        // Second resolution - should find in cache and compare keys
+        // This is where the StackOverflowError might occur due to
+        // ResolvedTypeKey.equals() calling ResolvedType.equals()
+        ResolvedType rt2 = RESOLVER.resolve(Enum.class);
+
+        // Should be the same instance from cache
+        assertSame(rt1, rt2);
+
+        // Also test equals explicitly
+        assertEquals(rt1, rt2);
+    }
+
+    /**
+     * Test resolving type parameters for recursive types
+     */
+    public void testTypeParametersForRecursiveTypes() {
+        // Resolve Enum
+        ResolvedType enumType = RESOLVER.resolve(Enum.class);
+
+        // Get its type parameters
+        List<ResolvedType> typeParams = enumType.getTypeParameters();
+        assertEquals(1, typeParams.size());
+
+        ResolvedType paramType = typeParams.get(0);
+
+        // The parameter should be a ResolvedRecursiveType for Enum<E>
+        // Try to get its type parameters recursively
+        List<ResolvedType> nestedParams = paramType.getTypeParameters();
+
+        // Now try to compare - this might trigger the stack overflow
+        assertEquals(paramType, paramType);
+
+        if (!nestedParams.isEmpty()) {
+            ResolvedType nestedParam = nestedParams.get(0);
+            // This comparison might cause issues
+            assertEquals(nestedParam, nestedParam);
+        }
+    }
+
+    /**
+     * Test with typeParametersFor which might trigger different code paths
+     */
+    public void testTypeParametersForMethod() {
+        ResolvedType rt = RESOLVER.resolve(TestEnum.class);
+
+        // TestEnum extends Enum<TestEnum>, so asking for Enum's type parameters
+        // should return TestEnum
+        List<ResolvedType> params = rt.typeParametersFor(Enum.class);
+        assertNotNull(params);
+        assertEquals(1, params.size());
+
+        // The parameter should be TestEnum
+        ResolvedType param = params.get(0);
+        assertEquals(TestEnum.class, param.getErasedType());
+    }
+
+    /**
+     * Test comparing TypeBindings directly
+     */
+    public void testTypeBindingsComparison() {
+        ResolvedType rt1 = RESOLVER.resolve(Enum.class);
+        ResolvedType rt2 = RESOLVER.resolve(Enum.class);
+
+        TypeBindings bindings1 = rt1.getTypeBindings();
+        TypeBindings bindings2 = rt2.getTypeBindings();
+
+        // This should trigger TypeBindings.equals() which calls
+        // ResolvedType.equals() on contained types
+        assertEquals(bindings1, bindings2);
+    }
+
+    /**
+     * *** THIS TEST REPRODUCES THE STACKOVERFLOWERROR ***
+     *
+     * Test with FRESH TypeResolver instances to avoid cache hits
+     * This forces new resolution and creation of ResolvedRecursiveTypes.
+     * When comparing ResolvedTypes from different resolvers, the equals()
+     * method triggers infinite recursion through:
+     * - ResolvedRecursiveType.equals() -> super.equals() -> TypeBindings.equals()
+     * - TypeBindings.equals() -> ResolvedType.equals() (on type parameters)
+     * - ResolvedRecursiveType.equals() -> _referencedType.equals() -> ... (cycle)
+     */
+    public void testFreshResolversWithRecursiveTypes() {
+        // Use fresh resolver each time to avoid caching
+        TypeResolver fresh1 = new TypeResolver();
+        TypeResolver fresh2 = new TypeResolver();
+
+        ResolvedType rt1 = fresh1.resolve(Enum.class);
+        ResolvedType rt2 = fresh2.resolve(Enum.class);
+
+        // These are from different resolvers, so different instances
+        // Comparing them should trigger full equals() logic
+        assertEquals(rt1, rt2);
+
+        // Also compare their type bindings
+        assertEquals(rt1.getTypeBindings(), rt2.getTypeBindings());
+
+        // And compare type parameters
+        List<ResolvedType> params1 = rt1.getTypeParameters();
+        List<ResolvedType> params2 = rt2.getTypeParameters();
+
+        if (!params1.isEmpty() && !params2.isEmpty()) {
+            // This comparison between ResolvedRecursiveTypes from different
+            // resolvers might trigger the infinite recursion
+            assertEquals(params1.get(0), params2.get(0));
+        }
+    }
+
+    /**
+     * Test resolving through different paths to create different
+     * but equivalent recursive type structures
+     */
+    public void testDifferentResolutionPaths() {
+        TypeResolver resolver = new TypeResolver();
+
+        // Path 1: Resolve Enum directly
+        ResolvedType enumDirect = resolver.resolve(Enum.class);
+
+        // Path 2: Resolve through an enum subclass and ask for parent
+        ResolvedType testEnumType = resolver.resolve(TestEnum.class);
+        ResolvedType enumViaParent = testEnumType.getParentClass();
+
+        // These might have different ResolvedRecursiveType instances internally
+        // Comparing them could trigger the issue
+        if (enumViaParent != null) {
+            // Compare the types
+            assertNotNull(enumDirect);
+            assertNotNull(enumViaParent);
+
+            // The erased types should be the same
+            assertEquals(Enum.class, enumViaParent.getErasedType());
+        }
+    }
+
+    /**
+     * *** THIS TEST ALSO REPRODUCES THE STACKOVERFLOWERROR ***
+     *
+     * Test that creates maximum pressure on equals() by resolving
+     * many recursive types and comparing them all.
+     * This amplifies the issue by comparing types from multiple different resolvers.
+     */
+    public void testMassiveRecursiveTypeComparison() {
+        TypeResolver[] resolvers = new TypeResolver[5];
+        ResolvedType[][] types = new ResolvedType[5][4];
+
+        // Create multiple resolvers and resolve multiple recursive types in each
+        for (int i = 0; i < 5; i++) {
+            resolvers[i] = new TypeResolver();
+            types[i][0] = resolvers[i].resolve(Enum.class);
+            types[i][1] = resolvers[i].resolve(RawSelfBounded.class);
+            types[i][2] = resolvers[i].resolve(RawSelfReferential.class);
+            types[i][3] = resolvers[i].resolve(RawDoublyRecursive.class);
+        }
+
+        // Now compare all of them - this creates many equals() calls
+        for (int typeIdx = 0; typeIdx < 4; typeIdx++) {
+            for (int i = 0; i < 5; i++) {
+                for (int j = i + 1; j < 5; j++) {
+                    // Compare types from different resolvers
+                    assertEquals(types[i][typeIdx], types[j][typeIdx]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Test findSupertype which might trigger different resolution paths
+     */
+    public void testFindSupertypeWithRecursive() {
+        ResolvedType testEnumType = RESOLVER.resolve(TestEnum.class);
+
+        // Find Enum supertype - this might trigger different code paths
+        ResolvedType enumSupertype = testEnumType.findSupertype(Enum.class);
+        assertNotNull(enumSupertype);
+
+        // Find Comparable supertype (implemented by Enum)
+        ResolvedType comparableSupertype = testEnumType.findSupertype(Comparable.class);
+        assertNotNull(comparableSupertype);
+
+        // Compare them
+        assertNotSame(enumSupertype, comparableSupertype);
     }
 }
