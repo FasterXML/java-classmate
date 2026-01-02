@@ -10,9 +10,8 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
-@SuppressWarnings("deprecation")
-public class RawFieldTest {
-
+public class RawFieldTest
+{
     @SuppressWarnings("unused")
     private static class ModifiersClass {
         private static String test;

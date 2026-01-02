@@ -9,9 +9,8 @@ import static junit.framework.Assert.*;
 /**
  * @author blangel
  */
-@SuppressWarnings("deprecation")
-public class HierarchicTypeTest {
-
+public class HierarchicTypeTest
+{
     @Test
     public void hierarchicTypeToString() {
         HierarchicType hierarchicType = new HierarchicType(null, false, 0);

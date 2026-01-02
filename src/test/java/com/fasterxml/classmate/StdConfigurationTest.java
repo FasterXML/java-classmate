@@ -5,9 +5,8 @@ import org.junit.Test;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertSame;
 
-@SuppressWarnings("deprecation")
-public class StdConfigurationTest {
-
+public class StdConfigurationTest
+{
     @Test
     public void getInclusionForClass() {
         AnnotationConfiguration.StdConfiguration config = new AnnotationConfiguration.StdConfiguration(null);

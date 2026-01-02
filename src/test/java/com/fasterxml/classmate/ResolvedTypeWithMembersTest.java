@@ -16,9 +16,8 @@ import static junit.framework.Assert.*;
 /**
  * User: blangel
  */
-@SuppressWarnings("deprecation")
-public class ResolvedTypeWithMembersTest {
-
+public class ResolvedTypeWithMembersTest
+{
     @Retention(RetentionPolicy.RUNTIME)
     static @interface Marker { }
 

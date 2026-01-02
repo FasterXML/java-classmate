@@ -9,7 +9,6 @@ import org.junit.Test;
 
 import static junit.framework.Assert.*;
 
-@SuppressWarnings("deprecation")
 public class TypeBindingsTest
 {
     @Test
