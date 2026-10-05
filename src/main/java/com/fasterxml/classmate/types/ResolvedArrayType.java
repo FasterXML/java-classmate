@@ -36,6 +36,17 @@ public final class ResolvedArrayType extends ResolvedType
     }
     
     @Override
+    public boolean equals(Object other) {
+        return super.equals(other)
+                && Objects.equals(_elementType, ((ResolvedArrayType) other)._elementType);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + Objects.hashCode(_elementType);
+    }
+
+    @Override
     public boolean canCreateSubtypes() {
         return false;
     }

@@ -2,10 +2,14 @@ package com.fasterxml.classmate.types;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
+import com.fasterxml.classmate.TypeResolver;
 
 import org.junit.Test;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
@@ -13,6 +17,37 @@ import static org.junit.Assert.*;
  * User: blangel
  */
 public class ResolvedArrayTypeTest {
+
+    @Test
+    public void equalityIncludesGenericElementType() {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType strings = resolver.arrayType(resolver.resolve(List.class, String.class));
+        ResolvedType integers = resolver.arrayType(resolver.resolve(List.class, Integer.class));
+        ResolvedType sameStrings = resolver.arrayType(resolver.resolve(List.class, String.class));
+
+        assertFalse(strings.equals(integers));
+        assertFalse(integers.equals(strings));
+        assertEquals(strings, sameStrings);
+        assertEquals(strings.hashCode(), sameStrings.hashCode());
+        Set<ResolvedType> types = new HashSet<ResolvedType>();
+        types.add(strings);
+        types.add(integers);
+        types.add(sameStrings);
+        assertEquals(2, types.size());
+    }
+
+    @Test
+    public void cacheDistinguishesGenericArrayParameters() {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType strings = resolver.arrayType(resolver.resolve(List.class, String.class));
+        ResolvedType integers = resolver.arrayType(resolver.resolve(List.class, Integer.class));
+
+        resolver.resolve(List.class, strings);
+        ResolvedType result = resolver.resolve(List.class, integers);
+
+        assertEquals(Integer.class, result.getTypeParameters().get(0).getArrayElementType()
+                .getTypeParameters().get(0).getErasedType());
+    }
 
     @Test
     public void getArrayElementType() {
