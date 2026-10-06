@@ -1,14 +1,18 @@
 package com.fasterxml.classmate.types;
 
+import com.fasterxml.classmate.MemberResolver;
 import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.ResolvedTypeWithMembers;
 import com.fasterxml.classmate.TypeBindings;
 import com.fasterxml.classmate.TypeResolver;
+import com.fasterxml.classmate.members.ResolvedField;
 
 import org.junit.Test;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -47,6 +51,84 @@ public class ResolvedArrayTypeTest {
 
         assertEquals(Integer.class, result.getTypeParameters().get(0).getArrayElementType()
                 .getTypeParameters().get(0).getErasedType());
+    }
+
+    static class ArrayHolder<T> {
+        public T[] typed;
+        public String[] strings;
+        @SuppressWarnings("rawtypes")
+        public Map[] rawMaps;
+    }
+
+    static class Base<T> { }
+
+    static class Node extends Base<Node[]> { }
+
+    // [classmate#125]: array types must not retain bindings of the context they are resolved in
+    @Test
+    public void arrayTypesIgnoreResolutionContext() {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType direct = resolver.resolve(String[].class);
+        ResolvedType viaFactory = resolver.arrayType(String.class);
+        ResolvedType typed = _field(resolver, "typed");
+        ResolvedType strings = _field(resolver, "strings");
+
+        for (ResolvedType type : new ResolvedType[] { direct, viaFactory, typed, strings }) {
+            assertEquals(String[].class, type.getErasedType());
+            assertTrue(type.getTypeBindings().isEmpty());
+            assertEquals(0, type.getTypeParameters().size());
+            assertEquals(direct, type);
+            assertEquals(type, direct);
+            assertEquals(direct.hashCode(), type.hashCode());
+        }
+    }
+
+    @Test
+    public void rawGenericArrayIgnoresResolutionContext() {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType rawMaps = _field(resolver, "rawMaps");
+        ResolvedType direct = resolver.resolve(Map[].class);
+
+        assertEquals(direct, rawMaps);
+        // raw Map resolves to bounds of both type parameters, not to `Map<String>`
+        List<ResolvedType> params = rawMaps.getArrayElementType().getTypeParameters();
+        assertEquals(2, params.size());
+        assertEquals(Object.class, params.get(0).getErasedType());
+        assertEquals(Object.class, params.get(1).getErasedType());
+    }
+
+    @Test
+    public void cachedArrayTypeParametersDoNotDependOnResolutionOrder() {
+        TypeResolver resolver = new TypeResolver();
+        resolver.resolve(List.class, _field(resolver, "typed"));
+        ResolvedType listType = resolver.resolve(List.class, String[].class);
+
+        ResolvedType arrayType = listType.getTypeParameters().get(0);
+        assertEquals(String[].class, arrayType.getErasedType());
+        assertEquals(0, arrayType.getTypeParameters().size());
+    }
+
+    @Test
+    public void arrayOfRecursiveTypeNotCachedWithSelfReference() {
+        TypeResolver resolver = new TypeResolver();
+        resolver.resolve(Node.class);
+        ResolvedType direct = resolver.resolve(Node[].class);
+
+        assertFalse(TypeResolver.isSelfReference(direct.getArrayElementType()));
+        assertEquals(Base.class, direct.getArrayElementType().getParentClass().getErasedType());
+        assertEquals(resolver.arrayType(Node.class), direct);
+        assertEquals(new TypeResolver().resolve(Node[].class), direct);
+    }
+
+    private ResolvedType _field(TypeResolver resolver, String name) {
+        ResolvedTypeWithMembers members = new MemberResolver(resolver)
+                .resolve(resolver.resolve(ArrayHolder.class, String.class), null, null);
+        for (ResolvedField field : members.getMemberFields()) {
+            if (field.getName().equals(name)) {
+                return field.getType();
+            }
+        }
+        throw new IllegalArgumentException("No field '"+name+"'");
     }
 
     @Test

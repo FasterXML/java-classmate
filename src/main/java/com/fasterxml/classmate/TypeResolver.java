@@ -358,6 +358,15 @@ public class TypeResolver implements Serializable
         if (type != null) {
             return type;
         }
+        // [classmate#125]: Arrays have no type parameters of their own, so bindings of
+        // enclosing context must not be retained (nor used for element type). Nor are
+        // they cached, since element type may be a self-reference (in which case
+        // array type is only valid within that context); element type itself is cached.
+        if (rawType.isArray()) {
+            ResolvedType elementType = _fromAny(context, rawType.getComponentType(),
+                    TypeBindings.emptyBindings());
+            return new ResolvedArrayType(rawType, TypeBindings.emptyBindings(), elementType);
+        }
         // Second: recursive reference?
         if (context == null) {
             context = new ClassStack(rawType);
@@ -418,10 +427,7 @@ public class TypeResolver implements Serializable
     private ResolvedType _constructType(ClassStack context, Class<?> rawType, TypeBindings typeBindings)
     {
         // Ok: no easy shortcut, let's figure out type of type...
-        if (rawType.isArray()) {
-            ResolvedType elementType = _fromAny(context, rawType.getComponentType(), typeBindings);
-            return new ResolvedArrayType(rawType, typeBindings, elementType);
-        }
+        // (note: array types handled by `_fromClass()`)
         final TypeVariable<?>[] rawTypeParameters = rawType.getTypeParameters();
         // [classmate#53]: Handle raw generic types - resolve type parameters to their bounds
         if (typeBindings.isEmpty()) {
@@ -511,7 +517,8 @@ public class TypeResolver implements Serializable
         ResolvedType elementType = _fromAny(context, arrayType.getGenericComponentType(), typeBindings);
         // Figuring out raw class for generic array is actually bit tricky...
         Object emptyArray = Array.newInstance(elementType.getErasedType(), 0);
-        return new ResolvedArrayType(emptyArray.getClass(), typeBindings, elementType);
+        // [classmate#125]: bindings only needed for element type, not retained by array
+        return new ResolvedArrayType(emptyArray.getClass(), TypeBindings.emptyBindings(), elementType);
     }
 
     private ResolvedType _fromWildcard(ClassStack context, WildcardType wildType, TypeBindings typeBindings)
