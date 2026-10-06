@@ -3,7 +3,7 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
-1.7.4 (not yet released)
+1.8.0 (not yet released)
 
 #125: Generic array types compare equal and collide in the resolver cache
  (reported, fix contributed by 박재홍, @PHJ2000)
