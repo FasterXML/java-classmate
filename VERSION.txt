@@ -7,6 +7,8 @@ Release notes:
 
 #125: Generic array types compare equal and collide in the resolver cache
  (reported, fix contributed by 박재홍, @PHJ2000)
+- Array types no longer retain type bindings of the enclosing type, and are
+  no longer cached by `TypeResolver`
 
 1.7.3 (02-Jan-2026)
 
