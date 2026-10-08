@@ -11,8 +11,10 @@ public class TypeResolver53Test extends BaseTest
     @SuppressWarnings("rawtypes")
     static abstract class Map53 implements Map { }
 
-    @SuppressWarnings("rawtypes")
     static abstract class BoundedComparable<T extends Number> implements Comparable<T> { }
+
+    @SuppressWarnings("rawtypes")
+    static abstract class BoundedRawComparable<T extends Number> implements Comparable { }
 
     @SuppressWarnings("rawtypes")
     static abstract class BoundedRaw extends BoundedComparable { }
@@ -47,6 +49,14 @@ public class TypeResolver53Test extends BaseTest
         // BoundedComparable<T extends Number> implements Comparable<T>, used raw
         // Type parameter T has bound Number, so should resolve to Number
         assertEquals(Arrays.asList(RESOLVER.resolve(Number.class)),
+                params);
+    }
+
+    // [classmate#125] Raw interface must not use bindings of implementing class
+    public void testRawInterfaceInGenericClass() {
+        ResolvedType rt = RESOLVER.resolve(BoundedRawComparable.class, Integer.class);
+        List<ResolvedType> params = rt.typeParametersFor(Comparable.class);
+        assertEquals(Arrays.asList(RESOLVER.resolve(Object.class)),
                 params);
     }
 

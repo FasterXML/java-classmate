@@ -74,6 +74,48 @@ public class ResolvedArrayTypeTest {
 
     static class Rec<T> extends Base<Rec<T>[]> { }
 
+    static class Node2 extends Base<Node2[][]> { }
+
+    @SuppressWarnings("rawtypes")
+    static class GNode<T> extends Base<GNode[]> { }
+
+    // Types containing self-references must not be cached, even if nested, since
+    // they would be found by lookups for equal (but fully resolved) types
+    @Test
+    public void typeWithSelfReferenceNotCached() {
+        TypeResolver resolver = new TypeResolver();
+        resolver.resolve(Node.class);
+        ResolvedType base = resolver.resolve(Base.class, Node[].class);
+        ResolvedType elem = base.getTypeParameters().get(0).getArrayElementType();
+
+        assertFalse(TypeResolver.isSelfReference(elem));
+        assertEquals(Base.class, elem.getParentClass().getErasedType());
+    }
+
+    @Test
+    public void multiDimArrayOfSelfReferenceNotCached() {
+        TypeResolver resolver = new TypeResolver();
+        resolver.resolve(Node2.class);
+        ResolvedType direct = resolver.resolve(Node2[][].class);
+        ResolvedType elem = direct.getArrayElementType().getArrayElementType();
+
+        assertFalse(TypeResolver.isSelfReference(elem));
+        assertEquals(Base.class, elem.getParentClass().getErasedType());
+    }
+
+    @Test
+    public void arrayOfRawRecursiveTypeEqualsResolvedArray() {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType viaParent = resolver.resolve(GNode.class).getParentClass()
+                .getTypeParameters().get(0);
+        ResolvedType direct = resolver.resolve(GNode[].class);
+
+        assertTrue(TypeResolver.isSelfReference(viaParent.getArrayElementType()));
+        assertEquals(direct, viaParent);
+        assertEquals(viaParent, direct);
+        assertEquals(direct.hashCode(), viaParent.hashCode());
+    }
+
     // Arrays with self-referential element type must equal ones with fully resolved
     // element type (needed for detecting overrides, f.ex `Node.foo(Node[])` vs `Base.foo(T)`)
     @Test

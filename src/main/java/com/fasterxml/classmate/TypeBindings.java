@@ -3,6 +3,9 @@ package com.fasterxml.classmate;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
 
+import com.fasterxml.classmate.types.ResolvedRecursiveType;
+import com.fasterxml.classmate.types.TypePlaceHolder;
+
 /**
  * Helper class used for storing binding of local type variables to
  * matching resolved types, in context of a single class.
@@ -33,6 +36,14 @@ public final class TypeBindings
     private final String[] _unboundVariables;
     
     private final int _hashCode;
+
+    /**
+     * Whether any of bound types is (or contains) a type only valid within
+     * resolution context: {@link TypePlaceHolder} or {@link ResolvedRecursiveType}.
+     *
+     * @since 1.8
+     */
+    private final boolean _hasContextualTypes;
     
     /*
     /**********************************************************************
@@ -48,11 +59,14 @@ public final class TypeBindings
             throw new IllegalArgumentException("Mismatching names ("+_names.length+"), types ("+_types.length+")");
         }
         int h = 1;
+        boolean contextual = false;
         for (int i = 0, len = _types.length; i < len; ++i) {
             h += _types[i].hashCode();
+            contextual = contextual || isContextual(_types[i]);
         }
         _unboundVariables = uvars;
         _hashCode = h;
+        _hasContextualTypes = contextual;
     }
 
     public static TypeBindings emptyBindings() {
@@ -128,6 +142,41 @@ public final class TypeBindings
             }
         }
         return null;
+    }
+
+    /**
+     * Method for checking whether any of bound types is, or contains (as type
+     * parameter or array element type, at any level of nesting), a type that is only
+     * valid within resolution context ({@link TypePlaceHolder} for sub-type resolution,
+     * {@link ResolvedRecursiveType} for self-references): types with such bindings
+     * should not be cached.
+     *
+     * @since 1.8
+     */
+    public boolean hasContextualTypes() {
+        return _hasContextualTypes;
+    }
+
+    /**
+     * Helper method for checking whether given type is, or contains, a type only
+     * valid within resolution context; see {@link #hasContextualTypes()}.
+     *
+     * @since 1.8
+     */
+    public static boolean isContextual(ResolvedType type)
+    {
+        // Array types have no bindings of their own, need to check element type
+        while ((type != null) && type.isArray()) {
+            type = type.getArrayElementType();
+        }
+        if (type == null) {
+            return false;
+        }
+        if ((type instanceof TypePlaceHolder) || (type instanceof ResolvedRecursiveType)) {
+            return true;
+        }
+        // nested bindings were checked when constructed so no need to recurse
+        return type.getTypeBindings().hasContextualTypes();
     }
 
     public boolean isEmpty() {

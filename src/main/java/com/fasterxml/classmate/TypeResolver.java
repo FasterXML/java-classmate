@@ -171,7 +171,8 @@ public class TypeResolver implements Serializable
      */
     public ResolvedArrayType arrayType(Type elementType)
     {
-        return _arrayOf(resolve(TypeBindings.emptyBindings(), elementType));
+        ResolvedType resolvedElementType = resolve(TypeBindings.emptyBindings(), elementType);
+        return _arrayOf(_arrayClassFor(resolvedElementType), resolvedElementType);
     }
 
     /**
@@ -181,6 +182,13 @@ public class TypeResolver implements Serializable
      * Use of this method is discouraged (use if and only if you really know what you
      * are doing!); but if used, type bindings passed should come from {@link ResolvedType}
      * instance of declaring class (or interface).
+     *<p>
+     * NOTE: bindings are only used for resolving type variables (like {@code T}
+     * or {@code List<T>}); they are NOT applied to {@link java.lang.Class} (raw type)
+     * passed as {@code jdkType} itself: so passing bindings of {@code List<String>} with
+     * {@code List.class} results in {@code List<Object>}. To construct parameterized
+     * types, use {@link #resolve(Type, Type...)} instead.
+     * (behavior changed in 1.8, see [classmate#125])
      *<p>
      * NOTE: order of arguments was reversed for 0.8, to avoid problems with
      * overload varargs method.
@@ -359,7 +367,7 @@ public class TypeResolver implements Serializable
         // [classmate#125]: Arrays have no type parameters of their own, so bindings
         // must not be retained (nor used for element type)
         if (rawType.isArray()) {
-            return _arrayOf(_fromClass(context, rawType.getComponentType(),
+            return _arrayOf(rawType, _fromClass(context, rawType.getComponentType(),
                     TypeBindings.emptyBindings()));
         }
         // Second: recursive reference?
@@ -406,7 +414,8 @@ public class TypeResolver implements Serializable
          * we better resolve the whole thing; then dig out
          * type parameterization...
          */
-        ResolvedType type = _fromClass(context, generic.getClass(), typeBindings);
+        // [classmate#125]: GenericType sub-class does not use bindings of enclosing context
+        ResolvedType type = _fromClass(context, generic.getClass(), TypeBindings.emptyBindings());
         ResolvedType genType = type.findSupertype(GenericType.class);
         if (genType == null) { // sanity check; shouldn't occur
             throw new IllegalArgumentException("Unparameterized GenericType instance ("+generic.getClass().getName()+")");
@@ -510,29 +519,31 @@ public class TypeResolver implements Serializable
     private ResolvedType _fromArrayType(ClassStack context, GenericArrayType arrayType, TypeBindings typeBindings)
     {
         // [classmate#125]: bindings only needed for element type, not retained by array
-        return _arrayOf(_fromAny(context, arrayType.getGenericComponentType(), typeBindings));
+        ResolvedType elementType = _fromAny(context, arrayType.getGenericComponentType(), typeBindings);
+        return _arrayOf(_arrayClassFor(elementType), elementType);
+    }
+
+    private static Class<?> _arrayClassFor(ResolvedType elementType) {
+        // Figuring out raw class for generic array is actually bit tricky...
+        return Array.newInstance(elementType.getErasedType(), 0).getClass();
     }
 
     /**
      * Helper method for constructing (or finding cached) array type with given
      * element type. Arrays are cached using element type as the "type parameter"
      * of the key, so that differently parameterized element types do not collide.
+     * Arrays with element types only valid within resolution context (self-references,
+     * placeholders) are not cached (cache key will be null).
      */
-    private ResolvedArrayType _arrayOf(ResolvedType elementType)
+    private ResolvedArrayType _arrayOf(Class<?> arrayClass, ResolvedType elementType)
     {
-        // Figuring out raw class for generic array is actually bit tricky...
-        Class<?> rawType = Array.newInstance(elementType.getErasedType(), 0).getClass();
-        // Self-references are only valid within resolution context, so arrays of those
-        // must not be cached; nor ones with placeholders (for which key will be null)
-        ResolvedTypeKey key = (elementType instanceof ResolvedRecursiveType) ? null
-                : _resolvedTypes.key(rawType, new ResolvedType[] { elementType });
-        if (key == null) {
-            return new ResolvedArrayType(rawType, TypeBindings.emptyBindings(), elementType);
-        }
-        ResolvedType type = _resolvedTypes.find(key);
+        ResolvedTypeKey key = _resolvedTypes.key(arrayClass, new ResolvedType[] { elementType });
+        ResolvedType type = (key == null) ? null : _resolvedTypes.find(key);
         if (type == null) {
-            type = new ResolvedArrayType(rawType, TypeBindings.emptyBindings(), elementType);
-            _resolvedTypes.put(key, type);
+            type = new ResolvedArrayType(arrayClass, TypeBindings.emptyBindings(), elementType);
+            if (key != null) {
+                _resolvedTypes.put(key, type);
+            }
         }
         return (ResolvedArrayType) type;
     }

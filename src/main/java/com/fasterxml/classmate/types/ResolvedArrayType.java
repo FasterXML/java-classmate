@@ -42,22 +42,35 @@ public final class ResolvedArrayType extends ResolvedType
     }
 
     // Self-reference to element type (like `Node[]` within `Node extends Base<Node[]>`)
-    // must be equal to fully resolved type, so compare erased type and bindings for those.
-    // NOTE: `hashCode()` is consistent since ResolvedRecursiveType does not override it
+    // must be equal to fully resolved type, so compare erased type and bindings for those;
+    // except that raw self-reference (like `GNode[]` within `GNode<T> extends Base<GNode[]>`)
+    // has no bindings, so it only compares erased type.
     private static boolean _elementsEqual(ResolvedType elem1, ResolvedType elem2) {
         if ((elem1 == null) || (elem2 == null)) {
             return (elem1 == elem2);
         }
         if ((elem1 instanceof ResolvedRecursiveType) || (elem2 instanceof ResolvedRecursiveType)) {
-            return (elem1.getErasedType() == elem2.getErasedType())
-                    && elem1.getTypeBindings().equals(elem2.getTypeBindings());
+            if (elem1.getErasedType() != elem2.getErasedType()) {
+                return false;
+            }
+            if (_isRawSelfReference(elem1) || _isRawSelfReference(elem2)) {
+                return true;
+            }
+            return elem1.getTypeBindings().equals(elem2.getTypeBindings());
         }
         return Objects.equals(elem1, elem2);
     }
 
+    private static boolean _isRawSelfReference(ResolvedType type) {
+        return (type instanceof ResolvedRecursiveType) && type.getTypeBindings().isEmpty();
+    }
+
+    // NOTE: element type not included since its erased type is implied by array class,
+    // and (due to self-reference handling in `equals()`) its bindings may differ for
+    // equal arrays
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + Objects.hashCode(_elementType);
+        return super.hashCode();
     }
 
     @Override

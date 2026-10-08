@@ -1,5 +1,6 @@
 package com.fasterxml.classmate.util;
 
+import com.fasterxml.classmate.GenericType;
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.classmate.types.ResolvedInterfaceType;
@@ -84,6 +85,23 @@ public class TestResolvedTypeCache extends TestCase
                 resolver.resolve(String.class), resolver.arrayType(listOfPlaceholder) }));
         assertNotNull(cache.key(List.class, new ResolvedType[] {
                 resolver.resolve(List.class, String.class) }));
+    }
+
+    static class ListGenericType extends GenericType<List<Integer>> { }
+
+    // [classmate#125]: GenericType must not use bindings of enclosing context
+    public void testGenericTypeCachedOnce()
+    {
+        ResolvedTypeCache cache = ResolvedTypeCache.lruCache(200);
+        TypeResolver resolver = new TypeResolver(cache);
+        ResolvedType listOfStrings = resolver.resolve(List.class, String.class);
+        ResolvedType direct = resolver.resolve(new ListGenericType());
+        int size = cache.size();
+        ResolvedType inContext = resolver.resolve(listOfStrings.getTypeBindings(),
+                new ListGenericType());
+
+        assertSame(direct, inContext);
+        assertEquals(size, cache.size());
     }
 
     public void testKeyEquals()
