@@ -6,6 +6,7 @@ import com.fasterxml.classmate.ResolvedTypeWithMembers;
 import com.fasterxml.classmate.TypeBindings;
 import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.classmate.members.ResolvedField;
+import com.fasterxml.classmate.util.ResolvedTypeCache;
 
 import org.junit.Test;
 
@@ -90,6 +91,26 @@ public class ResolvedArrayTypeTest {
         }
     }
 
+    // Array types are cached (keyed by element type), regardless of how constructed
+    @Test
+    public void arrayTypesAreCached() {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType direct = resolver.resolve(String[].class);
+
+        assertSame(direct, resolver.resolve(String[].class));
+        assertSame(direct, resolver.arrayType(String.class));
+        assertSame(direct, _field(resolver, "strings"));
+        assertSame(direct, _field(resolver, "typed"));
+        // and multi-dimensional arrays share element types
+        ResolvedType nested = resolver.resolve(String[][].class);
+        assertSame(nested, resolver.arrayType(String[].class));
+        assertSame(direct, nested.getArrayElementType());
+
+        ResolvedType listStrings = resolver.arrayType(resolver.resolve(List.class, String.class));
+        assertSame(listStrings, resolver.arrayType(resolver.resolve(List.class, String.class)));
+        assertNotSame(listStrings, resolver.arrayType(resolver.resolve(List.class, Integer.class)));
+    }
+
     @Test
     public void rawGenericArrayIgnoresResolutionContext() {
         TypeResolver resolver = new TypeResolver();
@@ -126,6 +147,33 @@ public class ResolvedArrayTypeTest {
         assertNotNull(listType.getTypeBindings().findBoundType("E"));
         ResolvedType collType = listType.findSupertype(Collection.class);
         assertEquals(String.class, collType.getTypeParameters().get(0).getErasedType());
+    }
+
+    static class StringHolder<T> {
+        public String value;
+    }
+
+    // [classmate#125]: non-generic member types must be cached once, not once per
+    // parameterization of the enclosing type
+    @Test
+    public void nonGenericMemberTypeCachedOnce() {
+        ResolvedTypeCache cache = ResolvedTypeCache.lruCache(200);
+        TypeResolver resolver = new TypeResolver(cache);
+        MemberResolver memberResolver = new MemberResolver(resolver);
+        // pre-resolve type parameters so that only the holder types are added below
+        resolver.resolve(Integer.class);
+        resolver.resolve(Long.class);
+
+        ResolvedType intValue = memberResolver.resolve(resolver.resolve(StringHolder.class, Integer.class),
+                null, null).getMemberFields()[0].getType();
+        int size = cache.size();
+        ResolvedType longValue = memberResolver.resolve(resolver.resolve(StringHolder.class, Long.class),
+                null, null).getMemberFields()[0].getType();
+
+        // only `StringHolder<Long>` itself is new
+        assertEquals(size + 1, cache.size());
+        assertSame(intValue, longValue);
+        assertSame(resolver.resolve(String.class), longValue);
     }
 
     @Test

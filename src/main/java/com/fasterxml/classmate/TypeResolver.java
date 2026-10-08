@@ -171,12 +171,7 @@ public class TypeResolver implements Serializable
      */
     public ResolvedArrayType arrayType(Type elementType)
     {
-        ResolvedType resolvedElementType = resolve(TypeBindings.emptyBindings(), elementType);
-        // Arrays are cumbersome for some reason:
-        Object emptyArray = Array.newInstance(resolvedElementType.getErasedType(), 0);
-        // Should we try to use cache? It's bit tricky, so let's not bother yet
-        return new ResolvedArrayType(emptyArray.getClass(), TypeBindings.emptyBindings(),
-                resolvedElementType);
+        return _arrayOf(resolve(TypeBindings.emptyBindings(), elementType));
     }
 
     /**
@@ -361,14 +356,11 @@ public class TypeResolver implements Serializable
         if (type != null) {
             return type;
         }
-        // [classmate#125]: Arrays have no type parameters of their own, so bindings of
-        // enclosing context must not be retained (nor used for element type). Nor are
-        // they cached, since element type may be a self-reference (in which case
-        // array type is only valid within that context); element type itself is cached.
+        // [classmate#125]: Arrays have no type parameters of their own, so bindings
+        // must not be retained (nor used for element type)
         if (rawType.isArray()) {
-            ResolvedType elementType = _fromAny(context, rawType.getComponentType(),
-                    TypeBindings.emptyBindings());
-            return new ResolvedArrayType(rawType, TypeBindings.emptyBindings(), elementType);
+            return _arrayOf(_fromClass(context, rawType.getComponentType(),
+                    TypeBindings.emptyBindings()));
         }
         // Second: recursive reference?
         if (context == null) {
@@ -517,11 +509,32 @@ public class TypeResolver implements Serializable
 
     private ResolvedType _fromArrayType(ClassStack context, GenericArrayType arrayType, TypeBindings typeBindings)
     {
-        ResolvedType elementType = _fromAny(context, arrayType.getGenericComponentType(), typeBindings);
-        // Figuring out raw class for generic array is actually bit tricky...
-        Object emptyArray = Array.newInstance(elementType.getErasedType(), 0);
         // [classmate#125]: bindings only needed for element type, not retained by array
-        return new ResolvedArrayType(emptyArray.getClass(), TypeBindings.emptyBindings(), elementType);
+        return _arrayOf(_fromAny(context, arrayType.getGenericComponentType(), typeBindings));
+    }
+
+    /**
+     * Helper method for constructing (or finding cached) array type with given
+     * element type. Arrays are cached using element type as the "type parameter"
+     * of the key, so that differently parameterized element types do not collide.
+     */
+    private ResolvedArrayType _arrayOf(ResolvedType elementType)
+    {
+        // Figuring out raw class for generic array is actually bit tricky...
+        Class<?> rawType = Array.newInstance(elementType.getErasedType(), 0).getClass();
+        // Self-references and placeholders are only valid within resolution context
+        // (and placeholders are mutable), so arrays of those must not be cached
+        if ((elementType instanceof ResolvedRecursiveType)
+                || (elementType instanceof TypePlaceHolder)) {
+            return new ResolvedArrayType(rawType, TypeBindings.emptyBindings(), elementType);
+        }
+        ResolvedTypeKey key = _resolvedTypes.key(rawType, new ResolvedType[] { elementType });
+        ResolvedType type = _resolvedTypes.find(key);
+        if (type == null) {
+            type = new ResolvedArrayType(rawType, TypeBindings.emptyBindings(), elementType);
+            _resolvedTypes.put(key, type);
+        }
+        return (ResolvedArrayType) type;
     }
 
     private ResolvedType _fromWildcard(ClassStack context, WildcardType wildType, TypeBindings typeBindings)
