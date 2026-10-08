@@ -20,7 +20,6 @@ Release notes:
 - Array types are cached by `TypeResolver` using element type as part of the key
 - Types containing `TypePlaceHolder`s (from `resolveSubtype()`) or self-references
   (`ResolvedRecursiveType`), at any level of nesting, are no longer cached
-- Add `TypeBindings.hasContextualTypes()`, `TypeBindings.isContextual(ResolvedType)`
 
 1.7.3 (02-Jan-2026)
 

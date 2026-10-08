@@ -386,10 +386,12 @@ public class TypeResolver implements Serializable
         }
 
         // If not, already recently resolved?
-        ResolvedType[] typeParameters = typeBindings.typeParameterArray();
-        ResolvedTypeKey key = _resolvedTypes.key(rawType, typeParameters);
         // 25-Oct-2015, tatu: one twist; if any TypePlaceHolders included, key will NOT be created,
         //   which means that caching should not be used (since type is mutable)
+        // [classmate#125]: same for nested placeholders, self-references (only valid
+        //   within resolution context)
+        ResolvedTypeKey key = typeBindings.hasContextualTypes() ? null
+                : _resolvedTypes.key(rawType, typeBindings.typeParameterArray());
         if (key == null) {
             type = _constructType(context, rawType, typeBindings);
         } else {
@@ -537,7 +539,8 @@ public class TypeResolver implements Serializable
      */
     private ResolvedArrayType _arrayOf(Class<?> arrayClass, ResolvedType elementType)
     {
-        ResolvedTypeKey key = _resolvedTypes.key(arrayClass, new ResolvedType[] { elementType });
+        ResolvedTypeKey key = TypeBindings.isContextual(elementType) ? null
+                : _resolvedTypes.key(arrayClass, new ResolvedType[] { elementType });
         ResolvedType type = (key == null) ? null : _resolvedTypes.find(key);
         if (type == null) {
             type = new ResolvedArrayType(arrayClass, TypeBindings.emptyBindings(), elementType);

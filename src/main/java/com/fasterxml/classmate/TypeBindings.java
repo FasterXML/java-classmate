@@ -153,7 +153,7 @@ public final class TypeBindings
      *
      * @since 1.8
      */
-    public boolean hasContextualTypes() {
+    boolean hasContextualTypes() {
         return _hasContextualTypes;
     }
 
@@ -163,7 +163,7 @@ public final class TypeBindings
      *
      * @since 1.8
      */
-    public static boolean isContextual(ResolvedType type)
+    static boolean isContextual(ResolvedType type)
     {
         // Array types have no bindings of their own, need to check element type
         while ((type != null) && type.isArray()) {
