@@ -72,6 +72,42 @@ public class ResolvedArrayTypeTest {
 
     static class Node extends Base<Node[]> { }
 
+    static class Rec<T> extends Base<Rec<T>[]> { }
+
+    // Arrays with self-referential element type must equal ones with fully resolved
+    // element type (needed for detecting overrides, f.ex `Node.foo(Node[])` vs `Base.foo(T)`)
+    @Test
+    public void arrayOfRecursiveTypeEqualsResolvedArray() {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType viaParent = resolver.resolve(Node.class).getParentClass()
+                .getTypeParameters().get(0);
+        ResolvedType direct = resolver.resolve(Node[].class);
+
+        assertTrue(TypeResolver.isSelfReference(viaParent.getArrayElementType()));
+        assertFalse(TypeResolver.isSelfReference(direct.getArrayElementType()));
+        assertEquals(direct, viaParent);
+        assertEquals(viaParent, direct);
+        assertEquals(direct.hashCode(), viaParent.hashCode());
+        assertEquals(resolver.resolve(Node[][].class),
+                resolver.arrayType(viaParent));
+    }
+
+    @Test
+    public void arrayOfGenericRecursiveTypeComparesTypeParameters() {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType viaParent = resolver.resolve(Rec.class, String.class).getParentClass()
+                .getTypeParameters().get(0);
+        ResolvedType strings = resolver.arrayType(resolver.resolve(Rec.class, String.class));
+        ResolvedType integers = resolver.arrayType(resolver.resolve(Rec.class, Integer.class));
+
+        assertTrue(TypeResolver.isSelfReference(viaParent.getArrayElementType()));
+        assertEquals(strings, viaParent);
+        assertEquals(viaParent, strings);
+        assertEquals(strings.hashCode(), viaParent.hashCode());
+        assertFalse(integers.equals(viaParent));
+        assertFalse(viaParent.equals(integers));
+    }
+
     // [classmate#125]: array types must not retain bindings of the context they are resolved in
     @Test
     public void arrayTypesIgnoreResolutionContext() {

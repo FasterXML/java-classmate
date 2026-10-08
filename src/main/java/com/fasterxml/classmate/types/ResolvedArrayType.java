@@ -38,7 +38,21 @@ public final class ResolvedArrayType extends ResolvedType
     @Override
     public boolean equals(Object other) {
         return super.equals(other)
-                && Objects.equals(_elementType, ((ResolvedArrayType) other)._elementType);
+                && _elementsEqual(_elementType, ((ResolvedArrayType) other)._elementType);
+    }
+
+    // Self-reference to element type (like `Node[]` within `Node extends Base<Node[]>`)
+    // must be equal to fully resolved type, so compare erased type and bindings for those.
+    // NOTE: `hashCode()` is consistent since ResolvedRecursiveType does not override it
+    private static boolean _elementsEqual(ResolvedType elem1, ResolvedType elem2) {
+        if ((elem1 == null) || (elem2 == null)) {
+            return (elem1 == elem2);
+        }
+        if ((elem1 instanceof ResolvedRecursiveType) || (elem2 instanceof ResolvedRecursiveType)) {
+            return (elem1.getErasedType() == elem2.getErasedType())
+                    && elem1.getTypeBindings().equals(elem2.getTypeBindings());
+        }
+        return Objects.equals(elem1, elem2);
     }
 
     @Override
