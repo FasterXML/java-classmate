@@ -69,6 +69,16 @@ public final class TypeBindings
         _hasContextualTypes = contextual;
     }
 
+    // Copy-constructor for changing unbound variables only
+    private TypeBindings(TypeBindings base, String[] uvars)
+    {
+        _names = base._names;
+        _types = base._types;
+        _unboundVariables = uvars;
+        _hashCode = base._hashCode;
+        _hasContextualTypes = base._hasContextualTypes;
+    }
+
     public static TypeBindings emptyBindings() {
         return EMPTY;
     }
@@ -122,7 +132,7 @@ public final class TypeBindings
         String[] names =  (len == 0)
                 ? new String[1] : Arrays.copyOf(_unboundVariables, len+1);
         names[len] = name;
-        return new TypeBindings(_names, _types, names);
+        return new TypeBindings(this, names);
     }
 
     /*
@@ -165,18 +175,18 @@ public final class TypeBindings
      */
     static boolean isContextual(ResolvedType type)
     {
-        // Array types have no bindings of their own, need to check element type
-        while ((type != null) && type.isArray()) {
+        while (type != null) {
+            if ((type instanceof TypePlaceHolder) || (type instanceof ResolvedRecursiveType)) {
+                return true;
+            }
+            // Array types have no bindings of their own, need to check element type
+            if (!type.isArray()) {
+                // nested bindings were checked when constructed so no need to recurse
+                return type.getTypeBindings().hasContextualTypes();
+            }
             type = type.getArrayElementType();
         }
-        if (type == null) {
-            return false;
-        }
-        if ((type instanceof TypePlaceHolder) || (type instanceof ResolvedRecursiveType)) {
-            return true;
-        }
-        // nested bindings were checked when constructed so no need to recurse
-        return type.getTypeBindings().hasContextualTypes();
+        return false;
     }
 
     public boolean isEmpty() {

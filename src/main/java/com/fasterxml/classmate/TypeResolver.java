@@ -3,6 +3,7 @@ package com.fasterxml.classmate;
 import java.io.Serializable;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.function.Supplier;
 
 import com.fasterxml.classmate.types.*;
 import com.fasterxml.classmate.util.ClassKey;
@@ -392,16 +393,25 @@ public class TypeResolver implements Serializable
         //   within resolution context)
         ResolvedTypeKey key = typeBindings.hasContextualTypes() ? null
                 : _resolvedTypes.key(rawType, typeBindings.typeParameterArray());
-        if (key == null) {
-            type = _constructType(context, rawType, typeBindings);
-        } else {
-            type = _resolvedTypes.find(key);
-            if (type == null) {
-                type = _constructType(context, rawType, typeBindings);
+        final ClassStack typeContext = context;
+        type = _findOrConstruct(key, () -> _constructType(typeContext, rawType, typeBindings));
+        context.resolveSelfReferences(type);
+        return type;
+    }
+
+    /**
+     * Helper method for finding cached type with given key, if any; or if not,
+     * constructing and caching it. If key is null, type is constructed but not cached.
+     */
+    private ResolvedType _findOrConstruct(ResolvedTypeKey key, Supplier<ResolvedType> constructor)
+    {
+        ResolvedType type = (key == null) ? null : _resolvedTypes.find(key);
+        if (type == null) {
+            type = constructor.get();
+            if (key != null) {
                 _resolvedTypes.put(key, type);
             }
         }
-        context.resolveSelfReferences(type);
         return type;
     }
 
@@ -436,26 +446,20 @@ public class TypeResolver implements Serializable
         // (note: array types handled by `_fromClass()`)
         final TypeVariable<?>[] rawTypeParameters = rawType.getTypeParameters();
         // [classmate#53]: Handle raw generic types - resolve type parameters to their bounds
-        if (typeBindings.isEmpty()) {
-            if (rawTypeParameters.length > 0) {
-                ResolvedType[] types = new ResolvedType[rawTypeParameters.length];
-                for (int i = 0; i < rawTypeParameters.length; ++i) {
-                    // Resolve each type parameter to its bound (similar to _fromVariable)
-                    TypeVariable<?> var = rawTypeParameters[i];
-                    String name = var.getName();
-                    // Avoid self-reference cycles by marking as unbound during resolution
-                    TypeBindings tempBindings = typeBindings.withUnboundVariable(name);
-                    Type[] bounds = var.getBounds();
-                    types[i] = _fromAny(context, bounds[0], tempBindings);
-                }
-                typeBindings = TypeBindings.create(rawType, types);
+        // (note: [classmate#33] work-around for non-empty bindings of non-generic types
+        // no longer needed as of [classmate#125]: such bindings are never passed)
+        if (typeBindings.isEmpty() && (rawTypeParameters.length > 0)) {
+            ResolvedType[] types = new ResolvedType[rawTypeParameters.length];
+            for (int i = 0; i < rawTypeParameters.length; ++i) {
+                // Resolve each type parameter to its bound (similar to _fromVariable)
+                TypeVariable<?> var = rawTypeParameters[i];
+                String name = var.getName();
+                // Avoid self-reference cycles by marking as unbound during resolution
+                TypeBindings tempBindings = typeBindings.withUnboundVariable(name);
+                Type[] bounds = var.getBounds();
+                types[i] = _fromAny(context, bounds[0], tempBindings);
             }
-        } else {
-            // Work-around/fix for [classmate#33]: if the type has no type parameters,
-            // don't include typeBindings in the ResolvedType
-            if (rawTypeParameters.length == 0) {
-                typeBindings = TypeBindings.emptyBindings();
-            }
+            typeBindings = TypeBindings.create(rawType, types);
         }
         // For other types super interfaces are needed...
         if (rawType.isInterface()) {
@@ -541,14 +545,8 @@ public class TypeResolver implements Serializable
     {
         ResolvedTypeKey key = TypeBindings.isContextual(elementType) ? null
                 : _resolvedTypes.key(arrayClass, new ResolvedType[] { elementType });
-        ResolvedType type = (key == null) ? null : _resolvedTypes.find(key);
-        if (type == null) {
-            type = new ResolvedArrayType(arrayClass, TypeBindings.emptyBindings(), elementType);
-            if (key != null) {
-                _resolvedTypes.put(key, type);
-            }
-        }
-        return (ResolvedArrayType) type;
+        return (ResolvedArrayType) _findOrConstruct(key,
+                () -> new ResolvedArrayType(arrayClass, TypeBindings.emptyBindings(), elementType));
     }
 
     private ResolvedType _fromWildcard(ClassStack context, WildcardType wildType, TypeBindings typeBindings)

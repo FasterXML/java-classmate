@@ -9,8 +9,7 @@ Release notes:
  (reported, fix contributed by 박재홍, @PHJ2000)
 - Array types no longer retain type bindings of the enclosing type; equality
   of `ResolvedArrayType` now includes element type (self-referential element
-  types are compared by erased type and type bindings; raw self-references
-  by erased type only)
+  types are compared by erased type and type bindings)
 - Raw types (like raw `Map` field, or raw supertype) no longer retain type bindings
   of the enclosing type: type parameters resolve to their bounds instead
   (f.ex raw `Map` within `Holder<String>` is now `Map<Object,Object>`, not `Map<String>`)
@@ -18,8 +17,10 @@ Release notes:
   to a `Class` passed as `Type` (f.ex bindings of `List<String>` with `List.class`
   now result in `List<Object>`); use `resolve(Type, Type...)` instead
 - Array types are cached by `TypeResolver` using element type as part of the key
-- Types containing `TypePlaceHolder`s (from `resolveSubtype()`) or self-references
-  (`ResolvedRecursiveType`), at any level of nesting, are no longer cached
+- Types with `TypePlaceHolder`s (from `resolveSubtype()`) or self-references
+  (`ResolvedRecursiveType`) in their type parameters (at any level of nesting,
+  including array element types) are no longer cached (but see #128 for
+  self-references via supertypes)
 
 1.7.3 (02-Jan-2026)
 

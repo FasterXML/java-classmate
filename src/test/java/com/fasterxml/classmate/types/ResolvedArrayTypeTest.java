@@ -103,17 +103,25 @@ public class ResolvedArrayTypeTest {
         assertEquals(Base.class, elem.getParentClass().getErasedType());
     }
 
+    // Raw self-reference has no bindings, so it must not be equal to any parameterization
+    // (would break transitivity, and with it Sets/Maps); known limitation: also not equal
+    // to fully resolved raw type (`GNode<Object>[]`)
     @Test
-    public void arrayOfRawRecursiveTypeEqualsResolvedArray() {
+    public void arrayOfRawRecursiveTypeEqualityIsTransitive() {
         TypeResolver resolver = new TypeResolver();
         ResolvedType viaParent = resolver.resolve(GNode.class).getParentClass()
                 .getTypeParameters().get(0);
-        ResolvedType direct = resolver.resolve(GNode[].class);
+        ResolvedType strings = resolver.arrayType(resolver.resolve(GNode.class, String.class));
+        ResolvedType integers = resolver.arrayType(resolver.resolve(GNode.class, Integer.class));
 
         assertTrue(TypeResolver.isSelfReference(viaParent.getArrayElementType()));
-        assertEquals(direct, viaParent);
-        assertEquals(viaParent, direct);
-        assertEquals(direct.hashCode(), viaParent.hashCode());
+        assertFalse(viaParent.equals(strings));
+        assertFalse(viaParent.equals(integers));
+        Set<ResolvedType> types = new HashSet<ResolvedType>();
+        types.add(viaParent);
+        types.add(strings);
+        types.add(integers);
+        assertEquals(3, types.size());
     }
 
     // Arrays with self-referential element type must equal ones with fully resolved
