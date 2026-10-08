@@ -58,7 +58,14 @@ public class ResolvedArrayTypeTest {
         public String[] strings;
         @SuppressWarnings("rawtypes")
         public Map[] rawMaps;
+        @SuppressWarnings("rawtypes")
+        public Map rawMap;
+        @SuppressWarnings("rawtypes")
+        public List rawList;
     }
+
+    @SuppressWarnings({ "rawtypes", "serial" })
+    static class RawSuper<T> extends java.util.HashMap { }
 
     static class Base<T> { }
 
@@ -92,6 +99,43 @@ public class ResolvedArrayTypeTest {
         assertEquals(direct, rawMaps);
         // raw Map resolves to bounds of both type parameters, not to `Map<String>`
         List<ResolvedType> params = rawMaps.getArrayElementType().getTypeParameters();
+        assertEquals(2, params.size());
+        assertEquals(Object.class, params.get(0).getErasedType());
+        assertEquals(Object.class, params.get(1).getErasedType());
+    }
+
+    // [classmate#125]: same for non-array raw types
+    @Test
+    public void rawGenericTypeIgnoresResolutionContext() {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType rawMap = _field(resolver, "rawMap");
+
+        assertEquals(resolver.resolve(Map.class), rawMap);
+        List<ResolvedType> params = rawMap.getTypeParameters();
+        assertEquals(2, params.size());
+        assertEquals(Object.class, params.get(0).getErasedType());
+        assertEquals(Object.class, params.get(1).getErasedType());
+    }
+
+    @Test
+    public void rawGenericTypeDoesNotPoisonCache() {
+        TypeResolver resolver = new TypeResolver();
+        _field(resolver, "rawList");
+        ResolvedType listType = resolver.resolve(List.class, String.class);
+
+        assertNotNull(listType.getTypeBindings().findBoundType("E"));
+        ResolvedType collType = listType.findSupertype(Collection.class);
+        assertEquals(String.class, collType.getTypeParameters().get(0).getErasedType());
+    }
+
+    @Test
+    public void rawSuperClassIgnoresResolutionContext() {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType type = resolver.resolve(RawSuper.class, Integer.class);
+        ResolvedType parent = type.getParentClass();
+
+        assertEquals(java.util.HashMap.class, parent.getErasedType());
+        List<ResolvedType> params = parent.getTypeParameters();
         assertEquals(2, params.size());
         assertEquals(Object.class, params.get(0).getErasedType());
         assertEquals(Object.class, params.get(1).getErasedType());

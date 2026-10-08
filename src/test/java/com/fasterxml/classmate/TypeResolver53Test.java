@@ -12,7 +12,7 @@ public class TypeResolver53Test extends BaseTest
     static abstract class Map53 implements Map { }
 
     @SuppressWarnings("rawtypes")
-    static abstract class BoundedComparable<T extends Number> implements Comparable { }
+    static abstract class BoundedComparable<T extends Number> implements Comparable<T> { }
 
     @SuppressWarnings("rawtypes")
     static abstract class BoundedRaw extends BoundedComparable { }

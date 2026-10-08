@@ -327,7 +327,10 @@ public class TypeResolver implements Serializable
     private ResolvedType _fromAny(ClassStack context, Type mainType, TypeBindings typeBindings)
     {
         if (mainType instanceof Class<?>) {
-            return _fromClass(context, (Class<?>) mainType, typeBindings);
+            // [classmate#125]: a Class here is a raw (or non-generic) type reference;
+            // bindings of the enclosing context are not its own and must not be used
+            // (otherwise raw `Map` within `Holder<String>` would become `Map<String>`)
+            return _fromClass(context, (Class<?>) mainType, TypeBindings.emptyBindings());
         }
         if (mainType instanceof ParameterizedType) {
             return _fromParamType(context, (ParameterizedType) mainType, typeBindings);
