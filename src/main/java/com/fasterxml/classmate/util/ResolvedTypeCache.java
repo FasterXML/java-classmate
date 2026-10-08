@@ -46,12 +46,32 @@ public abstract class ResolvedTypeCache implements Serializable
         }
         // 25-Oct-2015, tatu: Need to prevent caching of anything with TypePlaceHolder;
         //   can cause problems otherwise as those are ephemeral/mutable containers
+        //   ... and that includes ones nested within type parameters or array element types
         for (int i = 0; i < len; ++i) {
-            if (tp[i] instanceof TypePlaceHolder) {
+            if (_hasPlaceHolder(tp[i])) {
                 return null;
             }
         }
         return new ResolvedTypeKey(simpleType, tp);
+    }
+
+    private static boolean _hasPlaceHolder(ResolvedType type)
+    {
+        if (type == null) {
+            return false;
+        }
+        if (type instanceof TypePlaceHolder) {
+            return true;
+        }
+        if (type.isArray()) {
+            return _hasPlaceHolder(type.getArrayElementType());
+        }
+        for (ResolvedType param : type.getTypeParameters()) {
+            if (_hasPlaceHolder(param)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public abstract ResolvedType find(ResolvedTypeKey key);

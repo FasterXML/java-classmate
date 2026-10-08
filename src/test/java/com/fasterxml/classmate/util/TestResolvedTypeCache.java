@@ -1,8 +1,10 @@
 package com.fasterxml.classmate.util;
 
 import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.classmate.types.ResolvedInterfaceType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
+import com.fasterxml.classmate.types.TypePlaceHolder;
 
 import junit.framework.TestCase;
 
@@ -68,6 +70,22 @@ public class TestResolvedTypeCache extends TestCase
         }
     }
     
+    // Types with TypePlaceHolders must not be cached, even if nested
+    public void testNoKeyForPlaceHolders()
+    {
+        ResolvedTypeCache cache = ResolvedTypeCache.lruCache(10);
+        TypeResolver resolver = new TypeResolver(cache);
+        TypePlaceHolder placeholder = new TypePlaceHolder(0);
+        ResolvedType listOfPlaceholder = resolver.resolve(List.class, placeholder);
+
+        assertNull(cache.key(List.class, new ResolvedType[] { placeholder }));
+        assertNull(cache.key(List.class, new ResolvedType[] { listOfPlaceholder }));
+        assertNull(cache.key(Map.class, new ResolvedType[] {
+                resolver.resolve(String.class), resolver.arrayType(listOfPlaceholder) }));
+        assertNotNull(cache.key(List.class, new ResolvedType[] {
+                resolver.resolve(List.class, String.class) }));
+    }
+
     public void testKeyEquals()
     {
         try {

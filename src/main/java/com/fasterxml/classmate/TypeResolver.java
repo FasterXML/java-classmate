@@ -522,13 +522,13 @@ public class TypeResolver implements Serializable
     {
         // Figuring out raw class for generic array is actually bit tricky...
         Class<?> rawType = Array.newInstance(elementType.getErasedType(), 0).getClass();
-        // Self-references and placeholders are only valid within resolution context
-        // (and placeholders are mutable), so arrays of those must not be cached
-        if ((elementType instanceof ResolvedRecursiveType)
-                || (elementType instanceof TypePlaceHolder)) {
+        // Self-references are only valid within resolution context, so arrays of those
+        // must not be cached; nor ones with placeholders (for which key will be null)
+        ResolvedTypeKey key = (elementType instanceof ResolvedRecursiveType) ? null
+                : _resolvedTypes.key(rawType, new ResolvedType[] { elementType });
+        if (key == null) {
             return new ResolvedArrayType(rawType, TypeBindings.emptyBindings(), elementType);
         }
-        ResolvedTypeKey key = _resolvedTypes.key(rawType, new ResolvedType[] { elementType });
         ResolvedType type = _resolvedTypes.find(key);
         if (type == null) {
             type = new ResolvedArrayType(rawType, TypeBindings.emptyBindings(), elementType);
