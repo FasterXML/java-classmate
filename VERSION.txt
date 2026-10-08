@@ -3,6 +3,25 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
+1.8.0 (not yet released)
+
+#125: Generic array types compare equal and collide in the resolver cache
+ (reported, fix contributed by 박재홍, @PHJ2000)
+- Array types no longer retain type bindings of the enclosing type; equality
+  of `ResolvedArrayType` now includes element type (self-referential element
+  types are compared by erased type and type bindings)
+- Raw types (like raw `Map` field, or raw supertype) no longer retain type bindings
+  of the enclosing type: type parameters resolve to their bounds instead
+  (f.ex raw `Map` within `Holder<String>` is now `Map<Object,Object>`, not `Map<String>`)
+- `TypeResolver.resolve(TypeBindings, Type)` no longer applies given bindings
+  to a `Class` passed as `Type` (f.ex bindings of `List<String>` with `List.class`
+  now result in `List<Object>`); use `resolve(Type, Type...)` instead
+- Array types are cached by `TypeResolver` using element type as part of the key
+- Types with `TypePlaceHolder`s (from `resolveSubtype()`) or self-references
+  (`ResolvedRecursiveType`) in their type parameters (at any level of nesting,
+  including array element types) are no longer cached (but see #128 for
+  self-references via supertypes)
+
 1.7.3 (02-Jan-2026)
 
 #117: Regression in 1.7.2 (wrt #53) causes `StackOverflowError` for some recursive types

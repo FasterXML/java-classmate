@@ -3,6 +3,7 @@ package com.fasterxml.classmate;
 import java.io.Serializable;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.function.Supplier;
 
 import com.fasterxml.classmate.types.*;
 import com.fasterxml.classmate.util.ClassKey;
@@ -172,11 +173,7 @@ public class TypeResolver implements Serializable
     public ResolvedArrayType arrayType(Type elementType)
     {
         ResolvedType resolvedElementType = resolve(TypeBindings.emptyBindings(), elementType);
-        // Arrays are cumbersome for some reason:
-        Object emptyArray = Array.newInstance(resolvedElementType.getErasedType(), 0);
-        // Should we try to use cache? It's bit tricky, so let's not bother yet
-        return new ResolvedArrayType(emptyArray.getClass(), TypeBindings.emptyBindings(),
-                resolvedElementType);
+        return _arrayOf(_arrayClassFor(resolvedElementType), resolvedElementType);
     }
 
     /**
@@ -186,6 +183,13 @@ public class TypeResolver implements Serializable
      * Use of this method is discouraged (use if and only if you really know what you
      * are doing!); but if used, type bindings passed should come from {@link ResolvedType}
      * instance of declaring class (or interface).
+     *<p>
+     * NOTE: bindings are only used for resolving type variables (like {@code T}
+     * or {@code List<T>}); they are NOT applied to {@link java.lang.Class} (raw type)
+     * passed as {@code jdkType} itself: so passing bindings of {@code List<String>} with
+     * {@code List.class} results in {@code List<Object>}. To construct parameterized
+     * types, use {@link #resolve(Type, Type...)} instead.
+     * (behavior changed in 1.8, see [classmate#125])
      *<p>
      * NOTE: order of arguments was reversed for 0.8, to avoid problems with
      * overload varargs method.
@@ -327,7 +331,10 @@ public class TypeResolver implements Serializable
     private ResolvedType _fromAny(ClassStack context, Type mainType, TypeBindings typeBindings)
     {
         if (mainType instanceof Class<?>) {
-            return _fromClass(context, (Class<?>) mainType, typeBindings);
+            // [classmate#125]: a Class here is a raw (or non-generic) type reference;
+            // bindings of the enclosing context are not its own and must not be used
+            // (otherwise raw `Map` within `Holder<String>` would become `Map<String>`)
+            return _fromClass(context, (Class<?>) mainType, TypeBindings.emptyBindings());
         }
         if (mainType instanceof ParameterizedType) {
             return _fromParamType(context, (ParameterizedType) mainType, typeBindings);
@@ -358,6 +365,12 @@ public class TypeResolver implements Serializable
         if (type != null) {
             return type;
         }
+        // [classmate#125]: Arrays have no type parameters of their own, so bindings
+        // must not be retained (nor used for element type)
+        if (rawType.isArray()) {
+            return _arrayOf(rawType, _fromClass(context, rawType.getComponentType(),
+                    TypeBindings.emptyBindings()));
+        }
         // Second: recursive reference?
         if (context == null) {
             context = new ClassStack(rawType);
@@ -374,20 +387,31 @@ public class TypeResolver implements Serializable
         }
 
         // If not, already recently resolved?
-        ResolvedType[] typeParameters = typeBindings.typeParameterArray();
-        ResolvedTypeKey key = _resolvedTypes.key(rawType, typeParameters);
         // 25-Oct-2015, tatu: one twist; if any TypePlaceHolders included, key will NOT be created,
         //   which means that caching should not be used (since type is mutable)
-        if (key == null) {
-            type = _constructType(context, rawType, typeBindings);
-        } else {
-            type = _resolvedTypes.find(key);
-            if (type == null) {
-                type = _constructType(context, rawType, typeBindings);
+        // [classmate#125]: same for nested placeholders, self-references (only valid
+        //   within resolution context)
+        ResolvedTypeKey key = typeBindings.hasContextualTypes() ? null
+                : _resolvedTypes.key(rawType, typeBindings.typeParameterArray());
+        final ClassStack typeContext = context;
+        type = _findOrConstruct(key, () -> _constructType(typeContext, rawType, typeBindings));
+        context.resolveSelfReferences(type);
+        return type;
+    }
+
+    /**
+     * Helper method for finding cached type with given key, if any; or if not,
+     * constructing and caching it. If key is null, type is constructed but not cached.
+     */
+    private ResolvedType _findOrConstruct(ResolvedTypeKey key, Supplier<ResolvedType> constructor)
+    {
+        ResolvedType type = (key == null) ? null : _resolvedTypes.find(key);
+        if (type == null) {
+            type = constructor.get();
+            if (key != null) {
                 _resolvedTypes.put(key, type);
             }
         }
-        context.resolveSelfReferences(type);
         return type;
     }
 
@@ -402,7 +426,8 @@ public class TypeResolver implements Serializable
          * we better resolve the whole thing; then dig out
          * type parameterization...
          */
-        ResolvedType type = _fromClass(context, generic.getClass(), typeBindings);
+        // [classmate#125]: GenericType sub-class does not use bindings of enclosing context
+        ResolvedType type = _fromClass(context, generic.getClass(), TypeBindings.emptyBindings());
         ResolvedType genType = type.findSupertype(GenericType.class);
         if (genType == null) { // sanity check; shouldn't occur
             throw new IllegalArgumentException("Unparameterized GenericType instance ("+generic.getClass().getName()+")");
@@ -418,32 +443,23 @@ public class TypeResolver implements Serializable
     private ResolvedType _constructType(ClassStack context, Class<?> rawType, TypeBindings typeBindings)
     {
         // Ok: no easy shortcut, let's figure out type of type...
-        if (rawType.isArray()) {
-            ResolvedType elementType = _fromAny(context, rawType.getComponentType(), typeBindings);
-            return new ResolvedArrayType(rawType, typeBindings, elementType);
-        }
+        // (note: array types handled by `_fromClass()`)
         final TypeVariable<?>[] rawTypeParameters = rawType.getTypeParameters();
         // [classmate#53]: Handle raw generic types - resolve type parameters to their bounds
-        if (typeBindings.isEmpty()) {
-            if (rawTypeParameters.length > 0) {
-                ResolvedType[] types = new ResolvedType[rawTypeParameters.length];
-                for (int i = 0; i < rawTypeParameters.length; ++i) {
-                    // Resolve each type parameter to its bound (similar to _fromVariable)
-                    TypeVariable<?> var = rawTypeParameters[i];
-                    String name = var.getName();
-                    // Avoid self-reference cycles by marking as unbound during resolution
-                    TypeBindings tempBindings = typeBindings.withUnboundVariable(name);
-                    Type[] bounds = var.getBounds();
-                    types[i] = _fromAny(context, bounds[0], tempBindings);
-                }
-                typeBindings = TypeBindings.create(rawType, types);
+        // (note: [classmate#33] work-around for non-empty bindings of non-generic types
+        // no longer needed as of [classmate#125]: such bindings are never passed)
+        if (typeBindings.isEmpty() && (rawTypeParameters.length > 0)) {
+            ResolvedType[] types = new ResolvedType[rawTypeParameters.length];
+            for (int i = 0; i < rawTypeParameters.length; ++i) {
+                // Resolve each type parameter to its bound (similar to _fromVariable)
+                TypeVariable<?> var = rawTypeParameters[i];
+                String name = var.getName();
+                // Avoid self-reference cycles by marking as unbound during resolution
+                TypeBindings tempBindings = typeBindings.withUnboundVariable(name);
+                Type[] bounds = var.getBounds();
+                types[i] = _fromAny(context, bounds[0], tempBindings);
             }
-        } else {
-            // Work-around/fix for [classmate#33]: if the type has no type parameters,
-            // don't include typeBindings in the ResolvedType
-            if (rawTypeParameters.length == 0) {
-                typeBindings = TypeBindings.emptyBindings();
-            }
+            typeBindings = TypeBindings.create(rawType, types);
         }
         // For other types super interfaces are needed...
         if (rawType.isInterface()) {
@@ -508,10 +524,29 @@ public class TypeResolver implements Serializable
 
     private ResolvedType _fromArrayType(ClassStack context, GenericArrayType arrayType, TypeBindings typeBindings)
     {
+        // [classmate#125]: bindings only needed for element type, not retained by array
         ResolvedType elementType = _fromAny(context, arrayType.getGenericComponentType(), typeBindings);
+        return _arrayOf(_arrayClassFor(elementType), elementType);
+    }
+
+    private static Class<?> _arrayClassFor(ResolvedType elementType) {
         // Figuring out raw class for generic array is actually bit tricky...
-        Object emptyArray = Array.newInstance(elementType.getErasedType(), 0);
-        return new ResolvedArrayType(emptyArray.getClass(), typeBindings, elementType);
+        return Array.newInstance(elementType.getErasedType(), 0).getClass();
+    }
+
+    /**
+     * Helper method for constructing (or finding cached) array type with given
+     * element type. Arrays are cached using element type as the "type parameter"
+     * of the key, so that differently parameterized element types do not collide.
+     * Arrays with element types only valid within resolution context (self-references,
+     * placeholders) are not cached (cache key will be null).
+     */
+    private ResolvedArrayType _arrayOf(Class<?> arrayClass, ResolvedType elementType)
+    {
+        ResolvedTypeKey key = TypeBindings.isContextual(elementType) ? null
+                : _resolvedTypes.key(arrayClass, new ResolvedType[] { elementType });
+        return (ResolvedArrayType) _findOrConstruct(key,
+                () -> new ResolvedArrayType(arrayClass, TypeBindings.emptyBindings(), elementType));
     }
 
     private ResolvedType _fromWildcard(ClassStack context, WildcardType wildType, TypeBindings typeBindings)

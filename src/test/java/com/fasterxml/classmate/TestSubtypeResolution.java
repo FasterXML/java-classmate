@@ -1,5 +1,7 @@
 package com.fasterxml.classmate;
 
+import com.fasterxml.classmate.util.ResolvedTypeCache;
+
 import java.util.*;
 
 /**
@@ -55,6 +57,23 @@ public class TestSubtypeResolution extends BaseTest
     /* Unit tests, success, simple
     /**********************************************************************
      */
+
+    // Types with nested placeholders (like `Wrapper<List<P0>>`) are not to be cached
+    public void testSubtypeWithNestedPlaceholderNotCached()
+    {
+        ResolvedTypeCache cache = ResolvedTypeCache.lruCache(200);
+        TypeResolver resolver = new TypeResolver(cache);
+        ResolvedType supertype = resolver.resolve(Wrapper.class,
+                resolver.resolve(List.class, String.class));
+        ResolvedType subtype = resolver.resolveSubtype(supertype, ListWrapper.class);
+        assertEquals(supertype, subtype.getParentClass());
+        int size = cache.size();
+
+        for (int i = 0; i < 3; ++i) {
+            resolver.resolveSubtype(supertype, ListWrapper.class);
+        }
+        assertEquals(size, cache.size());
+    }
 
     /**
      * Test to ensure a properly parameterized {@link List} can be be made

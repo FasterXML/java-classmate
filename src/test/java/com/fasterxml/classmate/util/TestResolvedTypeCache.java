@@ -1,8 +1,11 @@
 package com.fasterxml.classmate.util;
 
+import com.fasterxml.classmate.GenericType;
 import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.classmate.types.ResolvedInterfaceType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
+import com.fasterxml.classmate.types.TypePlaceHolder;
 
 import junit.framework.TestCase;
 
@@ -68,6 +71,45 @@ public class TestResolvedTypeCache extends TestCase
         }
     }
     
+    // Types with TypePlaceHolders must not be cached, even if nested
+    public void testNoCachingForPlaceHolders()
+    {
+        ResolvedTypeCache cache = ResolvedTypeCache.lruCache(200);
+        TypeResolver resolver = new TypeResolver(cache);
+        TypePlaceHolder placeholder = new TypePlaceHolder(0);
+        ResolvedType string = resolver.resolve(String.class);
+        ResolvedType listOfPlaceholder = resolver.resolve(List.class, placeholder);
+        int size = cache.size();
+
+        ResolvedType nested = resolver.resolve(List.class, listOfPlaceholder);
+        resolver.resolve(Map.class, string, resolver.arrayType(listOfPlaceholder));
+        assertEquals(size, cache.size());
+        assertNotSame(nested, resolver.resolve(List.class, listOfPlaceholder));
+
+        // but without placeholders, caching is used
+        ResolvedType listOfStrings = resolver.resolve(List.class, string);
+        ResolvedType listOfLists = resolver.resolve(List.class, listOfStrings);
+        assertTrue(cache.size() > size);
+        assertSame(listOfLists, resolver.resolve(List.class, listOfStrings));
+    }
+
+    static class ListGenericType extends GenericType<List<Integer>> { }
+
+    // [classmate#125]: GenericType must not use bindings of enclosing context
+    public void testGenericTypeCachedOnce()
+    {
+        ResolvedTypeCache cache = ResolvedTypeCache.lruCache(200);
+        TypeResolver resolver = new TypeResolver(cache);
+        ResolvedType listOfStrings = resolver.resolve(List.class, String.class);
+        ResolvedType direct = resolver.resolve(new ListGenericType());
+        int size = cache.size();
+        ResolvedType inContext = resolver.resolve(listOfStrings.getTypeBindings(),
+                new ListGenericType());
+
+        assertSame(direct, inContext);
+        assertEquals(size, cache.size());
+    }
+
     public void testKeyEquals()
     {
         try {
