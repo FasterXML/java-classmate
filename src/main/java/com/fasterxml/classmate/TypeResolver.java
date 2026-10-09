@@ -121,6 +121,9 @@ public class TypeResolver implements Serializable
      * Note that you can mix different types of type parameters, whether already
      * resolved ({@link ResolvedType}), type-erased ({@link java.lang.Class}) or
      * generic type reference ({@link GenericType}).
+     *
+     * @throws IllegalArgumentException If any of type parameters is a primitive type
+     *   (since 1.8)
      */
     public ResolvedType resolve(Type type, Type... typeParameters)
     {
@@ -163,6 +166,12 @@ public class TypeResolver implements Serializable
         ResolvedType[] resolvedParams = new ResolvedType[len];
         for (int i = 0; i < len; ++i) {
             resolvedParams[i] = _fromAny(null, typeParameters[i], bindings);
+            // [classmate#127]: primitive types are not valid type parameters
+            if (resolvedParams[i].isPrimitive()) {
+                throw new IllegalArgumentException("Can not use primitive type ("
+                        +resolvedParams[i].getBriefDescription()+") as type parameter #"
+                        +(i+1)+"/"+len+" of "+rawBase.getName());
+            }
         }
         return _fromClass(null, rawBase, TypeBindings.create(rawBase, resolvedParams));
     }
@@ -235,10 +244,10 @@ public class TypeResolver implements Serializable
     public ResolvedType resolveSubtype(ResolvedType supertype, final Class<?> subtype)
         throws IllegalArgumentException, UnsupportedOperationException
     {
-        // first: if it's a recursive reference, find out referred-to type
-        ResolvedType refType = supertype.getSelfReferencedType();
-        if (refType != null) {
-            supertype = refType;
+        // first: if it's a recursive reference, resolve as stand-alone type
+        // ([classmate#127]: not as referred-to type, which may have different bindings)
+        if (supertype instanceof ResolvedRecursiveType) {
+            supertype = _resolveSelfReferences(supertype);
         }
         // Then, trivial check for case where subtype is supertype...
         final Class<?> superclass = supertype.getErasedType();
@@ -614,10 +623,14 @@ public class TypeResolver implements Serializable
 
     private boolean _verifyAndResolve(ResolvedType exp, ResolvedType act)
     {
-        // [classmate#127]: Self-reference in expected type is only valid within its
-        // original resolution context, so need to re-resolve it as a stand-alone type
+        // [classmate#127]: Self-references are only valid within their original
+        // resolution context, so need to re-resolve as stand-alone types (which also
+        // resolves type parameters of raw self-references to their bounds)
         if (exp instanceof ResolvedRecursiveType) {
-            exp = _fromClass(null, exp.getErasedType(), exp.getTypeBindings());
+            exp = _resolveSelfReferences(exp);
+        }
+        if (act instanceof ResolvedRecursiveType) {
+            act = _resolveSelfReferences(act);
         }
         // See if we have an actual type placeholder to resolve; if yes, replace
         if (act instanceof TypePlaceHolder) {
@@ -625,6 +638,8 @@ public class TypeResolver implements Serializable
             if (exp.isPrimitive()) {
                 return false;
             }
+            // [classmate#127]: self-references nested within type to bind must not leak either
+            exp = _resolveSelfReferences(exp);
             TypePlaceHolder placeholder = (TypePlaceHolder) act;
             // [classmate#127]: and if already bound, must be bound to the same type
             ResolvedType prev = placeholder.actualType();
@@ -653,9 +668,7 @@ public class TypeResolver implements Serializable
         List<ResolvedType> actualTypes = act.getTypeParameters();
         final int len = expectedTypes.size();
         if (len != actualTypes.size()) {
-            // [classmate#127]: raw self-reference (like `Base` within `class Base<T> extends Wrapper<Base>`)
-            // has no type parameters; can not verify those, but there are no placeholders to resolve either
-            return (act instanceof ResolvedRecursiveType) && actualTypes.isEmpty();
+            return false;
         }
         for (int i = 0; i < len; ++i) {
             if (!_verifyAndResolve(expectedTypes.get(i), actualTypes.get(i))) {
@@ -663,5 +676,46 @@ public class TypeResolver implements Serializable
             }
         }
         return true;
+    }
+
+    /**
+     * Helper method for replacing all self-references ({@link ResolvedRecursiveType}s)
+     * within given type (including type itself, type parameters and array element types,
+     * at any level of nesting) with stand-alone resolved types.
+     *
+     * @return Type with self-references replaced; given type itself if it contains none
+     *
+     * @since 1.8
+     */
+    private ResolvedType _resolveSelfReferences(ResolvedType type)
+    {
+        if (type.isArray()) {
+            ResolvedType elem = type.getArrayElementType();
+            ResolvedType newElem = (elem == null) ? null : _resolveSelfReferences(elem);
+            if (newElem == elem) {
+                return type;
+            }
+            return _arrayOf(_arrayClassFor(newElem), newElem);
+        }
+        final TypeBindings bindings = type.getTypeBindings();
+        ResolvedType[] newTypes = null;
+        for (int i = 0, len = bindings.size(); i < len; ++i) {
+            ResolvedType t = bindings.getBoundType(i);
+            ResolvedType newT = _resolveSelfReferences(t);
+            if (newT != t) {
+                if (newTypes == null) {
+                    newTypes = bindings.getTypeParameters().toArray(new ResolvedType[0]);
+                }
+                newTypes[i] = newT;
+            }
+        }
+        if (newTypes != null) {
+            return _fromClass(null, type.getErasedType(),
+                    TypeBindings.create(type.getErasedType(), newTypes));
+        }
+        if (type instanceof ResolvedRecursiveType) {
+            return _fromClass(null, type.getErasedType(), bindings);
+        }
+        return type;
     }
 }

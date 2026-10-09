@@ -54,6 +54,18 @@ public class TestSubtypeResolution extends BaseTest
 
     static class RawSelfSub extends RawSelf<String> { }
 
+    static class RawSelfOther extends Wrapper<RawSelf> { }
+
+    static class SubWrapper<E> extends Wrapper<E> { }
+
+    static class SelfInList extends Wrapper<List<SelfInList>> { }
+
+    static class SamePair<E> extends Pair<E, E> { }
+
+    static class SelfParam<T> extends Wrapper<SelfParam<String>> { }
+
+    static class SelfParamSub<X> extends SelfParam<X> { }
+
     abstract static class OuterType<K, V> extends AbstractMap<K, Collection<V>>
     {
         public abstract class Inner extends AbstractMap<K, Collection<V>> {
@@ -166,6 +178,52 @@ public class TestSubtypeResolution extends BaseTest
         assertSame(RawSelfArray.class, param.getErasedType());
         assertNotNull(param.getParentClass());
         assertSame(Wrapper.class, param.getParentClass().getErasedType());
+    }
+
+    // [classmate#127]: self-references nested within bound type must not leak into subtype
+    public void testSubtypeWithNestedSelfReferenceInSupertype()
+    {
+        ResolvedType supertype = typeResolver.resolve(RawSelfArray.class).getParentClass();
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, SubWrapper.class);
+        ResolvedType param = subtype.getTypeParameters().get(0);
+        assertTrue(param.isArray());
+        _verifyNoSelfReference(param.getArrayElementType(), RawSelfArray.class);
+
+        supertype = typeResolver.resolve(SelfInList.class).getParentClass();
+        subtype = typeResolver.resolveSubtype(supertype, SubWrapper.class);
+        param = subtype.getTypeParameters().get(0);
+        assertSame(List.class, param.getErasedType());
+        _verifyNoSelfReference(param.getTypeParameters().get(0), SelfInList.class);
+    }
+
+    // [classmate#127]: same type with and without self-reference must bind consistently
+    public void testSubtypeWithSelfReferenceAndRepeatedTypeVariable()
+    {
+        ResolvedType withSelfRef = typeResolver.resolve(SelfInList.class).getParentClass()
+                .getTypeParameters().get(0);
+        ResolvedType withoutSelfRef = typeResolver.resolve(List.class, SelfInList.class);
+        ResolvedType supertype = typeResolver.resolve(Pair.class, withSelfRef, withoutSelfRef);
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, SamePair.class);
+        assertEquals(withoutSelfRef, subtype.getTypeParameters().get(0));
+    }
+
+    // [classmate#127]: self-reference as supertype is resolved using its own bindings
+    public void testSubtypeOfSelfReference()
+    {
+        ResolvedType supertype = typeResolver.resolve(SelfParam.class, Integer.class)
+                .getParentClass().getTypeParameters().get(0);
+        assertTrue(supertype instanceof com.fasterxml.classmate.types.ResolvedRecursiveType);
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, SelfParamSub.class);
+        assertSame(SelfParamSub.class, subtype.getErasedType());
+        assertSame(String.class, subtype.getTypeParameters().get(0).getErasedType());
+    }
+
+    private void _verifyNoSelfReference(ResolvedType type, Class<?> expRaw)
+    {
+        assertFalse(type instanceof com.fasterxml.classmate.types.ResolvedRecursiveType);
+        assertSame(expRaw, type.getErasedType());
+        assertNotNull(type.getParentClass());
+        assertSame(Wrapper.class, type.getParentClass().getErasedType());
     }
 
     /**
@@ -458,5 +516,14 @@ public class TestSubtypeResolution extends BaseTest
         } catch (IllegalArgumentException e) {
             verifyException(e, "differs");
         }
+    }
+
+    // [classmate#127]: raw self-reference resolves to bounds, same as other raw types
+    public void testRawSelfReferenceVerifiedAsRaw()
+    {
+        ResolvedType supertype = typeResolver.resolve(Wrapper.class,
+                typeResolver.resolve(RawSelf.class, String.class));
+        _verifyIncompatible(supertype, RawSelfSub.class);
+        _verifyIncompatible(supertype, RawSelfOther.class);
     }
 }

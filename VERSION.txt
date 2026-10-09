@@ -22,6 +22,13 @@ Release notes:
   including array element types) are no longer cached (but see #128 for
   self-references via supertypes)
 #127: `resolveSubtype()` does not verify or resolve array element types
+- `resolveSubtype()` now rejects type variable bound to conflicting types
+  (like `E` in `Dup<E> extends Pair<E[], E>`) and primitive types bound to
+  type variables (like `int` for `E` in `E[]`)
+- Self-references (`ResolvedRecursiveType`) are no longer included in subtypes
+  resolved by `resolveSubtype()`; raw self-references resolve to their bounds
+- `TypeResolver.resolve(Type, Type...)` now fails with `IllegalArgumentException`
+  if any of type parameters is a primitive type (like `resolve(List.class, int.class)`)
  (fix by @cowtowncoder w/ Claude code)
 
 1.7.3 (02-Jan-2026)
