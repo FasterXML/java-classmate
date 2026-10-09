@@ -31,6 +31,13 @@ public class TestSubtypeResolution extends BaseTest
 
     static class ListWrapper<E> extends Wrapper<List<E>> { }
 
+    // [classmate#127]
+    static class ArrayWrapper<E> extends Wrapper<E[]> { }
+
+    static class IntListArrayWrapper extends Wrapper<List<Integer>[]> { }
+
+    static class IntArrayWrapper extends Wrapper<int[]> { }
+
     abstract static class OuterType<K, V> extends AbstractMap<K, Collection<V>>
     {
         public abstract class Inner extends AbstractMap<K, Collection<V>> {
@@ -73,6 +80,40 @@ public class TestSubtypeResolution extends BaseTest
             resolver.resolveSubtype(supertype, ListWrapper.class);
         }
         assertEquals(size, cache.size());
+    }
+
+    // [classmate#127]: type variables within array types must be resolved
+    public void testSubtypeWithArrayOfTypeVariable()
+    {
+        ResolvedType supertype = typeResolver.resolve(Wrapper.class, String[].class);
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, ArrayWrapper.class);
+        assertSame(ArrayWrapper.class, subtype.getErasedType());
+        List<ResolvedType> params = subtype.getTypeParameters();
+        assertEquals(1, params.size());
+        assertSame(String.class, params.get(0).getErasedType());
+
+        // and same with generic element type
+        supertype = typeResolver.resolve(Wrapper.class,
+                typeResolver.arrayType(typeResolver.resolve(List.class, Long.class)));
+        subtype = typeResolver.resolveSubtype(supertype, ArrayWrapper.class);
+        params = subtype.getTypeParameters();
+        assertEquals(1, params.size());
+        assertSame(List.class, params.get(0).getErasedType());
+        assertSame(Long.class, params.get(0).getTypeParameters().get(0).getErasedType());
+    }
+
+    // [classmate#127]: matching generic array element types are accepted
+    public void testSubtypeWithMatchingGenericArray()
+    {
+        ResolvedType supertype = typeResolver.resolve(Wrapper.class,
+                typeResolver.arrayType(typeResolver.resolve(List.class, Integer.class)));
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, IntListArrayWrapper.class);
+        assertSame(IntListArrayWrapper.class, subtype.getErasedType());
+        assertEquals(supertype, subtype.getParentClass());
+
+        supertype = typeResolver.resolve(Wrapper.class, int[].class);
+        subtype = typeResolver.resolveSubtype(supertype, IntArrayWrapper.class);
+        assertEquals(supertype, subtype.getParentClass());
     }
 
     /**
@@ -306,6 +347,38 @@ public class TestSubtypeResolution extends BaseTest
             fail("Expected failure, got: "+t);
         } catch (IllegalArgumentException e) {
             verifyException(e, "Type parameter #2/2 differs; expected java.lang.Integer");
+        }
+    }
+
+    // [classmate#127]: array element types must be verified
+    public void testIncompatibleGenericArrayElementType()
+    {
+        ResolvedType supertype = typeResolver.resolve(Wrapper.class,
+                typeResolver.arrayType(typeResolver.resolve(List.class, String.class)));
+        try {
+            ResolvedType t = typeResolver.resolveSubtype(supertype, IntListArrayWrapper.class);
+            fail("Expected failure, got: "+t);
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "Type parameter #1/1 differs");
+        }
+    }
+
+    public void testIncompatibleArrayElementType()
+    {
+        ResolvedType supertype = typeResolver.resolve(Wrapper.class, long[].class);
+        try {
+            ResolvedType t = typeResolver.resolveSubtype(supertype, IntArrayWrapper.class);
+            fail("Expected failure, got: "+t);
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "Type parameter #1/1 differs");
+        }
+
+        supertype = typeResolver.resolve(Wrapper.class, String.class);
+        try {
+            ResolvedType t = typeResolver.resolveSubtype(supertype, ArrayWrapper.class);
+            fail("Expected failure, got: "+t);
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "Type parameter #1/1 differs");
         }
     }
 }

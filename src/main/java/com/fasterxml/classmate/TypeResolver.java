@@ -619,6 +619,15 @@ public class TypeResolver implements Serializable
             ((TypePlaceHolder) act).actualType(exp);
             return true;
         }
+        // [classmate#127]: Array types have no type parameters, so need to verify
+        // (and resolve) element types instead. Must be done before erased type check
+        // since array of placeholder has erased type of `Object[]`
+        if (exp.isArray() || act.isArray()) {
+            if (!exp.isArray() || !act.isArray()) {
+                return false;
+            }
+            return _verifyAndResolve(exp.getArrayElementType(), act.getArrayElementType());
+        }
         // if not, try to verify compatibility. But note that we can not
         // use simple equality as we need to resolve recursively
         if (exp.getErasedType() != act.getErasedType()) {

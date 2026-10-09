@@ -21,6 +21,7 @@ Release notes:
   (`ResolvedRecursiveType`) in their type parameters (at any level of nesting,
   including array element types) are no longer cached (but see #128 for
   self-references via supertypes)
+#127: `resolveSubtype()` does not verify or resolve array element types
 
 1.7.3 (02-Jan-2026)
 
