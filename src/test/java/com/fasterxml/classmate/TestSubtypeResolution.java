@@ -72,6 +72,14 @@ public class TestSubtypeResolution extends BaseTest
 
     static class NSamePair<E extends Number> extends NPair<E, E> { }
 
+    static class NumArrayWrapper<E extends Number> extends Wrapper<E[]> { }
+
+    static class ComparableNumWrapper<E extends Number & Comparable<E>> extends Wrapper<E> { }
+
+    static class BuilderWrapper<B extends Builder<B>> extends Wrapper<B> { }
+
+    static class MyBuilder extends Builder<MyBuilder> { }
+
     abstract static class OuterType<K, V> extends AbstractMap<K, Collection<V>>
     {
         public abstract class Inner extends AbstractMap<K, Collection<V>> {
@@ -259,6 +267,43 @@ public class TestSubtypeResolution extends BaseTest
         assertSame(Wrapper.class, result.getErasedType());
         _verifyNoSelfReference(result.getTypeParameters().get(0).getArrayElementType(),
                 RawSelfArray.class);
+    }
+
+    // [classmate#127]: raw/wildcard supertype can be refined into array-binding subtype;
+    // unbound type variables resolved to their bounds
+    public void testSubtypeOfRawOrWildcardIntoArray()
+    {
+        for (ResolvedType supertype : new ResolvedType[] {
+                typeResolver.resolve(Wrapper.class),
+                typeResolver.resolve(new GenericType<Wrapper<?>>() { })
+        }) {
+            assertEquals(typeResolver.resolve(ArrayWrapper.class, Object.class),
+                    typeResolver.resolveSubtype(supertype, ArrayWrapper.class));
+            assertEquals(typeResolver.resolve(NumArrayWrapper.class, Number.class),
+                    typeResolver.resolveSubtype(supertype, NumArrayWrapper.class));
+            assertEquals(typeResolver.resolve(ListOfArrayWrapper.class, Object.class),
+                    typeResolver.resolveSubtype(supertype, ListOfArrayWrapper.class));
+            assertSame(IntListArrayWrapper.class,
+                    typeResolver.resolveSubtype(supertype, IntListArrayWrapper.class).getErasedType());
+        }
+        // and same for nested wildcard
+        ResolvedType supertype = typeResolver.resolve(new GenericType<Wrapper<List<?>>>() { });
+        assertEquals(typeResolver.resolve(ListWrapper.class, Object.class),
+                typeResolver.resolveSubtype(supertype, ListWrapper.class));
+    }
+
+    // [classmate#127]: type parameters must satisfy bounds of type variables
+    public void testSubtypeSatisfyingBounds()
+    {
+        assertEquals(typeResolver.resolve(NumArrayWrapper.class, Integer.class),
+                typeResolver.resolveSubtype(typeResolver.resolve(Wrapper.class, Integer[].class),
+                        NumArrayWrapper.class));
+        assertEquals(typeResolver.resolve(ComparableNumWrapper.class, Long.class),
+                typeResolver.resolveSubtype(typeResolver.resolve(Wrapper.class, Long.class),
+                        ComparableNumWrapper.class));
+        assertEquals(typeResolver.resolve(BuilderWrapper.class, MyBuilder.class),
+                typeResolver.resolveSubtype(typeResolver.resolve(Wrapper.class, MyBuilder.class),
+                        BuilderWrapper.class));
     }
 
     private void _verifyNoSelfReference(ResolvedType type, Class<?> expRaw)
@@ -574,5 +619,33 @@ public class TestSubtypeResolution extends BaseTest
                 typeResolver.resolve(RawSelf.class, String.class));
         _verifyIncompatible(supertype, RawSelfSub.class);
         _verifyIncompatible(supertype, RawSelfOther.class);
+    }
+
+    // [classmate#127]: type parameters must satisfy bounds of type variables
+    public void testSubtypeViolatingBounds()
+    {
+        _verifyBoundViolation(typeResolver.resolve(Wrapper.class, String[].class),
+                NumArrayWrapper.class, "(java.lang.String)", "`java.lang.Number` of type variable `E`");
+        // second bound
+        _verifyBoundViolation(typeResolver.resolve(Wrapper.class, java.util.concurrent.atomic.AtomicLong.class),
+                ComparableNumWrapper.class, "(java.util.concurrent.atomic.AtomicLong)",
+                "`java.lang.Comparable<java.util.concurrent.atomic.AtomicLong>` of type variable `E`");
+        _verifyBoundViolation(typeResolver.resolve(Wrapper.class, String.class),
+                BuilderWrapper.class, "(java.lang.String)", "of type variable `B`");
+    }
+
+    private void _verifyBoundViolation(ResolvedType supertype, Class<?> subtype,
+            String... matches)
+    {
+        try {
+            ResolvedType t = typeResolver.resolveSubtype(supertype, subtype);
+            fail("Expected failure, got: "+t.getFullDescription());
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "Type parameter #1/1");
+            verifyException(e, "does not satisfy bound");
+            for (String match : matches) {
+                verifyException(e, match);
+            }
+        }
     }
 }
