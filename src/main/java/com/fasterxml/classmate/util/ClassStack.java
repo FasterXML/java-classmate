@@ -122,7 +122,10 @@ public final class ClassStack
      * Method called when type that this stack frame represents is
      * fully resolved, allowing self-references to be completed
      * (if there are any)
+     *
+     * @deprecated Since 1.8 use {@link #resolveSelfReferences(ResolvedType, Function)}
      */
+    @Deprecated
     public void resolveSelfReferences(ResolvedType resolved)
     {
         resolveSelfReferences(resolved, null);

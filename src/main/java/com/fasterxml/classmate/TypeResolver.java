@@ -3,6 +3,7 @@ package com.fasterxml.classmate;
 import java.io.Serializable;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.function.UnaryOperator;
 
 import com.fasterxml.classmate.types.*;
 import com.fasterxml.classmate.util.ClassKey;
@@ -922,11 +923,35 @@ public class TypeResolver implements Serializable
         if (bindings.isEmpty()) { // raw (or non-generic) type
             return _fromClass(null, erased, bindings);
         }
-        ResolvedType[] params = new ResolvedType[bindings.size()];
-        for (int i = 0; i < params.length; ++i) {
-            params[i] = _resolveSelfReferences(bindings.getBoundType(i), null);
+        ResolvedType[] params = _mapTypes(bindings, t -> _resolveSelfReferences(t, null));
+        if (params == null) {
+            params = bindings.typeParameterArray();
         }
         return _fromClass(null, erased, TypeBindings.create(erased, params));
+    }
+
+    /**
+     * Helper method for applying given function to types of given bindings.
+     *
+     * @return Array of resulting types, if any changed (by identity); {@code null} if none
+     *
+     * @since 1.8
+     */
+    private static ResolvedType[] _mapTypes(TypeBindings bindings,
+            UnaryOperator<ResolvedType> mapper)
+    {
+        ResolvedType[] types = null;
+        for (int i = 0, len = bindings.size(); i < len; ++i) {
+            ResolvedType t = bindings.getBoundType(i);
+            ResolvedType newT = mapper.apply(t);
+            if (newT != t) {
+                if (types == null) {
+                    types = bindings.typeParameterArray().clone();
+                }
+                types[i] = newT;
+            }
+        }
+        return types;
     }
 
     /**
@@ -987,23 +1012,11 @@ public class TypeResolver implements Serializable
             }
             return _selfReferenceTarget(type);
         }
-        if (enclosing == null) {
-            enclosing = new ArrayList<>();
-        }
-        enclosing.add(type);
+        final List<ResolvedType> encl = (enclosing == null) ? new ArrayList<>() : enclosing;
+        encl.add(type);
         final TypeBindings bindings = type.getTypeBindings();
-        ResolvedType[] newTypes = null;
-        for (int i = 0, len = bindings.size(); i < len; ++i) {
-            ResolvedType t = bindings.getBoundType(i);
-            ResolvedType newT = _resolveSelfReferences(t, enclosing);
-            if (newT != t) {
-                if (newTypes == null) {
-                    newTypes = bindings.typeParameterArray().clone();
-                }
-                newTypes[i] = newT;
-            }
-        }
-        enclosing.remove(enclosing.size() - 1);
+        ResolvedType[] newTypes = _mapTypes(bindings, t -> _resolveSelfReferences(t, encl));
+        encl.remove(encl.size() - 1);
         if (newTypes == null) {
             // [classmate#128]: type with self-references via supertypes needs to be re-resolved;
             // but not if it retains self-references to enclosing types (since those are
