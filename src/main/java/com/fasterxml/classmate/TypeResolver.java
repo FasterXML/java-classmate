@@ -373,9 +373,7 @@ public class TypeResolver implements Serializable
                     TypeBindings.emptyBindings()));
         }
         // Second: recursive reference?
-        if (context == null) {
-            context = new ClassStack(rawType);
-        } else {
+        if (context != null) {
             ClassStack prev = context.find(rawType);
             if (prev != null) {
                 // Self-reference: needs special handling, then...
@@ -390,11 +388,10 @@ public class TypeResolver implements Serializable
                 ResolvedRecursiveType selfRef = new ResolvedRecursiveType(rawType, typeBindings);
                 // [classmate#128]: also need to keep track of types containing self-references
                 // (to types still being resolved) to avoid caching them
+                ((ResolvedType) selfRef)._markIncomplete();
                 context.selfReferenceCreated(selfRef, prev);
                 return selfRef;
             }
-            // no, can just add
-            context = context.child(rawType);
         }
 
         // If not, already recently resolved?
@@ -404,20 +401,66 @@ public class TypeResolver implements Serializable
         //   within resolution context)
         ResolvedTypeKey key = typeBindings.hasContextualTypes() ? null
                 : _resolvedTypes.key(rawType, typeBindings.typeParameterArray());
-        type = (key == null) ? null : _resolvedTypes.find(key);
-        if (type == null) {
-            type = _constructType(context, rawType, typeBindings);
-            // [classmate#128]: nor can types with self-references to types still being
-            // resolved (like `B` in `B extends Base<A>`, when resolving `A extends Base<B>`)
-            // be cached, whether via type parameters, supertypes or array element types
-            if (context.typeConstructed(type, typeBindings.typeParameterArray())
-                    && (key != null)) {
+        type = _findType(context, key);
+        if (type != null) {
+            return type;
+        }
+        // If not, need to construct
+        context = (context == null) ? new ClassStack(rawType) : context.child(rawType);
+        type = _constructType(context, rawType, typeBindings);
+        context.resolveSelfReferences(type);
+        // [classmate#128]: nor can types with self-references to types still being
+        // resolved (like `B` in `B extends Base<A>`, when resolving `A extends Base<B>`)
+        // be cached, whether via type parameters, supertypes or array element types
+        int paramDepth = Integer.MAX_VALUE;
+        for (ResolvedType param : type.getTypeBindings().typeParameterArray()) {
+            paramDepth = Math.min(paramDepth, _incompleteDepth(context, param));
+        }
+        if (context.typeConstructed(key, type, paramDepth)) {
+            if (key != null) {
                 _resolvedTypes.put(key, type);
             }
         } else {
-            context.resolveSelfReferences(type);
+            type._markIncomplete();
         }
         return type;
+    }
+
+    /**
+     * Helper method for finding cached type with given key, if any; or, failing that,
+     * incomplete type constructed earlier during current resolution that may be reused.
+     *
+     * @since 1.8
+     */
+    private ResolvedType _findType(ClassStack context, ResolvedTypeKey key)
+    {
+        if (key == null) {
+            return null;
+        }
+        ResolvedType type = _resolvedTypes.find(key);
+        if ((type == null) && (context != null)) {
+            type = context.findIncomplete(key);
+        }
+        return type;
+    }
+
+    /**
+     * Helper method for finding depth of the shallowest frame still being resolved that
+     * given type contains self-references to (see {@link ClassStack#incompleteDepth}).
+     *
+     * @param context Resolution context, if any; {@code null} if none
+     *
+     * @return {@code Integer.MAX_VALUE} if type is complete; -1 if it is incomplete
+     *    but not valid within given context
+     *
+     * @since 1.8
+     */
+    private static int _incompleteDepth(ClassStack context, ResolvedType type)
+    {
+        if (!type._isIncomplete()) {
+            return Integer.MAX_VALUE;
+        }
+        return (context == null) ? -1 : context.incompleteDepth(type);
     }
 
     /**
@@ -570,16 +613,23 @@ public class TypeResolver implements Serializable
     {
         ResolvedTypeKey key = TypeBindings.isContextual(elementType) ? null
                 : _resolvedTypes.key(arrayClass, new ResolvedType[] { elementType });
-        ResolvedArrayType type = (key == null) ? null : (ResolvedArrayType) _resolvedTypes.find(key);
+        ResolvedType type = _findType(context, key);
         if (type == null) {
             type = new ResolvedArrayType(arrayClass, TypeBindings.emptyBindings(), elementType);
             // [classmate#128]: element type may contain self-references to types still being resolved
-            if (((context == null) || context.containerConstructed(type, elementType))
-                    && (key != null)) {
-                _resolvedTypes.put(key, type);
+            int depth = _incompleteDepth(context, elementType);
+            if (depth == Integer.MAX_VALUE) {
+                if (key != null) {
+                    _resolvedTypes.put(key, type);
+                }
+            } else {
+                type._markIncomplete();
+                if (context != null) {
+                    context.containerConstructed(key, type, depth);
+                }
             }
         }
-        return type;
+        return (ResolvedArrayType) type;
     }
 
     private ResolvedType _fromWildcard(ClassStack context, WildcardType wildType, TypeBindings typeBindings)
@@ -832,10 +882,12 @@ public class TypeResolver implements Serializable
         // within `N<T>`, or raw `GNode` within `GNode<String>`): if so, need to resolve
         // with own bindings. Except if self-reference is within type parameters of the
         // referenced type (like `E` in raw `Enum<E extends Enum<E>>`), since it then
-        // represents the referenced type itself
+        // represents the referenced type itself. Unless referenced type is itself only
+        // valid within its resolution context
         final TypeBindings bindings = selfRef.getTypeBindings();
         ResolvedType ref = selfRef.getSelfReferencedType();
-        if ((ref != null) && (ref.getTypeBindings().equals(bindings)
+        if ((ref != null) && !ref._isIncomplete()
+                && (ref.getTypeBindings().equals(bindings)
                 || _containsType(ref.getTypeBindings(), selfRef))) {
             return ref;
         }
@@ -873,7 +925,8 @@ public class TypeResolver implements Serializable
      * resolved types. This includes the type itself, as well as ones within type
      * parameters and array element types, at any level of nesting: except for
      * self-references to an enclosing type (like {@code E} in {@code Enum<E extends Enum<E>>})
-     * which are valid as-is.
+     * which are valid as-is. Types containing such self-references via their supertypes
+     * (see [classmate#128]) are re-resolved.
      *
      * @param enclosing Enclosing types (containing given type as type parameter), used as
      *    a stack (must be restored before returning); {@code null} if none
@@ -884,7 +937,7 @@ public class TypeResolver implements Serializable
      */
     private ResolvedType _resolveSelfReferences(ResolvedType type, List<ResolvedType> enclosing)
     {
-        if (!TypeBindings.isContextual(type)) {
+        if (!TypeBindings.isContextual(type) && !type._isIncomplete()) {
             return type;
         }
         if (type.isArray()) {
@@ -922,7 +975,11 @@ public class TypeResolver implements Serializable
         }
         enclosing.remove(enclosing.size() - 1);
         if (newTypes == null) {
-            return type;
+            // [classmate#128]: type with self-references via supertypes needs to be re-resolved
+            if (!type._isIncomplete()) {
+                return type;
+            }
+            newTypes = bindings.typeParameterArray();
         }
         final Class<?> raw = type.getErasedType();
         return _fromClass(null, raw, TypeBindings.create(raw, newTypes));

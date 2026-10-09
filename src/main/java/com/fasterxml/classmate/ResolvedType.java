@@ -26,19 +26,46 @@ public abstract class ResolvedType
      * constructors) of this type
      */
     protected final TypeBindings _typeBindings;
-    
+
+    /**
+     * Whether this type contains (via type parameters, array element type or supertypes)
+     * self-references to types it does not itself contain (like {@code B} in
+     * {@code B extends Base<A>}, when resolved as part of {@code A extends Base<B>});
+     * or is such a self-reference.
+     * Such types are only valid within the resolution of the type that contains them,
+     * and are never cached by {@link TypeResolver} (nor are types containing them).
+     * Set by {@link TypeResolver} when type is constructed, before it is exposed.
+     *
+     * @since 1.8
+     */
+    private boolean _incomplete;
+
     /*
     /**********************************************************************
     /* Life cycle
     /**********************************************************************
      */
-    
+
     protected ResolvedType(Class<?> cls, TypeBindings bindings)
     {
         _erasedType = cls;
         _typeBindings = (bindings == null) ? TypeBindings.emptyBindings() : bindings;
     }
-    
+
+    /**
+     * @since 1.8
+     */
+    void _markIncomplete() {
+        _incomplete = true;
+    }
+
+    /**
+     * @since 1.8
+     */
+    boolean _isIncomplete() {
+        return _incomplete;
+    }
+
     /**
      * Method that can be used to check if call to {@link TypeResolver#resolveSubtype(ResolvedType, Class)}
      * may ever succeed; if false, it will fail with an exception, if true, it may succeed.

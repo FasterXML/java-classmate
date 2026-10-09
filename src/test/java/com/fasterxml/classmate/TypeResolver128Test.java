@@ -36,6 +36,35 @@ public class TypeResolver128Test extends BaseTest
 
     static class N<T> extends Base<N<N<T>>[]> { }
 
+    // Self-references via supertypes, escaping resolution via members, subtypes
+    static class FieldBase<T> {
+        public List<T> values;
+        public T[] array;
+    }
+    static class FA extends FieldBase<FB> { }
+    static class FB extends FieldBase<FA> { }
+    static class FSub<T> extends FieldBase<T> { }
+
+    static class Pair<A, B> { }
+    static class SubPair<A, B> extends Pair<A, B> { }
+    static class X extends Base<Y> { }
+    static class Y extends Base<Z> { }
+    static class Z extends Pair<X, List<Y>> { }
+
+    // Many types referring to each other: incomplete types must be reused
+    // within resolution (to avoid exponential resolution time)
+    static class Base10<P0,P1,P2,P3,P4,P5,P6,P7,P8,P9> { }
+    static class T0 extends Base10<T0,T1,T2,T3,T4,T5,T6,T7,T8,T9> { }
+    static class T1 extends Base10<T0,T1,T2,T3,T4,T5,T6,T7,T8,T9> { }
+    static class T2 extends Base10<T0,T1,T2,T3,T4,T5,T6,T7,T8,T9> { }
+    static class T3 extends Base10<T0,T1,T2,T3,T4,T5,T6,T7,T8,T9> { }
+    static class T4 extends Base10<T0,T1,T2,T3,T4,T5,T6,T7,T8,T9> { }
+    static class T5 extends Base10<T0,T1,T2,T3,T4,T5,T6,T7,T8,T9> { }
+    static class T6 extends Base10<T0,T1,T2,T3,T4,T5,T6,T7,T8,T9> { }
+    static class T7 extends Base10<T0,T1,T2,T3,T4,T5,T6,T7,T8,T9> { }
+    static class T8 extends Base10<T0,T1,T2,T3,T4,T5,T6,T7,T8,T9> { }
+    static class T9 extends Base10<T0,T1,T2,T3,T4,T5,T6,T7,T8,T9> { }
+
     // Raw self-reference with raw bound
     @SuppressWarnings("rawtypes")
     static class RawBound<T extends RawBound> extends Base<RawBound> { }
@@ -92,6 +121,76 @@ public class TypeResolver128Test extends BaseTest
         ResolvedType supplier = type.findSupertype(Supplier.class);
         assertSame(supplier, resolver.resolve(Supplier.class, String.class));
         assertSame(type, resolver.resolve(SelfComparable.class));
+    }
+
+    // Incomplete types obtained from resolved type must not be cached when used
+    // for resolving other types later on
+    public void testIncompleteTypeViaMembersNotCached()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedTypeWithMembers members = new MemberResolver(resolver)
+                .resolve(resolver.resolve(FA.class), null, null);
+        assertEquals(2, members.getMemberFields().length);
+        ResolvedType listOfB = resolver.resolve(List.class, FB.class);
+        _verifyFullyResolved(listOfB.getTypeParameters().get(0).getParentClass()
+                .getTypeParameters().get(0), FA.class);
+        ResolvedType arrayOfB = resolver.resolve(FB[].class);
+        _verifyFullyResolved(arrayOfB.getArrayElementType().getParentClass()
+                .getTypeParameters().get(0), FA.class);
+    }
+
+    public void testIncompleteTypeViaArrayTypeNotCached()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType b = resolver.resolve(FA.class).getParentClass().getTypeParameters().get(0);
+        resolver.arrayType(b);
+        _verifyFullyResolved(resolver.resolve(FB[].class).getArrayElementType()
+                .getParentClass().getTypeParameters().get(0), FA.class);
+    }
+
+    public void testIncompleteTypeViaSubtypeNotCached()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType baseOfB = resolver.resolve(FA.class).getParentClass();
+        ResolvedType sub = resolver.resolveSubtype(baseOfB, FSub.class);
+        // incomplete type itself is not included in subtype either
+        _verifyFullyResolved(sub.getTypeParameters().get(0).getParentClass()
+                .getTypeParameters().get(0), FA.class);
+        _verifyFullyResolved(resolver.resolve(FieldBase.class, FB.class).getTypeParameters()
+                .get(0).getParentClass().getTypeParameters().get(0), FA.class);
+        _verifyFullyResolved(resolver.resolve(FSub.class, FB.class).getTypeParameters()
+                .get(0).getParentClass().getTypeParameters().get(0), FA.class);
+    }
+
+    public void testIncompleteReferencedTypeViaSubtypeNotCached()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType y = resolver.resolve(X.class).getParentClass().getTypeParameters().get(0);
+        ResolvedType z = y.getParentClass().getTypeParameters().get(0);
+        // `Pair<X, List<Y>>` with self-references to `X` and `Y`
+        ResolvedType pair = z.getParentClass();
+        assertTrue(TypeResolver.isSelfReference(pair.getTypeParameters().get(0)));
+        resolver.resolveSubtype(pair, SubPair.class);
+        ResolvedType listOfY = resolver.resolve(List.class, Y.class);
+        ResolvedType z2 = listOfY.getTypeParameters().get(0).getParentClass()
+                .getTypeParameters().get(0);
+        _verifyFullyResolved(z2.getParentClass().getTypeParameters().get(0), X.class);
+    }
+
+    public void testIncompleteTypesReusedWithinResolution()
+    {
+        TypeResolver resolver = new TypeResolver();
+        List<ResolvedType> params = resolver.resolve(T0.class).getParentClass().getTypeParameters();
+        assertTrue(TypeResolver.isSelfReference(params.get(0)));
+        // `T2` first resolved as part of `T1`, then reused
+        ResolvedType t2 = params.get(2);
+        assertSame(T2.class, t2.getErasedType());
+        assertSame(t2, params.get(1).getParentClass().getTypeParameters().get(2));
+        // but not cached
+        ResolvedType t2Direct = resolver.resolve(T2.class);
+        assertNotSame(t2, t2Direct);
+        assertTrue(TypeResolver.isSelfReference(t2Direct.getParentClass().getTypeParameters().get(2)));
+        assertSame(t2Direct, resolver.resolve(T2.class));
     }
 
     /*

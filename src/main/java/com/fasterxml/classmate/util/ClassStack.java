@@ -1,6 +1,7 @@
 package com.fasterxml.classmate.util;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 
 import com.fasterxml.classmate.ResolvedType;
@@ -32,9 +33,10 @@ public final class ClassStack
     private final int _depth;
 
     /**
-     * Depth of the shallowest frame that self-references (created during resolution
-     * of the type this frame represents, including types it contains) point to;
-     * {@code Integer.MAX_VALUE} if none.
+     * Depth of the shallowest frame that types constructed within this frame (that is,
+     * as part of the type this frame represents) contain self-references to (directly,
+     * or via other incomplete types); {@code Integer.MAX_VALUE} if none, and -1 if
+     * they contain incomplete types from outside of this resolution.
      *
      * @since 1.8
      */
@@ -49,13 +51,39 @@ public final class ClassStack
     private boolean _resolvingBounds;
 
     /**
-     * Types (shared by all frames, so only used via root) that contain self-references
-     * to types still being resolved, mapped to depth of the shallowest such frame:
-     * such types are only valid within their resolution context.
+     * Whether the type this frame represents has been constructed (and frame is no
+     * longer on the stack).
      *
      * @since 1.8
      */
-    private IdentityHashMap<ResolvedType, Integer> _incompleteTypes;
+    private boolean _completed;
+
+    /**
+     * For completed frames with incomplete type: shallowest (enclosing) frame that the
+     * type contains self-references to; {@code null} if type is complete, or contains
+     * incomplete types from outside of this resolution.
+     *
+     * @since 1.8
+     */
+    private ClassStack _dependency;
+
+    /**
+     * Incomplete types (see {@link ResolvedType}) constructed during this resolution
+     * (shared by all frames, so only used via root), mapped to the shallowest frame
+     * they contain self-references to (when constructed).
+     *
+     * @since 1.8
+     */
+    private IdentityHashMap<ResolvedType, ClassStack> _incompleteTypes;
+
+    /**
+     * Incomplete types constructed during this resolution by key (shared by all frames,
+     * so only used via root): may be reused (but not cached) within this resolution, as
+     * long as frames they contain self-references to are still being resolved.
+     *
+     * @since 1.8
+     */
+    private HashMap<ResolvedTypeKey, ResolvedType> _incompleteByKey;
 
     public ClassStack(Class<?> rootType) {
         this(null, rootType);
@@ -128,55 +156,94 @@ public final class ClassStack
     public void selfReferenceCreated(ResolvedRecursiveType ref, ClassStack target)
     {
         target.addSelfReference(ref);
-        _addIncomplete(ref, target._depth);
+        _dependsOn(target._depth);
+        _root._addIncomplete(null, ref, target);
     }
 
     /**
-     * Method called (on the innermost frame) when given type, containing given element
-     * type (like array element type), has been constructed: if element type is
-     * incomplete, so is the type.
-     *
-     * @return True if type is complete (may be cached); false if not
+     * Method called (on the innermost frame) when given incomplete type, containing
+     * other incomplete type with given depth (see {@link #incompleteDepth}; like array
+     * element type), has been constructed.
      *
      * @since 1.8
      */
-    public boolean containerConstructed(ResolvedType type, ResolvedType elementType)
+    public void containerConstructed(ResolvedTypeKey key, ResolvedType type, int depth)
     {
-        int depth = _incompleteDepth(elementType);
-        if (depth == Integer.MAX_VALUE) {
-            return true;
-        }
-        _addIncomplete(type, depth);
-        return false;
+        _dependsOn(depth);
+        _root._addIncomplete(key, type, _frameAt(depth));
     }
 
     /**
      * Method called when type that this stack frame represents has been
-     * constructed (but not yet cached), with given type parameters.
-     * Completes self-references to the type (see {@link #resolveSelfReferences}).
+     * constructed (but not yet cached), with given depth for its type parameters
+     * (see {@link #incompleteDepth}). Note that self-references to the type need
+     * to be completed separately (see {@link #resolveSelfReferences}).
      *
      * @return True if type is complete (may be cached): that is, it does not contain
-     *    self-references to types still being resolved (other than itself); false if not
+     *    self-references to types still being resolved (other than itself); false if
+     *    not (in which case it is registered as incomplete type with given key)
      *
      * @since 1.8
      */
-    public boolean typeConstructed(ResolvedType type, ResolvedType[] typeParams)
+    public boolean typeConstructed(ResolvedTypeKey key, ResolvedType type, int paramDepth)
     {
-        resolveSelfReferences(type);
-        // type parameters were resolved in context of the parent frame, so the parent
-        // is already aware of their self-references (if any)
-        int minDepth = _minRefDepth;
-        for (ResolvedType param : typeParams) {
-            minDepth = Math.min(minDepth, _incompleteDepth(param));
+        _completed = true;
+        final int minDepth = Math.min(_minRefDepth, paramDepth);
+        if (minDepth >= _depth) {
+            return true;
         }
         if (_parent != null) {
-            _parent._minRefDepth = Math.min(_parent._minRefDepth, _minRefDepth);
+            _parent._dependsOn(minDepth);
         }
-        if (minDepth < _depth) {
-            _root._incompleteTypes.put(type, minDepth);
-            return false;
+        _dependency = _frameAt(minDepth);
+        _root._addIncomplete(key, type, _dependency);
+        return false;
+    }
+
+    /**
+     * Method for finding incomplete type with given key, constructed earlier during
+     * this resolution, if it may be reused (in the type this frame represents): that is,
+     * frames it contains self-references to are still being resolved.
+     *
+     * @return Incomplete type to reuse, if any; {@code null} if none
+     *
+     * @since 1.8
+     */
+    public ResolvedType findIncomplete(ResolvedTypeKey key)
+    {
+        if ((key == null) || (_root._incompleteByKey == null)) {
+            return null;
         }
-        return true;
+        ResolvedType type = _root._incompleteByKey.get(key);
+        if (type != null) {
+            int depth = incompleteDepth(type);
+            if (depth >= 0) {
+                _dependsOn(depth);
+                return type;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Accessor for finding depth of the shallowest frame still being resolved that
+     * given incomplete type contains self-references to (directly, or via types
+     * already completed).
+     *
+     * @return Depth of the frame; or -1 if there is no such frame (type was not
+     *    constructed during this resolution, or only contains self-references to
+     *    completed types), in which case type is not valid within this frame
+     *
+     * @since 1.8
+     */
+    public int incompleteDepth(ResolvedType type)
+    {
+        ClassStack frame = (_root._incompleteTypes == null) ? null
+                : _root._incompleteTypes.get(type);
+        while ((frame != null) && frame._completed) {
+            frame = frame._dependency;
+        }
+        return (frame == null) ? -1 : frame._depth;
     }
 
     /**
@@ -196,23 +263,32 @@ public final class ClassStack
         _resolvingBounds = state;
     }
 
-    private void _addIncomplete(ResolvedType type, int depth)
-    {
+    private void _dependsOn(int depth) {
         _minRefDepth = Math.min(_minRefDepth, depth);
-        if (_root._incompleteTypes == null) {
-            _root._incompleteTypes = new IdentityHashMap<ResolvedType, Integer>();
-        }
-        _root._incompleteTypes.put(type, depth);
     }
 
-    private int _incompleteDepth(ResolvedType type)
+    /**
+     * @return Frame with given depth (this frame or one of its ancestors); {@code null}
+     *    for negative depth
+     */
+    private ClassStack _frameAt(int depth)
     {
-        if (_root._incompleteTypes != null) {
-            Integer depth = _root._incompleteTypes.get(type);
-            if (depth != null) {
-                return depth.intValue();
-            }
+        ClassStack frame = (depth < 0) ? null : this;
+        while ((frame != null) && (frame._depth > depth)) {
+            frame = frame._parent;
         }
-        return Integer.MAX_VALUE;
+        return frame;
+    }
+
+    private void _addIncomplete(ResolvedTypeKey key, ResolvedType type, ClassStack dependency)
+    {
+        if (_incompleteTypes == null) {
+            _incompleteTypes = new IdentityHashMap<ResolvedType, ClassStack>();
+            _incompleteByKey = new HashMap<ResolvedTypeKey, ResolvedType>();
+        }
+        _incompleteTypes.put(type, dependency);
+        if (key != null) {
+            _incompleteByKey.put(key, type);
+        }
     }
 }

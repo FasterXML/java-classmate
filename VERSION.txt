@@ -39,7 +39,9 @@ Release notes:
   to fully resolved types
 - Types containing self-references to types still being resolved (like `B` in
   `B extends Base<A>`, when resolving `A extends Base<B>`; via type parameters,
-  supertypes or array element types) are no longer cached
+  supertypes or array element types) are no longer cached; nor are types later
+  resolved using them (f.ex via `MemberResolver`, `arrayType()` or `resolveSubtype()`,
+  which also re-resolves them)
 - Self-references (`ResolvedRecursiveType`) within type parameters or array element
   types are equal to fully resolved types with same erased type and type bindings
   (at any level of nesting; f.ex `Base<List<LNode>>` from `LNode extends Base<List<LNode>>`)
