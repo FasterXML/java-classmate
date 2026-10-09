@@ -80,6 +80,10 @@ public class TestSubtypeResolution extends BaseTest
 
     static class MyBuilder extends Builder<MyBuilder> { }
 
+    static class KVPair<K, V extends K> extends Pair<K, V> { }
+
+    static class EnumHolder<E extends Enum<E>> extends Wrapper<Enum<E>> { }
+
     abstract static class OuterType<K, V> extends AbstractMap<K, Collection<V>>
     {
         public abstract class Inner extends AbstractMap<K, Collection<V>> {
@@ -269,27 +273,34 @@ public class TestSubtypeResolution extends BaseTest
                 RawSelfArray.class);
     }
 
-    // [classmate#127]: raw/wildcard supertype can be refined into array-binding subtype;
-    // unbound type variables resolved to their bounds
-    public void testSubtypeOfRawOrWildcardIntoArray()
+    // [classmate#127]: `Object` type parameters (possibly from wildcard or raw type)
+    // are not verified against bounds
+    public void testSubtypeWithObjectNotVerifiedAgainstBounds()
     {
-        for (ResolvedType supertype : new ResolvedType[] {
+        // `V extends K`
+        ResolvedType supertype = typeResolver.resolve(new GenericType<Pair<String,?>>() { });
+        assertEquals(typeResolver.resolve(KVPair.class, String.class, Object.class),
+                typeResolver.resolveSubtype(supertype, KVPair.class));
+        // multiple bounds
+        for (ResolvedType wrapper : new ResolvedType[] {
                 typeResolver.resolve(Wrapper.class),
                 typeResolver.resolve(new GenericType<Wrapper<?>>() { })
         }) {
-            assertEquals(typeResolver.resolve(ArrayWrapper.class, Object.class),
-                    typeResolver.resolveSubtype(supertype, ArrayWrapper.class));
-            assertEquals(typeResolver.resolve(NumArrayWrapper.class, Number.class),
-                    typeResolver.resolveSubtype(supertype, NumArrayWrapper.class));
-            assertEquals(typeResolver.resolve(ListOfArrayWrapper.class, Object.class),
-                    typeResolver.resolveSubtype(supertype, ListOfArrayWrapper.class));
-            assertSame(IntListArrayWrapper.class,
-                    typeResolver.resolveSubtype(supertype, IntListArrayWrapper.class).getErasedType());
+            assertEquals(typeResolver.resolve(ComparableNumWrapper.class, Object.class),
+                    typeResolver.resolveSubtype(wrapper, ComparableNumWrapper.class));
         }
-        // and same for nested wildcard
-        ResolvedType supertype = typeResolver.resolve(new GenericType<Wrapper<List<?>>>() { });
-        assertEquals(typeResolver.resolve(ListWrapper.class, Object.class),
-                typeResolver.resolveSubtype(supertype, ListWrapper.class));
+    }
+
+    // [classmate#127]: self-reference (valid within enclosing type) must not become
+    // stand-alone type parameter of subtype
+    public void testSubtypeBindingSelfReference()
+    {
+        ResolvedType supertype = typeResolver.resolve(Wrapper.class, Enum.class);
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, EnumHolder.class);
+        ResolvedType param = subtype.getTypeParameters().get(0);
+        assertFalse(TypeResolver.isSelfReference(param));
+        assertSame(Enum.class, param.getErasedType());
+        assertNotNull(param.getParentClass());
     }
 
     // [classmate#127]: type parameters must satisfy bounds of type variables
@@ -629,7 +640,7 @@ public class TestSubtypeResolution extends BaseTest
         // second bound
         _verifyBoundViolation(typeResolver.resolve(Wrapper.class, java.util.concurrent.atomic.AtomicLong.class),
                 ComparableNumWrapper.class, "(java.util.concurrent.atomic.AtomicLong)",
-                "`java.lang.Comparable<java.util.concurrent.atomic.AtomicLong>` of type variable `E`");
+                "`java.lang.Comparable<E>` of type variable `E`");
         _verifyBoundViolation(typeResolver.resolve(Wrapper.class, String.class),
                 BuilderWrapper.class, "(java.lang.String)", "of type variable `B`");
     }
@@ -647,5 +658,11 @@ public class TestSubtypeResolution extends BaseTest
                 verifyException(e, match);
             }
         }
+    }
+
+    // [classmate#127]: `Object[]` is not compatible with primitive array
+    public void testObjectArrayNotCompatibleWithPrimitiveArray()
+    {
+        _verifyIncompatible(typeResolver.resolve(Wrapper.class, Object[].class), IntArrayWrapper.class);
     }
 }

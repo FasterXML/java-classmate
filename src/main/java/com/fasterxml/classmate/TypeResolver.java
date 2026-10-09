@@ -247,9 +247,7 @@ public class TypeResolver implements Serializable
         // first: [classmate#127] replace self-references only valid within their original
         // resolution context (like supertype itself being one, or one nested within supertype
         // obtained from `getParentClass()`) with stand-alone types
-        if (TypeBindings.isContextual(supertype)) {
-            supertype = _resolveSelfReferences(supertype, new ArrayList<>());
-        }
+        supertype = _resolveSelfReferences(supertype, new ArrayList<>());
         // Then, trivial check for case where subtype is supertype...
         final Class<?> superclass = supertype.getErasedType();
         if (superclass == subtype) { // unlikely but cheap check so let's just do it
@@ -298,9 +296,6 @@ public class TypeResolver implements Serializable
         }
         // but with type parameters, need to reconstruct
         final ResolvedType[] typeParams = new ResolvedType[paramCount];
-        // [classmate#127]: `Object` (from wildcard or raw type) to be replaced by bound
-        // of type variable; same as for raw subtype
-        List<ResolvedType> rawParams = null;
         for (int i = 0; i < paramCount; ++i) {
             ResolvedType t = placeholders[i].actualType();
             // Is it ok for it to be left unassigned? For now let's not allow that
@@ -311,12 +306,6 @@ public class TypeResolver implements Serializable
                 throw new IllegalArgumentException("Failed to find type parameter #"+(i+1)+"/"
                         +paramCount+" for "+subtype.getName());
             }
-            if (_isJavaLangObject(t)) {
-                if (rawParams == null) {
-                    rawParams = _fromClass(null, subtype, TypeBindings.emptyBindings()).getTypeParameters();
-                }
-                t = rawParams.get(i);
-            }
             typeParams[i] = t;
         }
         _verifyBounds(subtype, typeParams);
@@ -326,32 +315,51 @@ public class TypeResolver implements Serializable
     /**
      * Helper method for verifying that given type parameters satisfy declared bounds
      * of type variables of given type (as far as type-erased types are concerned).
+     * Type parameters of {@code java.lang.Object} are not verified, since they may
+     * come from wildcard or raw type.
      *
      * @since 1.8
      */
-    private void _verifyBounds(Class<?> rawType, ResolvedType[] typeParams)
+    private static void _verifyBounds(Class<?> rawType, ResolvedType[] typeParams)
         throws IllegalArgumentException
     {
         final TypeVariable<?>[] vars = rawType.getTypeParameters();
-        TypeBindings bindings = null;
         for (int i = 0; i < vars.length; ++i) {
-            final Class<?> actual = typeParams[i].getErasedType();
+            final ResolvedType param = typeParams[i];
+            if (_isJavaLangObject(param)) {
+                continue;
+            }
             for (Type bound : vars[i].getBounds()) {
-                if (bound == Object.class) {
-                    continue;
-                }
-                if (bindings == null) {
-                    bindings = TypeBindings.create(rawType, typeParams);
-                }
-                ResolvedType resolvedBound = _fromAny(null, bound, bindings);
-                if (!resolvedBound.getErasedType().isAssignableFrom(actual)) {
+                Class<?> erasedBound = _erasedBound(bound, vars, typeParams);
+                if ((erasedBound != null) && !erasedBound.isAssignableFrom(param.getErasedType())) {
                     throw new IllegalArgumentException(String.format(
 "Type parameter #%d/%d (%s) of %s does not satisfy bound `%s` of type variable `%s`",
-                            i+1, vars.length, typeParams[i].getBriefDescription(), rawType.getName(),
-                            resolvedBound.getBriefDescription(), vars[i].getName()));
+                            i+1, vars.length, param.getBriefDescription(), rawType.getName(),
+                            bound.getTypeName(), vars[i].getName()));
                 }
             }
         }
+    }
+
+    /**
+     * @return Type-erased bound, if one can be determined; {@code null} if not
+     */
+    private static Class<?> _erasedBound(Type bound, TypeVariable<?>[] vars, ResolvedType[] typeParams)
+    {
+        if (bound instanceof Class<?>) {
+            return (Class<?>) bound;
+        }
+        if (bound instanceof ParameterizedType) {
+            return (Class<?>) ((ParameterizedType) bound).getRawType();
+        }
+        if (bound instanceof TypeVariable<?>) { // like `V extends K`
+            for (int i = 0; i < vars.length; ++i) {
+                if (vars[i].equals(bound)) {
+                    return typeParams[i].getErasedType();
+                }
+            }
+        }
+        return null;
     }
 
     /*
@@ -677,6 +685,11 @@ public class TypeResolver implements Serializable
             if (exp.isPrimitive()) {
                 return false;
             }
+            // [classmate#127]: self-reference retained within its enclosing type is
+            // not valid as a stand-alone type parameter
+            if (exp instanceof ResolvedRecursiveType) {
+                exp = _resolveSelfReferences(exp, new ArrayList<>());
+            }
             TypePlaceHolder placeholder = (TypePlaceHolder) act;
             ResolvedType prev = placeholder.actualType();
             if (prev == null) {
@@ -697,13 +710,6 @@ public class TypeResolver implements Serializable
 "Conflicting bindings for type variable `%s` of %s: %s vs %s",
                     subtype.getTypeParameters()[placeholder.ordinal()].getName(), subtype.getName(),
                     prev.getBriefDescription(), exp.getBriefDescription()));
-        }
-        // [classmate#127]: `Object` (which may come from wildcard or raw type) is compatible
-        // with anything; placeholders within (if any) are bound to `Object` as well
-        // (to be replaced by bounds of type variables)
-        if (_isJavaLangObject(exp)) {
-            _bindToObject(act);
-            return true;
         }
         // [classmate#127]: raw self-reference needs to be resolved to its bounds to be
         // comparable with other types (but not with another self-reference)
@@ -744,26 +750,6 @@ public class TypeResolver implements Serializable
 
     private static boolean _isJavaLangObject(ResolvedType type) {
         return type.getErasedType() == Object.class;
-    }
-
-    /**
-     * Helper method for binding all unbound placeholders within given type
-     * (including type itself) to {@code java.lang.Object}.
-     */
-    private static void _bindToObject(ResolvedType type)
-    {
-        if (type instanceof TypePlaceHolder) {
-            TypePlaceHolder placeholder = (TypePlaceHolder) type;
-            if (placeholder.actualType() == null) {
-                placeholder.actualType(sJavaLangObject);
-            }
-        } else if (type.isArray()) {
-            _bindToObject(type.getArrayElementType());
-        } else if (TypeBindings.isContextual(type)) {
-            for (ResolvedType t : type.getTypeParameters()) {
-                _bindToObject(t);
-            }
-        }
     }
 
     /**

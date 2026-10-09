@@ -31,12 +31,9 @@ Release notes:
   longer included in types returned by `resolveSubtype()`; raw self-references
   resolve to their bounds (self-references to enclosing type, like in raw `Enum`,
   are retained as-is)
-- `resolveSubtype()` now accepts `Object` (from wildcard or raw type, like raw
-  `Wrapper` or `Wrapper<?>`) as compatible with any type parameter of subtype
-  (like `E[]` of `ArrayWrapper<E> extends Wrapper<E[]>`); type variables bound only
-  this way resolve to their bounds (`ArrayWrapper<Object>`)
 - `resolveSubtype()` now verifies that type parameters of subtype satisfy (type-erased)
-  bounds of its type variables (f.ex rejects `NumArray<E extends Number>` with `E` of `String`)
+  bounds of its type variables (f.ex rejects `NumArray<E extends Number>` with `E` of `String`);
+  type parameters of `Object` (which may come from wildcard or raw type) are not verified
 - `TypeResolver.resolve(Type, Type...)` now fails with `IllegalArgumentException`
   if any of type parameters is a primitive type (like `resolve(List.class, int.class)`)
  (fix by @cowtowncoder w/ Claude code)
