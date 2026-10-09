@@ -2,6 +2,7 @@ package com.fasterxml.classmate.types;
 
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.function.Supplier;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
@@ -23,6 +24,24 @@ public class ResolvedRecursiveType extends ResolvedType
      * Actual fully resolved type; assigned once resolution is complete
      */
     protected ResolvedType _referencedType;
+
+    /**
+     * For self-references with type bindings different from those of the referenced
+     * type (like raw {@code Mid} within {@code Mid<String>}, or {@code N<N<T>>} within
+     * {@code N<T>}): supplier of the actual type this self-reference represents.
+     * Resolved lazily since doing so eagerly could lead to infinite recursion.
+     *
+     * @since 1.8
+     */
+    protected Supplier<ResolvedType> _actualTypeSupplier;
+
+    /**
+     * Actual type this self-reference represents, if differs from referenced type;
+     * resolved lazily using {@link #_actualTypeSupplier}.
+     *
+     * @since 1.8
+     */
+    protected volatile ResolvedType _actualType;
 
     /*
     /**********************************************************************
@@ -49,6 +68,20 @@ public class ResolvedRecursiveType extends ResolvedType
         _referencedType = ref;
     }
 
+    /**
+     * Alternative to {@link #setReference(ResolvedType)} used when type bindings of
+     * this self-reference differ from those of the referenced type: in that case,
+     * {@link #getSelfReferencedType()} returns type obtained (lazily) from given supplier
+     * (or referenced type, if equal).
+     *
+     * @since 1.8
+     */
+    public void setReference(ResolvedType ref, Supplier<ResolvedType> actualType)
+    {
+        setReference(ref);
+        _actualTypeSupplier = actualType;
+    }
+
     /*
     /**********************************************************************
     /* Accessors for related types
@@ -64,7 +97,21 @@ public class ResolvedRecursiveType extends ResolvedType
     }
 
     @Override
-    public ResolvedType getSelfReferencedType() { return _referencedType; }
+    public ResolvedType getSelfReferencedType() {
+        if (_actualTypeSupplier == null) {
+            return _referencedType;
+        }
+        ResolvedType actual = _actualType;
+        if (actual == null) {
+            actual = _actualTypeSupplier.get();
+            // retain identity if equal (like for `E` in raw `Enum<E extends Enum<E>>`)
+            if (actual.equals(_referencedType)) {
+                actual = _referencedType;
+            }
+            _actualType = actual;
+        }
+        return actual;
+    }
     
     /**
      * To avoid infinite loops, will return empty list

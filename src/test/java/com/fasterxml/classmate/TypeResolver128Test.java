@@ -70,6 +70,13 @@ public class TypeResolver128Test extends BaseTest
     static class T8 extends Base10<T0,T1,T2,T3,T4,T5,T6,T7,T8,T9> { }
     static class T9 extends Base10<T0,T1,T2,T3,T4,T5,T6,T7,T8,T9> { }
 
+    // Raw self-reference to generic type
+    @SuppressWarnings("rawtypes")
+    static class GMid<T> extends Base<GOuter> {
+        public T value;
+    }
+    static class GOuter extends GMid { }
+
     // Raw self-reference with raw bound
     @SuppressWarnings("rawtypes")
     static class RawBound<T extends RawBound> extends Base<RawBound> { }
@@ -256,6 +263,34 @@ public class TypeResolver128Test extends BaseTest
         ResolvedType viaParent = resolver.resolve(N.class, String.class).getParentClass();
         ResolvedType subtype = resolver.resolveSubtype(viaParent, N.class);
         assertEquals(resolver.resolve(N.class, String.class), subtype);
+    }
+
+    // Raw self-reference must refer to raw type, not to (differently parameterized)
+    // type being resolved
+    public void testRawSelfReferenceToGenericType()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType outer = resolver.resolve(GMid.class, String.class).getParentClass()
+                .getTypeParameters().get(0);
+        assertSame(GOuter.class, outer.getErasedType());
+        ResolvedType parent = outer.getParentClass();
+        assertEquals(resolver.resolve(GMid.class, Object.class), parent);
+
+        ResolvedTypeWithMembers members = new MemberResolver(resolver).resolve(outer, null, null);
+        assertEquals(1, members.getMemberFields().length);
+        assertSame(Object.class, members.getMemberFields()[0].getType().getErasedType());
+    }
+
+    // Self-reference with nested bindings (like `N<N<T>>` within `N<T>`) must refer
+    // to type with those bindings
+    public void testNestedSelfReferenceReferencedType()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType selfRef = resolver.resolve(N.class, String.class).getParentClass()
+                .getTypeParameters().get(0).getArrayElementType();
+        assertTrue(TypeResolver.isSelfReference(selfRef));
+        assertEquals(resolver.resolve(N.class, resolver.resolve(N.class, String.class)),
+                selfRef.getSelfReferencedType());
     }
 
     public void testRawSelfReferenceWithRawBound()

@@ -408,7 +408,12 @@ public class TypeResolver implements Serializable
         // If not, need to construct
         context = (context == null) ? new ClassStack(rawType) : context.child(rawType);
         type = _constructType(context, rawType, typeBindings);
-        context.resolveSelfReferences(type);
+        // [classmate#128]: self-references with different bindings (like raw `Mid` within
+        // `Mid<String>`) represent differently parameterized type, resolved lazily. Except
+        // if within type parameters of the type itself (like `E` in raw `Enum<E extends Enum<E>>`)
+        final ResolvedType resolved = type;
+        context.resolveSelfReferences(type, ref -> _containsType(resolved.getTypeBindings(), ref)
+                ? resolved : _standaloneSelfReference(ref));
         // [classmate#128]: nor can types with self-references to types still being
         // resolved (like `B` in `B extends Base<A>`, when resolving `A extends Base<B>`)
         // be cached, whether via type parameters, supertypes or array element types
@@ -891,7 +896,22 @@ public class TypeResolver implements Serializable
                 || _containsType(ref.getTypeBindings(), selfRef))) {
             return ref;
         }
+        return _standaloneSelfReference(selfRef);
+    }
+
+    /**
+     * Helper method for resolving stand-alone type that given self-reference represents,
+     * using its own type bindings (with self-references in them resolved similarly).
+     *
+     * @since 1.8
+     */
+    private ResolvedType _standaloneSelfReference(ResolvedType selfRef)
+    {
         final Class<?> erased = selfRef.getErasedType();
+        final TypeBindings bindings = selfRef.getTypeBindings();
+        if (bindings.isEmpty()) { // raw (or non-generic) type
+            return _fromClass(null, erased, bindings);
+        }
         ResolvedType[] params = new ResolvedType[bindings.size()];
         for (int i = 0; i < params.length; ++i) {
             params[i] = _resolveSelfReferences(bindings.getBoundType(i), null);

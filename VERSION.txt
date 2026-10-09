@@ -38,17 +38,14 @@ Release notes:
 #128: Self-references via supertypes still cached; self-references not equal
   to fully resolved types
 - Types containing self-references to types still being resolved (like `B` in
-  `B extends Base<A>`, when resolving `A extends Base<B>`; via type parameters,
-  supertypes or array element types) are no longer cached; nor are types later
-  resolved using them (f.ex via `MemberResolver`, `arrayType()` or `resolveSubtype()`,
-  which also re-resolves them)
-- Self-references (`ResolvedRecursiveType`) within type parameters or array element
-  types are equal to fully resolved types with same erased type and type bindings
-  (at any level of nesting; f.ex `Base<List<LNode>>` from `LNode extends Base<List<LNode>>`)
-- Raw self-references (like `GNode` in `GNode<T> extends Base<GNode[]>`) have their
-  type parameters resolved to bounds, same as other raw types
-- `resolveSubtype()` resolves self-references with bindings different from those
-  of the referenced type (like `N<N<T>>` within `N<T>`) using their own bindings
+  `B extends Base<A>` when resolving `A extends Base<B>`) are no longer cached,
+  nor are types later resolved using them
+- Self-references (`ResolvedRecursiveType`) nested in type parameters or array
+  element types are equal to fully resolved types with same type bindings
+- Raw self-references have type parameters resolved to bounds, like other raw types
+- Self-references with bindings different from referenced type (like raw `Mid`
+  within `Mid<String>`, or `N<N<T>>` within `N<T>`) now refer to type with own
+  bindings (`getSelfReferencedType()`, `getParentClass()`, `resolveSubtype()`)
  (fix by @cowtowncoder w/ Claude code)
 
 1.7.3 (02-Jan-2026)

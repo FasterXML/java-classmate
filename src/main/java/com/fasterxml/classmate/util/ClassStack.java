@@ -3,6 +3,8 @@ package com.fasterxml.classmate.util;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.types.ResolvedRecursiveType;
@@ -123,9 +125,29 @@ public final class ClassStack
      */
     public void resolveSelfReferences(ResolvedType resolved)
     {
+        resolveSelfReferences(resolved, null);
+    }
+
+    /**
+     * Method called when type that this stack frame represents is
+     * fully resolved, allowing self-references to be completed
+     * (if there are any). Self-references with type bindings different from those
+     * of the resolved type get the actual type they represent from given function,
+     * if any (see {@link ResolvedRecursiveType#setReference(ResolvedType, Supplier)}).
+     *
+     * @since 1.8
+     */
+    public void resolveSelfReferences(ResolvedType resolved,
+            Function<ResolvedRecursiveType, ResolvedType> actualTypeResolver)
+    {
         if (_selfRefs != null) {
-            for (ResolvedRecursiveType ref : _selfRefs) {
-                ref.setReference(resolved);
+            for (final ResolvedRecursiveType ref : _selfRefs) {
+                if ((actualTypeResolver == null)
+                        || ref.getTypeBindings().equals(resolved.getTypeBindings())) {
+                    ref.setReference(resolved);
+                } else {
+                    ref.setReference(resolved, () -> actualTypeResolver.apply(ref));
+                }
             }
         }
     }
