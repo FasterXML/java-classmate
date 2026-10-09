@@ -39,7 +39,7 @@ Release notes:
   to fully resolved types
 - Types containing self-references to types still being resolved (like `B` in
   `B extends Base<A>` when resolving `A extends Base<B>`) are no longer cached,
-  nor are types later resolved using them
+  and are re-resolved when used later (like for member types)
 - Self-references (`ResolvedRecursiveType`) nested in type parameters or array
   element types are equal to fully resolved types with same type bindings
 - Raw self-references have type parameters resolved to bounds, like other raw types

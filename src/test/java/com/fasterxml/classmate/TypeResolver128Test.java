@@ -3,6 +3,8 @@ package com.fasterxml.classmate;
 import java.util.*;
 import java.util.function.Supplier;
 
+import com.fasterxml.classmate.members.ResolvedField;
+
 /**
  * Tests for [classmate#128]: caching of types with self-references via supertypes,
  * and equality of self-references with fully resolved types.
@@ -46,6 +48,8 @@ public class TypeResolver128Test extends BaseTest
     static class FSub<T> extends FieldBase<T> { }
 
     static class Pair<A, B> { }
+    static class Dup<E> extends Pair<E, E> { }
+    enum Color { RED }
     static class SubPair<A, B> extends Pair<A, B> { }
     static class X extends Base<Y> { }
     static class Y extends Base<Z> { }
@@ -143,6 +147,18 @@ public class TypeResolver128Test extends BaseTest
         ResolvedTypeWithMembers members = new MemberResolver(resolver)
                 .resolve(resolver.resolve(FA.class), null, null);
         assertEquals(2, members.getMemberFields().length);
+        // member types themselves must not contain incomplete types either
+        for (ResolvedField field : members.getMemberFields()) {
+            ResolvedType type = field.getType();
+            ResolvedType b = type.isArray() ? type.getArrayElementType()
+                    : type.getTypeParameters().get(0);
+            _verifyFullyResolved(b.getParentClass().getTypeParameters().get(0), FA.class);
+        }
+        // and are cached
+        ResolvedTypeWithMembers members2 = new MemberResolver(resolver)
+                .resolve(resolver.resolve(FA.class), null, null);
+        assertSame(members.getMemberFields()[0].getType(), members2.getMemberFields()[0].getType());
+
         ResolvedType listOfB = resolver.resolve(List.class, FB.class);
         _verifyFullyResolved(listOfB.getTypeParameters().get(0).getParentClass()
                 .getTypeParameters().get(0), FA.class);
@@ -291,6 +307,20 @@ public class TypeResolver128Test extends BaseTest
         assertTrue(TypeResolver.isSelfReference(selfRef));
         assertEquals(resolver.resolve(N.class, resolver.resolve(N.class, String.class)),
                 selfRef.getSelfReferencedType());
+    }
+
+    // Self-reference (in raw `Enum`) must be merged with compatible type as the type
+    // it represents
+    public void testSubtypeMergingSelfReference()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType rawEnum = resolver.resolve(Enum.class);
+        assertTrue(TypeResolver.isSelfReference(rawEnum.getTypeParameters().get(0)));
+        ResolvedType enumOfColor = resolver.resolve(Enum.class,
+                resolver.resolve(Enum.class, Color.class));
+        ResolvedType sub = resolver.resolveSubtype(
+                resolver.resolve(Pair.class, rawEnum, enumOfColor), Dup.class);
+        assertEquals(resolver.resolve(Dup.class, enumOfColor), sub);
     }
 
     public void testRawSelfReferenceWithRawBound()

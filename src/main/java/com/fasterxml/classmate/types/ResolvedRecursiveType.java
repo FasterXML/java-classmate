@@ -36,8 +36,8 @@ public class ResolvedRecursiveType extends ResolvedType
     protected Supplier<ResolvedType> _actualTypeSupplier;
 
     /**
-     * Actual type this self-reference represents, if differs from referenced type;
-     * resolved lazily using {@link #_actualTypeSupplier}.
+     * Actual type this self-reference represents (referenced type, unless bindings
+     * differ); resolved lazily using {@link #_actualTypeSupplier}, if one given.
      *
      * @since 1.8
      */
@@ -66,6 +66,7 @@ public class ResolvedRecursiveType extends ResolvedType
             throw new IllegalStateException("Trying to re-set self reference; old value = "+_referencedType+", new = "+ref);
         }
         _referencedType = ref;
+        _actualType = ref;
     }
 
     /**
@@ -79,7 +80,10 @@ public class ResolvedRecursiveType extends ResolvedType
     public void setReference(ResolvedType ref, Supplier<ResolvedType> actualType)
     {
         setReference(ref);
-        _actualTypeSupplier = actualType;
+        synchronized (this) {
+            _actualTypeSupplier = actualType;
+            _actualType = null;
+        }
     }
 
     /*
@@ -98,19 +102,26 @@ public class ResolvedRecursiveType extends ResolvedType
 
     @Override
     public ResolvedType getSelfReferencedType() {
-        if (_actualTypeSupplier == null) {
-            return _referencedType;
-        }
         ResolvedType actual = _actualType;
-        if (actual == null) {
-            actual = _actualTypeSupplier.get();
-            // retain identity if equal (like for `E` in raw `Enum<E extends Enum<E>>`)
-            if (actual.equals(_referencedType)) {
-                actual = _referencedType;
-            }
-            _actualType = actual;
+        if (actual != null) {
+            return actual;
         }
-        return actual;
+        synchronized (this) {
+            if (_actualType == null) {
+                if (_actualTypeSupplier == null) {
+                    return _referencedType;
+                }
+                actual = _actualTypeSupplier.get();
+                // retain identity if equal (like for `E` in raw `Enum<E extends Enum<E>>`)
+                if (actual.equals(_referencedType)) {
+                    actual = _referencedType;
+                }
+                _actualType = actual;
+                // no longer needed (and may hold on to `TypeResolver`)
+                _actualTypeSupplier = null;
+            }
+            return _actualType;
+        }
     }
     
     /**

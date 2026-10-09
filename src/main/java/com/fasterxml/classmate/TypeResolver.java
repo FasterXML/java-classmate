@@ -198,7 +198,9 @@ public class TypeResolver implements Serializable
      */
     public ResolvedType resolve(TypeBindings typeBindings, Type jdkType)
     {
-        return _fromAny(null, jdkType, typeBindings);
+        // [classmate#128]: bindings may contain incomplete types (like when resolving
+        // members of a type), which must not be exposed on their own
+        return _completeType(_fromAny(null, jdkType, typeBindings));
     }
 
     /**
@@ -372,6 +374,11 @@ public class TypeResolver implements Serializable
             return _arrayOf(context, rawType, _fromClass(context, rawType.getComponentType(),
                     TypeBindings.emptyBindings()));
         }
+        // [classmate#128]: incomplete types (from earlier resolution) must not be
+        // used as type parameters of new stand-alone types
+        if (context == null) {
+            typeBindings = _completeBindings(rawType, typeBindings);
+        }
         // Second: recursive reference?
         if (context != null) {
             ClassStack prev = context.find(rawType);
@@ -429,6 +436,43 @@ public class TypeResolver implements Serializable
             type._markIncomplete();
         }
         return type;
+    }
+
+    /**
+     * Helper method for replacing incomplete type (see {@link ResolvedType}) obtained
+     * from an earlier resolution with stand-alone type, to avoid it being used outside
+     * of its resolution context. Self-references are retained as-is, however.
+     *
+     * @since 1.8
+     */
+    private ResolvedType _completeType(ResolvedType type)
+    {
+        if (type._isIncomplete() && !isSelfReference(type)) {
+            return _resolveSelfReferences(type, null);
+        }
+        return type;
+    }
+
+    /**
+     * Helper method for replacing incomplete types within given bindings, if any
+     * (see {@link #_completeType}).
+     *
+     * @since 1.8
+     */
+    private TypeBindings _completeBindings(Class<?> rawType, TypeBindings bindings)
+    {
+        ResolvedType[] types = null;
+        for (int i = 0, len = bindings.size(); i < len; ++i) {
+            ResolvedType t = bindings.getBoundType(i);
+            ResolvedType complete = _completeType(t);
+            if (complete != t) {
+                if (types == null) {
+                    types = bindings.typeParameterArray().clone();
+                }
+                types[i] = complete;
+            }
+        }
+        return (types == null) ? bindings : TypeBindings.create(rawType, types);
     }
 
     /**
@@ -616,6 +660,10 @@ public class TypeResolver implements Serializable
      */
     private ResolvedArrayType _arrayOf(ClassStack context, Class<?> arrayClass, ResolvedType elementType)
     {
+        // [classmate#128]: same as with type parameters (see `_fromClass()`)
+        if (context == null) {
+            elementType = _completeType(elementType);
+        }
         ResolvedTypeKey key = TypeBindings.isContextual(elementType) ? null
                 : _resolvedTypes.key(arrayClass, new ResolvedType[] { elementType });
         ResolvedType type = _findType(context, key);
@@ -750,7 +798,9 @@ public class TypeResolver implements Serializable
             exp = _selfReferenceTarget(exp);
         } else if (isSelfReference(act) && !isSelfReference(exp)) {
             // but only raw one: others have bindings (possibly with placeholders) to use
-            act = _resolveRawSelfReference(act);
+            if (act.getTypeBindings().isEmpty()) {
+                act = _standaloneSelfReference(act);
+            }
         }
         // [classmate#127]: Array types have no type parameters, so need to verify
         // (and resolve) element types instead. Must be done before erased type check
@@ -793,8 +843,9 @@ public class TypeResolver implements Serializable
      */
     private ResolvedType _mergeBindings(ResolvedType a, ResolvedType b)
     {
-        if (a.equals(b)) {
-            return a;
+        // [classmate#128]: self-reference equal to fully resolved type, latter preferred
+        if (ResolvedType._equalTypes(a, b)) {
+            return isSelfReference(a) ? b : a;
         }
         if (_isJavaLangObject(a) && !b.isPrimitive()) {
             return b;
@@ -802,7 +853,17 @@ public class TypeResolver implements Serializable
         if (_isJavaLangObject(b) && !a.isPrimitive()) {
             return a;
         }
-        if (isSelfReference(a) || isSelfReference(b) || (a.isArray() != b.isArray())) {
+        // [classmate#128]: self-reference (like one in raw `Enum`) can be merged as the
+        // type it represents; as long as that contains no self-references (to ensure
+        // termination)
+        if (isSelfReference(a) != isSelfReference(b)) {
+            ResolvedType standalone = _standaloneSelfReference(isSelfReference(a) ? a : b);
+            if (TypeBindings.isContextual(standalone)) {
+                return null;
+            }
+            return isSelfReference(a) ? _mergeBindings(standalone, b) : _mergeBindings(a, standalone);
+        }
+        if (isSelfReference(a) || (a.isArray() != b.isArray())) {
             return null;
         }
         if (a.isArray()) {
@@ -850,23 +911,6 @@ public class TypeResolver implements Serializable
 
     private static boolean _isJavaLangObject(ResolvedType type) {
         return type.getErasedType() == Object.class;
-    }
-
-    /**
-     * Helper method for resolving raw self-reference (one without type bindings, for
-     * generic class) into type with type parameters bound to their bounds; same as
-     * other raw types are resolved.
-     *
-     * @since 1.8
-     */
-    private ResolvedType _resolveRawSelfReference(ResolvedType type)
-    {
-        if (isSelfReference(type)
-                && type.getTypeBindings().isEmpty()
-                && type.getErasedType().getTypeParameters().length > 0) {
-            return _fromClass(null, type.getErasedType(), type.getTypeBindings());
-        }
-        return type;
     }
 
     /**
