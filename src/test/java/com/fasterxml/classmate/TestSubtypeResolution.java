@@ -1,5 +1,7 @@
 package com.fasterxml.classmate;
 
+import com.fasterxml.classmate.types.ResolvedObjectType;
+import com.fasterxml.classmate.types.ResolvedRecursiveType;
 import com.fasterxml.classmate.util.ResolvedTypeCache;
 
 import java.util.*;
@@ -737,5 +739,49 @@ public class TestSubtypeResolution extends BaseTest
     public void testObjectArrayNotCompatibleWithPrimitiveArray()
     {
         _verifyIncompatible(typeResolver.resolve(Wrapper.class, Object[].class), IntArrayWrapper.class);
+    }
+
+    // [classmate#127]: self-reference (in raw type) is not merged with other type
+    // (raw types not yet handled as such, see [classmate#130])
+    public void testSelfReferenceNotMergedWithOtherType()
+    {
+        ResolvedType rawEnum = typeResolver.resolve(Enum.class);
+        ResolvedType enumOfTimeUnit = typeResolver.resolve(Enum.class, java.util.concurrent.TimeUnit.class);
+        _verifyConflict(typeResolver.resolve(Pair.class, rawEnum, enumOfTimeUnit), SamePair.class);
+        _verifyConflict(typeResolver.resolve(Pair.class, enumOfTimeUnit, rawEnum), SamePair.class);
+        _verifyConflict(typeResolver.resolve(Pair.class,
+                typeResolver.resolve(Node.class), typeResolver.resolve(Node.class, Node.class)),
+                SamePair.class);
+    }
+
+    // [classmate#127]: types constructed directly (not via `TypeResolver`) may lack
+    // bindings for type parameters
+    public void testSubtypeWithTypeMissingBindings()
+    {
+        ResolvedType rawList = new ResolvedObjectType(List.class, TypeBindings.emptyBindings(),
+                (ResolvedType) null, (List<ResolvedType>) null);
+        _verifyIncompatible(typeResolver.resolve(Wrapper.class, rawList), ListWrapper.class);
+        _verifyConflict(typeResolver.resolve(Pair.class, rawList,
+                typeResolver.resolve(List.class, String.class)), SamePair.class);
+    }
+
+    // [classmate#127]: self-reference constructed directly (not via `TypeResolver`)
+    // may lack referenced type
+    public void testSubtypeWithUnresolvedSelfReference()
+    {
+        ResolvedType listOfString = typeResolver.resolve(List.class, String.class);
+        ResolvedType selfRef = new ResolvedRecursiveType(List.class, listOfString.getTypeBindings());
+        assertEquals(typeResolver.resolve(ListWrapper.class, String.class),
+                typeResolver.resolveSubtype(typeResolver.resolve(Wrapper.class, selfRef), ListWrapper.class));
+    }
+
+    private void _verifyConflict(ResolvedType supertype, Class<?> subtype)
+    {
+        try {
+            ResolvedType t = typeResolver.resolveSubtype(supertype, subtype);
+            fail("Expected failure, got: "+t.getFullDescription());
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "conflicting bindings for type variable `E`");
+        }
     }
 }
