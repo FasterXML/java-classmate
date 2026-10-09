@@ -354,6 +354,32 @@ public class TypeResolverTest extends BaseTest
         }
     }
 
+    // [classmate#127]: primitive types are not valid type parameters
+    public void testPrimitiveTypeParameter()
+    {
+        try {
+            typeResolver.resolve(List.class, int.class);
+            fail("Expected failure");
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "Can not use primitive type (int) as type parameter #1/1 of java.util.List");
+        }
+        try {
+            typeResolver.resolve(Map.class, String.class, typeResolver.resolve(Long.TYPE));
+            fail("Expected failure");
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "Can not use primitive type (long) as type parameter #2/2 of java.util.Map");
+        }
+        try {
+            typeResolver.resolve(new GenericType<List<?>>() { }, Void.TYPE);
+            fail("Expected failure");
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "Can not use primitive type (void) as type parameter #1/1");
+        }
+        // but arrays of primitives are fine
+        ResolvedType t = typeResolver.resolve(List.class, int[].class);
+        assertSame(int[].class, t.getTypeParameters().get(0).getErasedType());
+    }
+
     public void testInvalidSubtype()
     {
         ResolvedType supertype = typeResolver.resolve(String.class);

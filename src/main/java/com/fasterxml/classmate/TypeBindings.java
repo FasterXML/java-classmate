@@ -86,6 +86,9 @@ public final class TypeBindings
     /**
      * Factory method for constructing bindings for given class using specified type
      * parameters.
+     *
+     * @throws IllegalArgumentException If number of type parameters does not match
+     *    that of given class, or if any of type parameters is a primitive type
      */
     public static TypeBindings create(Class<?> erasedType, List<ResolvedType> typeList)
     {
@@ -93,7 +96,14 @@ public final class TypeBindings
                 NO_TYPES : typeList.toArray(new ResolvedType[0]);
         return create(erasedType, types);
     }
-        
+
+    /**
+     * Factory method for constructing bindings for given class using specified type
+     * parameters.
+     *
+     * @throws IllegalArgumentException If number of type parameters does not match
+     *    that of given class, or if any of type parameters is a primitive type
+     */
     public static TypeBindings create(Class<?> erasedType, ResolvedType[] types)
     {
         if (types == null) {
@@ -115,6 +125,14 @@ public final class TypeBindings
             throw new IllegalArgumentException("Can not create TypeBinding for class "+erasedType.getName()
                    +" with "+types.length+" type parameter"
                    +((types.length == 1) ? "" : "s")+": class expects "+names.length);
+        }
+        // [classmate#127]: primitive types are not valid type parameters
+        for (int i = 0, len = types.length; i < len; ++i) {
+            if (types[i].isPrimitive()) {
+                throw new IllegalArgumentException("Can not use primitive type ("
+                        +types[i].getBriefDescription()+") as type parameter #"
+                        +(i+1)+"/"+len+" of "+erasedType.getName());
+            }
         }
         return new TypeBindings(names, types, null);
     }

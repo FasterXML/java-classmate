@@ -23,6 +23,19 @@ public class TypeBindingsTest
         assertEquals(0, ((ResolvedType[]) typesField.get(instance)).length);
     }
 
+    // [classmate#127]: primitive types are not valid type parameters
+    @Test
+    public void createWithPrimitive() {
+        ResolvedType intType = new TypeResolver().resolve(Integer.TYPE);
+        try {
+            TypeBindings.create(Comparable.class, Collections.singletonList(intType));
+            fail("Expected failure");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains(
+                    "Can not use primitive type (int) as type parameter #1/1 of java.lang.Comparable"));
+        }
+    }
+
     @Test
     public void isEmpty() {
         TypeBindings instance = TypeBindings.create(String.class, (List<ResolvedType>) null);
