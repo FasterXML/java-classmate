@@ -146,7 +146,8 @@ public class TypeResolver implements Serializable
         } else if (type instanceof ResolvedType) {
             ResolvedType rt = (ResolvedType) type;
             if (noParams) {
-                return rt;
+                // [classmate#128]: same as `resolve(TypeBindings, Type)`
+                return _completeType(rt);
             }
             bindings = rt.getTypeBindings();
             rawBase = rt.getErasedType();
@@ -378,9 +379,7 @@ public class TypeResolver implements Serializable
         // used as type parameters of new stand-alone types
         if (context == null) {
             typeBindings = _completeBindings(rawType, typeBindings);
-        }
-        // Second: recursive reference?
-        if (context != null) {
+        } else { // Second: recursive reference?
             ClassStack prev = context.find(rawType);
             if (prev != null) {
                 // Self-reference: needs special handling, then...
@@ -418,9 +417,10 @@ public class TypeResolver implements Serializable
         // [classmate#128]: self-references with different bindings (like raw `Mid` within
         // `Mid<String>`) represent differently parameterized type, resolved lazily. Except
         // if within type parameters of the type itself (like `E` in raw `Enum<E extends Enum<E>>`)
-        final ResolvedType resolved = type;
-        context.resolveSelfReferences(type, ref -> _containsType(resolved.getTypeBindings(), ref)
-                ? resolved : _standaloneSelfReference(ref));
+        final TypeBindings resolvedBindings = type.getTypeBindings();
+        context.resolveSelfReferences(type, ref -> ref.getTypeBindings().equals(resolvedBindings)
+                || _containsType(resolvedBindings, ref)
+                ? null : () -> _standaloneSelfReference(ref));
         // [classmate#128]: nor can types with self-references to types still being
         // resolved (like `B` in `B extends Base<A>`, when resolving `A extends Base<B>`)
         // be cached, whether via type parameters, supertypes or array element types
@@ -441,13 +441,15 @@ public class TypeResolver implements Serializable
     /**
      * Helper method for replacing incomplete type (see {@link ResolvedType}) obtained
      * from an earlier resolution with stand-alone type, to avoid it being used outside
-     * of its resolution context. Self-references are retained as-is, however.
+     * of its resolution context. Types with self-references in type parameters (or
+     * self-references themselves) are retained as-is, however, since they are only
+     * valid within their enclosing types.
      *
      * @since 1.8
      */
     private ResolvedType _completeType(ResolvedType type)
     {
-        if (type._isIncomplete() && !isSelfReference(type)) {
+        if (type._isIncomplete() && !TypeBindings.isContextual(type)) {
             return _resolveSelfReferences(type, null);
         }
         return type;
@@ -1024,15 +1026,17 @@ public class TypeResolver implements Serializable
             ResolvedType newT = _resolveSelfReferences(t, enclosing);
             if (newT != t) {
                 if (newTypes == null) {
-                    newTypes = bindings.getTypeParameters().toArray(new ResolvedType[0]);
+                    newTypes = bindings.typeParameterArray().clone();
                 }
                 newTypes[i] = newT;
             }
         }
         enclosing.remove(enclosing.size() - 1);
         if (newTypes == null) {
-            // [classmate#128]: type with self-references via supertypes needs to be re-resolved
-            if (!type._isIncomplete()) {
+            // [classmate#128]: type with self-references via supertypes needs to be re-resolved;
+            // but not if it retains self-references to enclosing types (since those are
+            // valid as-is, and would not be valid after re-resolution)
+            if (!type._isIncomplete() || bindings.hasContextualTypes()) {
                 return type;
             }
             newTypes = bindings.typeParameterArray();

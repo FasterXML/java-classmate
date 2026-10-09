@@ -106,16 +106,25 @@ public class ResolvedRecursiveType extends ResolvedType
         if (actual != null) {
             return actual;
         }
+        final Supplier<ResolvedType> supplier;
+        synchronized (this) {
+            if (_actualType != null) {
+                return _actualType;
+            }
+            supplier = _actualTypeSupplier;
+            if (supplier == null) {
+                return _referencedType;
+            }
+        }
+        // resolved outside of lock, since resolution may access other self-references;
+        // concurrent calls may resolve more than once, but only first one is retained
+        actual = supplier.get();
+        // retain identity if equal
+        if (actual.equals(_referencedType)) {
+            actual = _referencedType;
+        }
         synchronized (this) {
             if (_actualType == null) {
-                if (_actualTypeSupplier == null) {
-                    return _referencedType;
-                }
-                actual = _actualTypeSupplier.get();
-                // retain identity if equal (like for `E` in raw `Enum<E extends Enum<E>>`)
-                if (actual.equals(_referencedType)) {
-                    actual = _referencedType;
-                }
                 _actualType = actual;
                 // no longer needed (and may hold on to `TypeResolver`)
                 _actualTypeSupplier = null;

@@ -81,6 +81,11 @@ public class TypeResolver128Test extends BaseTest
     }
     static class GOuter extends GMid { }
 
+    // Self-reference to enclosing type within bound
+    static class BMid<X> { }
+    @SuppressWarnings("rawtypes")
+    static class BOuter<T extends BMid<BOuter>> { }
+
     // Raw self-reference with raw bound
     @SuppressWarnings("rawtypes")
     static class RawBound<T extends RawBound> extends Base<RawBound> { }
@@ -221,6 +226,32 @@ public class TypeResolver128Test extends BaseTest
         _verifyFullyResolved(sub.getTypeParameters().get(0), C1.class);
         _verifyFullyResolved(sub.getTypeParameters().get(1), C2.class);
         assertEquals(resolver.resolve(SubPair.class, C1.class, C2.class), sub);
+    }
+
+    // Incomplete types must be completed by all `resolve()` methods
+    public void testIncompleteTypeResolvedDirectly()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType b = resolver.resolve(A.class).getParentClass().getTypeParameters().get(0);
+        ResolvedType direct = resolver.resolve(b);
+        assertNotSame(b, direct);
+        _verifyFullyResolved(direct.getParentClass().getTypeParameters().get(0), A.class);
+        assertSame(resolver.resolve(B.class), direct);
+        assertSame(direct, resolver.resolve(TypeBindings.emptyBindings(), b));
+    }
+
+    // Self-references to enclosing types (within incomplete types) are valid as-is,
+    // so subtyping to the type itself must not change it
+    public void testSubtypeRetainsSelfReferenceToEnclosingType()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType outer = resolver.resolve(BOuter.class);
+        ResolvedType mid = outer.getTypeParameters().get(0);
+        assertTrue(TypeResolver.isSelfReference(mid.getTypeParameters().get(0)));
+        ResolvedType sub = resolver.resolveSubtype(outer, BOuter.class);
+        assertEquals(outer, sub);
+        assertEquals(sub, outer);
+        assertSame(sub, resolver.resolveSubtype(outer, BOuter.class));
     }
 
     public void testIncompleteTypesReusedWithinResolution()

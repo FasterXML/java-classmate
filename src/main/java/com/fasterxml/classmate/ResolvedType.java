@@ -38,7 +38,7 @@ public abstract class ResolvedType
      *
      * @since 1.8
      */
-    private boolean _incomplete;
+    private volatile boolean _incomplete;
 
     /*
     /**********************************************************************

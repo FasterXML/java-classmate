@@ -131,22 +131,24 @@ public final class ClassStack
     /**
      * Method called when type that this stack frame represents is
      * fully resolved, allowing self-references to be completed
-     * (if there are any). Self-references with type bindings different from those
-     * of the resolved type get the actual type they represent from given function,
-     * if any (see {@link ResolvedRecursiveType#setReference(ResolvedType, Supplier)}).
+     * (if there are any). Self-references that represent a type different from the
+     * resolved one (like ones with different type bindings) get the actual type they
+     * represent from supplier given by function (null if self-reference represents the
+     * resolved type), if any (see {@link ResolvedRecursiveType#setReference(ResolvedType, Supplier)}).
      *
      * @since 1.8
      */
     public void resolveSelfReferences(ResolvedType resolved,
-            Function<ResolvedRecursiveType, ResolvedType> actualTypeResolver)
+            Function<ResolvedRecursiveType, Supplier<ResolvedType>> actualTypes)
     {
         if (_selfRefs != null) {
-            for (final ResolvedRecursiveType ref : _selfRefs) {
-                if ((actualTypeResolver == null)
-                        || ref.getTypeBindings().equals(resolved.getTypeBindings())) {
+            for (ResolvedRecursiveType ref : _selfRefs) {
+                Supplier<ResolvedType> actualType = (actualTypes == null) ? null
+                        : actualTypes.apply(ref);
+                if (actualType == null) {
                     ref.setReference(resolved);
                 } else {
-                    ref.setReference(resolved, () -> actualTypeResolver.apply(ref));
+                    ref.setReference(resolved, actualType);
                 }
             }
         }
