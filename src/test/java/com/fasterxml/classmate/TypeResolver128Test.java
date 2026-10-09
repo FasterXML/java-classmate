@@ -51,6 +51,11 @@ public class TypeResolver128Test extends BaseTest
     static class Y extends Base<Z> { }
     static class Z extends Pair<X, List<Y>> { }
 
+    // Cycle of 3 types via type parameters
+    static class C1 extends Pair<C2, C3> { }
+    static class C2 extends Pair<C3, C1> { }
+    static class C3 extends Pair<C1, C2> { }
+
     // Many types referring to each other: incomplete types must be reused
     // within resolution (to avoid exponential resolution time)
     static class Base10<P0,P1,P2,P3,P4,P5,P6,P7,P8,P9> { }
@@ -175,6 +180,24 @@ public class TypeResolver128Test extends BaseTest
         ResolvedType z2 = listOfY.getTypeParameters().get(0).getParentClass()
                 .getTypeParameters().get(0);
         _verifyFullyResolved(z2.getParentClass().getTypeParameters().get(0), X.class);
+    }
+
+    // Subtyping types with self-references to incomplete types, cyclic via
+    // type parameters, must terminate and produce stand-alone types
+    public void testSubtypeWithCyclicIncompleteTypes()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType c2 = resolver.resolve(C1.class).getParentClass().getTypeParameters().get(0);
+        ResolvedType c3 = c2.getParentClass().getTypeParameters().get(0);
+        // `Pair<C1, C2>` with self-references to both
+        ResolvedType pair = c3.getParentClass();
+        assertTrue(TypeResolver.isSelfReference(pair.getTypeParameters().get(0)));
+        assertTrue(TypeResolver.isSelfReference(pair.getTypeParameters().get(1)));
+        ResolvedType sub = resolver.resolveSubtype(pair, SubPair.class);
+        assertSame(SubPair.class, sub.getErasedType());
+        _verifyFullyResolved(sub.getTypeParameters().get(0), C1.class);
+        _verifyFullyResolved(sub.getTypeParameters().get(1), C2.class);
+        assertEquals(resolver.resolve(SubPair.class, C1.class, C2.class), sub);
     }
 
     public void testIncompleteTypesReusedWithinResolution()
