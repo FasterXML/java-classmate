@@ -165,7 +165,8 @@ public class TypeResolver implements Serializable
         int len = typeParameters.length;
         ResolvedType[] resolvedParams = new ResolvedType[len];
         for (int i = 0; i < len; ++i) {
-            resolvedParams[i] = _fromAny(null, typeParameters[i], bindings);
+            // [classmate#128]: type parameters may be incomplete types (from earlier resolution)
+            resolvedParams[i] = _completeType(_fromAny(null, typeParameters[i], bindings));
         }
         return _fromClass(null, rawBase, TypeBindings.create(rawBase, resolvedParams));
     }
@@ -375,11 +376,8 @@ public class TypeResolver implements Serializable
             return _arrayOf(context, rawType, _fromClass(context, rawType.getComponentType(),
                     TypeBindings.emptyBindings()));
         }
-        // [classmate#128]: incomplete types (from earlier resolution) must not be
-        // used as type parameters of new stand-alone types
-        if (context == null) {
-            typeBindings = _completeBindings(rawType, typeBindings);
-        } else { // Second: recursive reference?
+        // Second: recursive reference?
+        if (context != null) {
             ClassStack prev = context.find(rawType);
             if (prev != null) {
                 // Self-reference: needs special handling, then...
@@ -441,40 +439,17 @@ public class TypeResolver implements Serializable
     /**
      * Helper method for replacing incomplete type (see {@link ResolvedType}) obtained
      * from an earlier resolution with stand-alone type, to avoid it being used outside
-     * of its resolution context. Types with self-references in type parameters (or
-     * self-references themselves) are retained as-is, however, since they are only
-     * valid within their enclosing types.
+     * of its resolution context (see {@link #_resolveSelfReferences}). Called by public
+     * entry points only. Self-references themselves are retained as-is, however.
      *
      * @since 1.8
      */
     private ResolvedType _completeType(ResolvedType type)
     {
-        if (type._isIncomplete() && !TypeBindings.isContextual(type)) {
+        if (type._isIncomplete() && !isSelfReference(type)) {
             return _resolveSelfReferences(type, null);
         }
         return type;
-    }
-
-    /**
-     * Helper method for replacing incomplete types within given bindings, if any
-     * (see {@link #_completeType}).
-     *
-     * @since 1.8
-     */
-    private TypeBindings _completeBindings(Class<?> rawType, TypeBindings bindings)
-    {
-        ResolvedType[] types = null;
-        for (int i = 0, len = bindings.size(); i < len; ++i) {
-            ResolvedType t = bindings.getBoundType(i);
-            ResolvedType complete = _completeType(t);
-            if (complete != t) {
-                if (types == null) {
-                    types = bindings.typeParameterArray().clone();
-                }
-                types[i] = complete;
-            }
-        }
-        return (types == null) ? bindings : TypeBindings.create(rawType, types);
     }
 
     /**
@@ -662,10 +637,6 @@ public class TypeResolver implements Serializable
      */
     private ResolvedArrayType _arrayOf(ClassStack context, Class<?> arrayClass, ResolvedType elementType)
     {
-        // [classmate#128]: same as with type parameters (see `_fromClass()`)
-        if (context == null) {
-            elementType = _completeType(elementType);
-        }
         ResolvedTypeKey key = TypeBindings.isContextual(elementType) ? null
                 : _resolvedTypes.key(arrayClass, new ResolvedType[] { elementType });
         ResolvedType type = _findType(context, key);
@@ -800,7 +771,8 @@ public class TypeResolver implements Serializable
             exp = _selfReferenceTarget(exp);
         } else if (isSelfReference(act) && !isSelfReference(exp)) {
             // but only raw one: others have bindings (possibly with placeholders) to use
-            if (act.getTypeBindings().isEmpty()) {
+            if (act.getTypeBindings().isEmpty()
+                    && (act.getErasedType().getTypeParameters().length > 0)) {
                 act = _standaloneSelfReference(act);
             }
         }

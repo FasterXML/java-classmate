@@ -81,6 +81,13 @@ public class TypeResolver128Test extends BaseTest
     }
     static class GOuter extends GMid { }
 
+    // Incomplete type nested along with self-reference
+    static class HBase<T> {
+        public T value;
+    }
+    static class H extends HBase<Pair<I, H>> { }
+    static class I extends Base<H> { }
+
     // Self-reference to enclosing type within bound
     static class BMid<X> { }
     @SuppressWarnings("rawtypes")
@@ -238,6 +245,21 @@ public class TypeResolver128Test extends BaseTest
         _verifyFullyResolved(direct.getParentClass().getTypeParameters().get(0), A.class);
         assertSame(resolver.resolve(B.class), direct);
         assertSame(direct, resolver.resolve(TypeBindings.emptyBindings(), b));
+    }
+
+    // Incomplete types nested within types with self-references must be completed too
+    public void testIncompleteTypeNestedWithSelfReferenceCompleted()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType h = resolver.resolve(H.class);
+        ResolvedTypeWithMembers members = new MemberResolver(resolver).resolve(h, null, null);
+        assertEquals(1, members.getMemberFields().length);
+        ResolvedType pair = members.getMemberFields()[0].getType();
+        assertSame(Pair.class, pair.getErasedType());
+        _verifyFullyResolved(pair.getTypeParameters().get(0).getParentClass()
+                .getTypeParameters().get(0), H.class);
+        _verifyFullyResolved(pair.getTypeParameters().get(1), H.class);
+        assertEquals(resolver.resolve(Pair.class, I.class, H.class), pair);
     }
 
     // Self-references to enclosing types (within incomplete types) are valid as-is,
