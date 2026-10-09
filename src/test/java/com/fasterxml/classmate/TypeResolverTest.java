@@ -508,21 +508,21 @@ public class TypeResolverTest extends BaseTest
         // first test equality
         GenericType<MatchB<List<?>>> matchBList = new GenericType<MatchB<List<?>>>() { };
         ResolvedType matchBListResolved = typeResolver.resolve(matchBList);
-        assertTrue((Boolean) typesMatchMethod.invoke(typeResolver, matchBListResolved, matchBListResolved, Object.class));
+        assertTrue((Boolean) typesMatchMethod.invoke(typeResolver, matchBListResolved, matchBListResolved));
         GenericType<MatchA<Set<?>, Comparator<Set<?>>>> matchASet = new GenericType<MatchA<Set<?>, Comparator<Set<?>>>>() { };
         GenericType<MatchA<Set<?>, Comparator<Set<?>>>> matchASet1 = new GenericType<MatchA<Set<?>, Comparator<Set<?>>>>() { };
         ResolvedType matchASetResolved = typeResolver.resolve(matchASet);
         ResolvedType matchASetResolved1 = typeResolver.resolve(matchASet1);
-        assertTrue((Boolean) typesMatchMethod.invoke(typeResolver, matchASetResolved, matchASetResolved1, Object.class));
+        assertTrue((Boolean) typesMatchMethod.invoke(typeResolver, matchASetResolved, matchASetResolved1));
 
         // now check inequality
         GenericType<MatchA<List<?>, Comparator<List<?>>>> matchAList = new GenericType<MatchA<List<?>, Comparator<List<?>>>>() { };
         ResolvedType matchAListResolved = typeResolver.resolve(matchAList);
-        assertFalse((Boolean) typesMatchMethod.invoke(typeResolver, matchAListResolved, matchASetResolved, Object.class));
+        assertFalse((Boolean) typesMatchMethod.invoke(typeResolver, matchAListResolved, matchASetResolved));
 
         // now ensure different number of type-parameters are handled correctly
-        assertFalse((Boolean) typesMatchMethod.invoke(typeResolver, matchAListResolved, matchBListResolved, Object.class));
-        assertFalse((Boolean) typesMatchMethod.invoke(typeResolver, matchBListResolved, matchAListResolved, Object.class));
+        assertFalse((Boolean) typesMatchMethod.invoke(typeResolver, matchAListResolved, matchBListResolved));
+        assertFalse((Boolean) typesMatchMethod.invoke(typeResolver, matchBListResolved, matchAListResolved));
     }
 
     public void testMultiDimensionalGenericArrays() throws Exception

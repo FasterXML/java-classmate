@@ -28,13 +28,6 @@ public class TypePlaceHolder extends ResolvedType
     @Override
     public boolean canCreateSubtypes() { return false; }
 
-    /**
-     * @return Index of type parameter (of the type being resolved) this placeholder is for
-     *
-     * @since 1.8
-     */
-    public int ordinal() { return _ordinal; }
-
     public ResolvedType actualType() { return _actualType; }
     public void actualType(ResolvedType t) { _actualType = t; }
     

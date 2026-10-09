@@ -24,16 +24,14 @@ Release notes:
 #127: `resolveSubtype()` does not verify or resolve array element types
 - `resolveSubtype()` now rejects type variable bound to conflicting types
   (like `E` in `Dup<E> extends Pair<E[], E>`; except that `Object`, which may
-  come from wildcard or raw type, is compatible with more specific type) and
-  primitive types bound to type variables (like `int` for `E` in `E[]`)
+  come from wildcard or raw type, is compatible with more specific type at any
+  level of nesting, like `List<?>` with `List<String>`) and primitive types bound
+  to type variables (like `int` for `E` in `E[]`)
 - Self-references (`ResolvedRecursiveType`) only valid within their original
   resolution context (like ones in type parameters of `getParentClass()`) are no
-  longer included in types returned by `resolveSubtype()`; raw self-references
-  resolve to their bounds (self-references to enclosing type, like in raw `Enum`,
-  are retained as-is)
-- `resolveSubtype()` now verifies that type parameters of subtype satisfy (type-erased)
-  bounds of its type variables (f.ex rejects `NumArray<E extends Number>` with `E` of `String`);
-  type parameters of `Object` (which may come from wildcard or raw type) are not verified
+  longer included in types returned by `resolveSubtype()`: raw self-references
+  resolve to their bounds, others to the referenced type (self-references to
+  enclosing type, like in raw `Enum`, are retained as-is)
 - `TypeResolver.resolve(Type, Type...)` now fails with `IllegalArgumentException`
   if any of type parameters is a primitive type (like `resolve(List.class, int.class)`)
  (fix by @cowtowncoder w/ Claude code)
