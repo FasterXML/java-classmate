@@ -23,10 +23,14 @@ Release notes:
   self-references via supertypes)
 #127: `resolveSubtype()` does not verify or resolve array element types
 - `resolveSubtype()` now rejects type variable bound to conflicting types
-  (like `E` in `Dup<E> extends Pair<E[], E>`) and primitive types bound to
-  type variables (like `int` for `E` in `E[]`)
-- Self-references (`ResolvedRecursiveType`) are no longer included in subtypes
-  resolved by `resolveSubtype()`; raw self-references resolve to their bounds
+  (like `E` in `Dup<E> extends Pair<E[], E>`; except that `Object`, which may
+  come from wildcard or raw type, is compatible with more specific type) and
+  primitive types bound to type variables (like `int` for `E` in `E[]`)
+- Self-references (`ResolvedRecursiveType`) only valid within their original
+  resolution context (like ones in type parameters of `getParentClass()`) are no
+  longer included in types returned by `resolveSubtype()`; raw self-references
+  resolve to their bounds (self-references to enclosing type, like in raw `Enum`,
+  are retained as-is)
 - `TypeResolver.resolve(Type, Type...)` now fails with `IllegalArgumentException`
   if any of type parameters is a primitive type (like `resolve(List.class, int.class)`)
  (fix by @cowtowncoder w/ Claude code)
