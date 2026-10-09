@@ -871,28 +871,20 @@ public class TypeResolver implements Serializable
 
     /**
      * Helper method for finding stand-alone type to use in place of given self-reference:
-     * raw one is resolved with type parameters bound to their bounds; others to the type
-     * referenced (or, if bindings differ from those of the type referenced, resolved
-     * using own bindings).
+     * the type referenced, if valid outside its resolution context and with matching
+     * bindings; otherwise resolved using own bindings (raw one to bounds).
      *
      * @since 1.8
      */
     private ResolvedType _selfReferenceTarget(ResolvedType selfRef)
     {
-        ResolvedType raw = _resolveRawSelfReference(selfRef);
-        if (raw != selfRef) {
-            return raw;
-        }
-        // [classmate#128]: referenced type may have different bindings (like `N<N<T>>`
-        // within `N<T>`, or raw `GNode` within `GNode<String>`): if so, need to resolve
-        // with own bindings. Except if self-reference is within type parameters of the
-        // referenced type (like `E` in raw `Enum<E extends Enum<E>>`), since it then
-        // represents the referenced type itself. Unless referenced type is itself only
-        // valid within its resolution context
-        final TypeBindings bindings = selfRef.getTypeBindings();
+        // [classmate#128]: referenced type has matching bindings, except if self-reference
+        // was not constructed by `TypeResolver`; or is within type parameters of the
+        // referenced type (like `E` in raw `Enum<E extends Enum<E>>`), in which case it
+        // represents the referenced type itself
         ResolvedType ref = selfRef.getSelfReferencedType();
         if ((ref != null) && !ref._isIncomplete()
-                && (ref.getTypeBindings().equals(bindings)
+                && (ref.getTypeBindings().equals(selfRef.getTypeBindings())
                 || _containsType(ref.getTypeBindings(), selfRef))) {
             return ref;
         }
