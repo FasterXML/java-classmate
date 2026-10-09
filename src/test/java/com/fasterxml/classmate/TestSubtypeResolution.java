@@ -86,6 +86,12 @@ public class TestSubtypeResolution extends BaseTest
 
     static class EnumHolder<E extends Enum<E>> extends Wrapper<Enum<E>> { }
 
+    @SuppressWarnings("rawtypes")
+    static class Node<N extends Node> { }
+
+    @SuppressWarnings("rawtypes")
+    static class NodeOfRawNodeWrapper extends Wrapper<Node<Node>> { }
+
     abstract static class OuterType<K, V> extends AbstractMap<K, Collection<V>>
     {
         public abstract class Inner extends AbstractMap<K, Collection<V>> {
@@ -235,6 +241,17 @@ public class TestSubtypeResolution extends BaseTest
         assertEquals(rawEnum, typeResolver.resolveSubtype(supertype, Enum.class));
     }
 
+    // [classmate#127]: self-reference (in raw `Node`) compared to non-self-reference
+    // type (`Node<Node>`) in subtype
+    public void testSubtypeWithSelfReferenceComparedToType()
+    {
+        ResolvedType supertype = typeResolver.resolve(Wrapper.class, Node.class);
+        assertTrue(TypeResolver.isSelfReference(
+                supertype.getTypeParameters().get(0).getTypeParameters().get(0)));
+        assertSame(NodeOfRawNodeWrapper.class,
+                typeResolver.resolveSubtype(supertype, NodeOfRawNodeWrapper.class).getErasedType());
+    }
+
     // [classmate#127]: self-reference to another instance of the same class (from
     // different resolution context) must not be retained
     public void testSubtypeWithSelfReferenceFromOtherContext()
@@ -357,6 +374,20 @@ public class TestSubtypeResolution extends BaseTest
         supertype = typeResolver.resolve(new GenericType<Pair<Map<String,?>, Map<?,Integer>>>() { });
         assertEquals(typeResolver.resolve(Map.class, String.class, Integer.class),
                 typeResolver.resolveSubtype(supertype, SamePair.class).getTypeParameters().get(0));
+
+        // more specific binding first
+        supertype = typeResolver.resolve(new GenericType<Pair<List<String>, List<?>>>() { });
+        assertEquals(listOfString,
+                typeResolver.resolveSubtype(supertype, SamePair.class).getTypeParameters().get(0));
+        supertype = typeResolver.resolve(Pair.class, String[].class, Object[].class);
+        assertEquals(typeResolver.resolve(String[].class),
+                typeResolver.resolveSubtype(supertype, SamePair.class).getTypeParameters().get(0));
+
+        // and arrays with element type merged from both
+        supertype = typeResolver.resolve(new GenericType<Pair<Map<String,?>[], Map<?,Integer>[]>>() { });
+        ResolvedType merged = typeResolver.resolveSubtype(supertype, SamePair.class).getTypeParameters().get(0);
+        assertEquals(typeResolver.resolve(new GenericType<Map<String,Integer>[]>() { }), merged);
+        assertSame(Map[].class, merged.getErasedType());
     }
 
     // [classmate#127]: bounds of type variables are not verified (wildcard upper bound

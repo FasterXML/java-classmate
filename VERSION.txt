@@ -32,8 +32,9 @@ Release notes:
   longer included in types returned by `resolveSubtype()`: raw self-references
   resolve to their bounds, others to the referenced type (self-references to
   enclosing type, like in raw `Enum`, are retained as-is)
-- `TypeResolver.resolve(Type, Type...)` now fails with `IllegalArgumentException`
-  if any of type parameters is a primitive type (like `resolve(List.class, int.class)`)
+- `TypeResolver.resolve(Type, Type...)` and `TypeBindings.create()` now fail with
+  `IllegalArgumentException` if any of type parameters is a primitive type
+  (like `resolve(List.class, int.class)`)
  (fix by @cowtowncoder w/ Claude code)
 
 1.7.3 (02-Jan-2026)

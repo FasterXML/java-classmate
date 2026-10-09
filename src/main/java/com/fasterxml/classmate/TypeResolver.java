@@ -165,14 +165,7 @@ public class TypeResolver implements Serializable
         int len = typeParameters.length;
         ResolvedType[] resolvedParams = new ResolvedType[len];
         for (int i = 0; i < len; ++i) {
-            final ResolvedType param = _fromAny(null, typeParameters[i], bindings);
-            // [classmate#127]: primitive types are not valid type parameters
-            if (param.isPrimitive()) {
-                throw new IllegalArgumentException("Can not use primitive type ("
-                        +param.getBriefDescription()+") as type parameter #"
-                        +(i+1)+"/"+len+" of "+rawBase.getName());
-            }
-            resolvedParams[i] = param;
+            resolvedParams[i] = _fromAny(null, typeParameters[i], bindings);
         }
         return _fromClass(null, rawBase, TypeBindings.create(rawBase, resolvedParams));
     }
