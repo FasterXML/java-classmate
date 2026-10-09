@@ -38,6 +38,22 @@ public class TestSubtypeResolution extends BaseTest
 
     static class IntArrayWrapper extends Wrapper<int[]> { }
 
+    static class Array2Wrapper<E> extends Wrapper<E[][]> { }
+
+    static class ListOfArrayWrapper<E> extends Wrapper<List<E[]>> { }
+
+    static class Pair<A, B> { }
+
+    static class DupPair<E> extends Pair<E[], E> { }
+
+    static class RawSelfArray<T> extends Wrapper<RawSelfArray[]> { }
+
+    static class RawSelfArraySub extends RawSelfArray<String> { }
+
+    static class RawSelf<T> extends Wrapper<RawSelf> { }
+
+    static class RawSelfSub extends RawSelf<String> { }
+
     abstract static class OuterType<K, V> extends AbstractMap<K, Collection<V>>
     {
         public abstract class Inner extends AbstractMap<K, Collection<V>> {
@@ -114,6 +130,42 @@ public class TestSubtypeResolution extends BaseTest
         supertype = typeResolver.resolve(Wrapper.class, int[].class);
         subtype = typeResolver.resolveSubtype(supertype, IntArrayWrapper.class);
         assertEquals(supertype, subtype.getParentClass());
+    }
+
+    // [classmate#127]: same type variable bound consistently is fine
+    public void testSubtypeWithRepeatedTypeVariable()
+    {
+        ResolvedType supertype = typeResolver.resolve(Pair.class, String[].class, String.class);
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, DupPair.class);
+        assertSame(DupPair.class, subtype.getErasedType());
+        assertSame(String.class, subtype.getTypeParameters().get(0).getErasedType());
+        assertEquals(supertype, subtype.getParentClass());
+    }
+
+    // [classmate#127]: raw self-reference as (array element) type parameter
+    public void testSubtypeWithRawSelfReference()
+    {
+        ResolvedType supertype = typeResolver.resolve(Wrapper.class, RawSelfArray[].class);
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, RawSelfArraySub.class);
+        assertSame(RawSelfArraySub.class, subtype.getErasedType());
+
+        supertype = typeResolver.resolve(Wrapper.class, RawSelf.class);
+        subtype = typeResolver.resolveSubtype(supertype, RawSelfSub.class);
+        assertSame(RawSelfSub.class, subtype.getErasedType());
+    }
+
+    // [classmate#127]: self-reference in supertype must not leak into subtype
+    public void testSubtypeWithSelfReferenceInSupertype()
+    {
+        ResolvedType supertype = typeResolver.resolve(RawSelfArray.class).getParentClass();
+        assertTrue(supertype.getTypeParameters().get(0).getArrayElementType()
+                instanceof com.fasterxml.classmate.types.ResolvedRecursiveType);
+        ResolvedType subtype = typeResolver.resolveSubtype(supertype, ArrayWrapper.class);
+        ResolvedType param = subtype.getTypeParameters().get(0);
+        assertFalse(param instanceof com.fasterxml.classmate.types.ResolvedRecursiveType);
+        assertSame(RawSelfArray.class, param.getErasedType());
+        assertNotNull(param.getParentClass());
+        assertSame(Wrapper.class, param.getParentClass().getErasedType());
     }
 
     /**
@@ -379,6 +431,32 @@ public class TestSubtypeResolution extends BaseTest
             fail("Expected failure, got: "+t);
         } catch (IllegalArgumentException e) {
             verifyException(e, "Type parameter #1/1 differs");
+        }
+    }
+
+    // [classmate#127]: primitive types can not be bound to type variables
+    public void testPrimitiveArrayElementForTypeVariable()
+    {
+        _verifyIncompatible(typeResolver.resolve(Wrapper.class, int[].class), ArrayWrapper.class);
+        _verifyIncompatible(typeResolver.resolve(Wrapper.class, int[][].class), Array2Wrapper.class);
+        _verifyIncompatible(typeResolver.resolve(Wrapper.class,
+                typeResolver.resolve(List.class, int[].class)), ListOfArrayWrapper.class);
+    }
+
+    // [classmate#127]: type variable must not be bound to conflicting types
+    public void testConflictingTypeVariableBindings()
+    {
+        _verifyIncompatible(typeResolver.resolve(Pair.class, String[].class, Integer.class),
+                DupPair.class);
+    }
+
+    private void _verifyIncompatible(ResolvedType supertype, Class<?> subtype)
+    {
+        try {
+            ResolvedType t = typeResolver.resolveSubtype(supertype, subtype);
+            fail("Expected failure, got: "+t.getFullDescription());
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "differs");
         }
     }
 }

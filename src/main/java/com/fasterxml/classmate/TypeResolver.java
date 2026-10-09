@@ -614,18 +614,33 @@ public class TypeResolver implements Serializable
 
     private boolean _verifyAndResolve(ResolvedType exp, ResolvedType act)
     {
+        // [classmate#127]: Self-reference in expected type is only valid within its
+        // original resolution context, so need to re-resolve it as a stand-alone type
+        if (exp instanceof ResolvedRecursiveType) {
+            exp = _fromClass(null, exp.getErasedType(), exp.getTypeBindings());
+        }
         // See if we have an actual type placeholder to resolve; if yes, replace
         if (act instanceof TypePlaceHolder) {
-            ((TypePlaceHolder) act).actualType(exp);
+            // [classmate#127]: primitive types are not valid type parameters
+            if (exp.isPrimitive()) {
+                return false;
+            }
+            TypePlaceHolder placeholder = (TypePlaceHolder) act;
+            // [classmate#127]: and if already bound, must be bound to the same type
+            ResolvedType prev = placeholder.actualType();
+            if (prev != null) {
+                return prev.equals(exp);
+            }
+            placeholder.actualType(exp);
             return true;
         }
         // [classmate#127]: Array types have no type parameters, so need to verify
         // (and resolve) element types instead. Must be done before erased type check
         // since array of placeholder has erased type of `Object[]`
-        if (exp.isArray() || act.isArray()) {
-            if (!exp.isArray() || !act.isArray()) {
-                return false;
-            }
+        if (exp.isArray() != act.isArray()) {
+            return false;
+        }
+        if (exp.isArray()) {
             return _verifyAndResolve(exp.getArrayElementType(), act.getArrayElementType());
         }
         // if not, try to verify compatibility. But note that we can not
@@ -636,10 +651,14 @@ public class TypeResolver implements Serializable
         // But we can check type parameters "blindly"
         List<ResolvedType> expectedTypes = exp.getTypeParameters();
         List<ResolvedType> actualTypes = act.getTypeParameters();
-        for (int i = 0, len = expectedTypes.size(); i < len; ++i) {
-            ResolvedType exp2 = expectedTypes.get(i);
-            ResolvedType act2 = actualTypes.get(i);
-            if (!_verifyAndResolve(exp2, act2)) {
+        final int len = expectedTypes.size();
+        if (len != actualTypes.size()) {
+            // [classmate#127]: raw self-reference (like `Base` within `class Base<T> extends Wrapper<Base>`)
+            // has no type parameters; can not verify those, but there are no placeholders to resolve either
+            return (act instanceof ResolvedRecursiveType) && actualTypes.isEmpty();
+        }
+        for (int i = 0; i < len; ++i) {
+            if (!_verifyAndResolve(expectedTypes.get(i), actualTypes.get(i))) {
                 return false;
             }
         }
