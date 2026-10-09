@@ -19,8 +19,7 @@ Release notes:
 - Array types are cached by `TypeResolver` using element type as part of the key
 - Types with `TypePlaceHolder`s (from `resolveSubtype()`) or self-references
   (`ResolvedRecursiveType`) in their type parameters (at any level of nesting,
-  including array element types) are no longer cached (but see #128 for
-  self-references via supertypes)
+  including array element types) are no longer cached
 #127: `resolveSubtype()` does not verify or resolve array element types
 - `resolveSubtype()` now rejects type variable bound to conflicting types
   (like `E` in `Dup<E> extends Pair<E[], E>`; except that `Object`, which may
@@ -35,6 +34,19 @@ Release notes:
 - `TypeResolver.resolve(Type, Type...)` and `TypeBindings.create()` now fail with
   `IllegalArgumentException` if any of type parameters is a primitive type
   (like `resolve(List.class, int.class)`)
+ (fix by @cowtowncoder w/ Claude code)
+#128: Self-references via supertypes still cached; self-references not equal
+  to fully resolved types
+- Types containing self-references to types still being resolved (like `B` in
+  `B extends Base<A>`, when resolving `A extends Base<B>`; via type parameters,
+  supertypes or array element types) are no longer cached
+- Self-references (`ResolvedRecursiveType`) within type parameters or array element
+  types are equal to fully resolved types with same erased type and type bindings
+  (at any level of nesting; f.ex `Base<List<LNode>>` from `LNode extends Base<List<LNode>>`)
+- Raw self-references (like `GNode` in `GNode<T> extends Base<GNode[]>`) have their
+  type parameters resolved to bounds, same as other raw types
+- `resolveSubtype()` resolves self-references with bindings different from those
+  of the referenced type (like `N<N<T>>` within `N<T>`) using their own bindings
  (fix by @cowtowncoder w/ Claude code)
 
 1.7.3 (02-Jan-2026)

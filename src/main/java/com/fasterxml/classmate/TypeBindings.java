@@ -295,7 +295,8 @@ public final class TypeBindings
         }
         ResolvedType[] otherTypes = other._types;
         for (int i = 0; i < len; ++i) {
-            if (!otherTypes[i].equals(_types[i])) {
+            // [classmate#128]: self-references must match fully resolved types
+            if (!ResolvedType._equalTypes(otherTypes[i], _types[i])) {
                 return false;
             }
         }

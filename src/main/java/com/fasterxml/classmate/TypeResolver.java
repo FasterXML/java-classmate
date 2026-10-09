@@ -3,7 +3,6 @@ package com.fasterxml.classmate;
 import java.io.Serializable;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.function.Supplier;
 
 import com.fasterxml.classmate.types.*;
 import com.fasterxml.classmate.util.ClassKey;
@@ -176,7 +175,7 @@ public class TypeResolver implements Serializable
     public ResolvedArrayType arrayType(Type elementType)
     {
         ResolvedType resolvedElementType = resolve(TypeBindings.emptyBindings(), elementType);
-        return _arrayOf(_arrayClassFor(resolvedElementType), resolvedElementType);
+        return _arrayOf(null, _arrayClassFor(resolvedElementType), resolvedElementType);
     }
 
     /**
@@ -370,7 +369,7 @@ public class TypeResolver implements Serializable
         // [classmate#125]: Arrays have no type parameters of their own, so bindings
         // must not be retained (nor used for element type)
         if (rawType.isArray()) {
-            return _arrayOf(rawType, _fromClass(context, rawType.getComponentType(),
+            return _arrayOf(context, rawType, _fromClass(context, rawType.getComponentType(),
                     TypeBindings.emptyBindings()));
         }
         // Second: recursive reference?
@@ -380,8 +379,18 @@ public class TypeResolver implements Serializable
             ClassStack prev = context.find(rawType);
             if (prev != null) {
                 // Self-reference: needs special handling, then...
+                // [classmate#128]: raw self-reference gets type parameters resolved to
+                // their bounds, same as other raw types (unless already resolving bounds
+                // of the type, to avoid infinite recursion)
+                if (typeBindings.isEmpty() && (rawType.getTypeParameters().length > 0)
+                        && !prev.isResolvingBounds()) {
+                    typeBindings = TypeBindings.create(rawType,
+                            _resolveBounds(context, prev, rawType));
+                }
                 ResolvedRecursiveType selfRef = new ResolvedRecursiveType(rawType, typeBindings);
-                prev.addSelfReference(selfRef);
+                // [classmate#128]: also need to keep track of types containing self-references
+                // (to types still being resolved) to avoid caching them
+                context.selfReferenceCreated(selfRef, prev);
                 return selfRef;
             }
             // no, can just add
@@ -395,24 +404,18 @@ public class TypeResolver implements Serializable
         //   within resolution context)
         ResolvedTypeKey key = typeBindings.hasContextualTypes() ? null
                 : _resolvedTypes.key(rawType, typeBindings.typeParameterArray());
-        final ClassStack typeContext = context;
-        type = _findOrConstruct(key, () -> _constructType(typeContext, rawType, typeBindings));
-        context.resolveSelfReferences(type);
-        return type;
-    }
-
-    /**
-     * Helper method for finding cached type with given key, if any; or if not,
-     * constructing and caching it. If key is null, type is constructed but not cached.
-     */
-    private ResolvedType _findOrConstruct(ResolvedTypeKey key, Supplier<ResolvedType> constructor)
-    {
-        ResolvedType type = (key == null) ? null : _resolvedTypes.find(key);
+        type = (key == null) ? null : _resolvedTypes.find(key);
         if (type == null) {
-            type = constructor.get();
-            if (key != null) {
+            type = _constructType(context, rawType, typeBindings);
+            // [classmate#128]: nor can types with self-references to types still being
+            // resolved (like `B` in `B extends Base<A>`, when resolving `A extends Base<B>`)
+            // be cached, whether via type parameters, supertypes or array element types
+            if (context.typeConstructed(type, typeBindings.typeParameterArray())
+                    && (key != null)) {
                 _resolvedTypes.put(key, type);
             }
+        } else {
+            context.resolveSelfReferences(type);
         }
         return type;
     }
@@ -451,17 +454,7 @@ public class TypeResolver implements Serializable
         // (note: [classmate#33] work-around for non-empty bindings of non-generic types
         // no longer needed as of [classmate#125]: such bindings are never passed)
         if (typeBindings.isEmpty() && (rawTypeParameters.length > 0)) {
-            ResolvedType[] types = new ResolvedType[rawTypeParameters.length];
-            for (int i = 0; i < rawTypeParameters.length; ++i) {
-                // Resolve each type parameter to its bound (similar to _fromVariable)
-                TypeVariable<?> var = rawTypeParameters[i];
-                String name = var.getName();
-                // Avoid self-reference cycles by marking as unbound during resolution
-                TypeBindings tempBindings = typeBindings.withUnboundVariable(name);
-                Type[] bounds = var.getBounds();
-                types[i] = _fromAny(context, bounds[0], tempBindings);
-            }
-            typeBindings = TypeBindings.create(rawType, types);
+            typeBindings = TypeBindings.create(rawType, _resolveBounds(context, context, rawType));
         }
         // For other types super interfaces are needed...
         if (rawType.isInterface()) {
@@ -472,6 +465,33 @@ public class TypeResolver implements Serializable
         return new ResolvedObjectType(rawType, typeBindings,
                 _resolveSuperClass(context, rawType, typeBindings),
                 _resolveSuperInterfaces(context, rawType, typeBindings));
+    }
+
+    /**
+     * Helper method for resolving type parameters of a raw generic type to their bounds.
+     *
+     * @param context Resolution context to use
+     * @param frame Stack frame of the raw type (to mark it as having its bounds resolved)
+     */
+    private ResolvedType[] _resolveBounds(ClassStack context, ClassStack frame, Class<?> rawType)
+    {
+        final TypeVariable<?>[] rawTypeParameters = rawType.getTypeParameters();
+        final boolean wasResolving = frame.isResolvingBounds();
+        frame.setResolvingBounds(true);
+        try {
+            ResolvedType[] types = new ResolvedType[rawTypeParameters.length];
+            for (int i = 0; i < rawTypeParameters.length; ++i) {
+                // Resolve each type parameter to its bound (similar to _fromVariable)
+                TypeVariable<?> var = rawTypeParameters[i];
+                // Avoid self-reference cycles by marking as unbound during resolution
+                TypeBindings tempBindings = TypeBindings.emptyBindings()
+                        .withUnboundVariable(var.getName());
+                types[i] = _fromAny(context, var.getBounds()[0], tempBindings);
+            }
+            return types;
+        } finally {
+            frame.setResolvingBounds(wasResolving);
+        }
     }
 
     private ResolvedType[] _resolveSuperInterfaces(ClassStack context, Class<?> rawType, TypeBindings typeBindings)
@@ -528,7 +548,7 @@ public class TypeResolver implements Serializable
     {
         // [classmate#125]: bindings only needed for element type, not retained by array
         ResolvedType elementType = _fromAny(context, arrayType.getGenericComponentType(), typeBindings);
-        return _arrayOf(_arrayClassFor(elementType), elementType);
+        return _arrayOf(context, _arrayClassFor(elementType), elementType);
     }
 
     private static Class<?> _arrayClassFor(ResolvedType elementType) {
@@ -541,14 +561,25 @@ public class TypeResolver implements Serializable
      * element type. Arrays are cached using element type as the "type parameter"
      * of the key, so that differently parameterized element types do not collide.
      * Arrays with element types only valid within resolution context (self-references,
-     * placeholders) are not cached (cache key will be null).
+     * placeholders, types containing self-references to types still being resolved)
+     * are not cached.
+     *
+     * @param context Resolution context, if any; {@code null} if none
      */
-    private ResolvedArrayType _arrayOf(Class<?> arrayClass, ResolvedType elementType)
+    private ResolvedArrayType _arrayOf(ClassStack context, Class<?> arrayClass, ResolvedType elementType)
     {
         ResolvedTypeKey key = TypeBindings.isContextual(elementType) ? null
                 : _resolvedTypes.key(arrayClass, new ResolvedType[] { elementType });
-        return (ResolvedArrayType) _findOrConstruct(key,
-                () -> new ResolvedArrayType(arrayClass, TypeBindings.emptyBindings(), elementType));
+        ResolvedArrayType type = (key == null) ? null : (ResolvedArrayType) _resolvedTypes.find(key);
+        if (type == null) {
+            type = new ResolvedArrayType(arrayClass, TypeBindings.emptyBindings(), elementType);
+            // [classmate#128]: element type may contain self-references to types still being resolved
+            if (((context == null) || context.containerConstructed(type, elementType))
+                    && (key != null)) {
+                _resolvedTypes.put(key, type);
+            }
+        }
+        return type;
     }
 
     private ResolvedType _fromWildcard(ClassStack context, WildcardType wildType, TypeBindings typeBindings)
@@ -732,7 +763,7 @@ public class TypeResolver implements Serializable
             if (elem == elemB) {
                 return b;
             }
-            return _arrayOf(_arrayClassFor(elem), elem);
+            return _arrayOf(null, _arrayClassFor(elem), elem);
         }
         if (a.getErasedType() != b.getErasedType()) {
             return null;
@@ -786,7 +817,8 @@ public class TypeResolver implements Serializable
     /**
      * Helper method for finding stand-alone type to use in place of given self-reference:
      * raw one is resolved with type parameters bound to their bounds; others to the type
-     * referenced.
+     * referenced (or, if bindings differ from those of the type referenced, resolved
+     * using own bindings).
      *
      * @since 1.8
      */
@@ -796,11 +828,43 @@ public class TypeResolver implements Serializable
         if (raw != selfRef) {
             return raw;
         }
+        // [classmate#128]: referenced type may have different bindings (like `N<N<T>>`
+        // within `N<T>`, or raw `GNode` within `GNode<String>`): if so, need to resolve
+        // with own bindings. Except if self-reference is within type parameters of the
+        // referenced type (like `E` in raw `Enum<E extends Enum<E>>`), since it then
+        // represents the referenced type itself
+        final TypeBindings bindings = selfRef.getTypeBindings();
         ResolvedType ref = selfRef.getSelfReferencedType();
-        if (ref != null) {
+        if ((ref != null) && (ref.getTypeBindings().equals(bindings)
+                || _containsType(ref.getTypeBindings(), selfRef))) {
             return ref;
         }
-        return _fromClass(null, selfRef.getErasedType(), selfRef.getTypeBindings());
+        final Class<?> erased = selfRef.getErasedType();
+        ResolvedType[] params = new ResolvedType[bindings.size()];
+        for (int i = 0; i < params.length; ++i) {
+            params[i] = _resolveSelfReferences(bindings.getBoundType(i), null);
+        }
+        return _fromClass(null, erased, TypeBindings.create(erased, params));
+    }
+
+    /**
+     * Helper method for checking whether given bindings contain given type (by identity)
+     * as type parameter or array element type, at any level of nesting.
+     *
+     * @since 1.8
+     */
+    private static boolean _containsType(TypeBindings bindings, ResolvedType target)
+    {
+        for (int i = 0, len = bindings.size(); i < len; ++i) {
+            ResolvedType t = bindings.getBoundType(i);
+            while (t.isArray()) {
+                t = t.getArrayElementType();
+            }
+            if ((t == target) || _containsType(t.getTypeBindings(), target)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -826,7 +890,7 @@ public class TypeResolver implements Serializable
         if (type.isArray()) {
             ResolvedType elem = type.getArrayElementType();
             ResolvedType newElem = _resolveSelfReferences(elem, enclosing);
-            return (newElem == elem) ? type : _arrayOf(type.getErasedType(), newElem);
+            return (newElem == elem) ? type : _arrayOf(null, type.getErasedType(), newElem);
         }
         if (isSelfReference(type)) {
             // Self-reference to an enclosing type (by identity) is valid as-is

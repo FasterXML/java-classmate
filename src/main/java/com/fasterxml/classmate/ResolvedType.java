@@ -8,6 +8,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 import com.fasterxml.classmate.members.*;
+import com.fasterxml.classmate.types.ResolvedRecursiveType;
 
 public abstract class ResolvedType
     implements Type
@@ -279,6 +280,25 @@ public abstract class ResolvedType
         }
         // and type bindings must match as well
         return _typeBindings.equals(other._typeBindings);
+    }
+
+    /**
+     * Helper method for comparing types contained in other types (as type parameters
+     * or array element types): differs from {@link #equals} in that a self-reference
+     * ({@link ResolvedRecursiveType}) matches a fully resolved type with the same erased
+     * type and type bindings.
+     *
+     * @since 1.8
+     */
+    protected static boolean _equalTypes(ResolvedType t1, ResolvedType t2)
+    {
+        if (t1 == t2) return true;
+        if ((t1 == null) || (t2 == null)) return false;
+        if ((t1 instanceof ResolvedRecursiveType) != (t2 instanceof ResolvedRecursiveType)) {
+            return (t1._erasedType == t2._erasedType)
+                    && t1._typeBindings.equals(t2._typeBindings);
+        }
+        return t1.equals(t2);
     }
     
     /*
