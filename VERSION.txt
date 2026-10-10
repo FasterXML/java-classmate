@@ -51,6 +51,12 @@ Release notes:
   bindings: see new `ResolvedRecursiveType.getActualType()` (also used for
   `getParentClass()`, members and `resolveSubtype()`)
  (fix by @cowtowncoder w/ Claude code)
+#130: `resolveSubtype()` does not verify bounds of type variables
+- `resolveSubtype()` now rejects type variable bound to type that can not satisfy
+  its bounds (like `String` for `E extends Number`); check is lenient since bindings
+  from wildcards and raw types are not distinguished from exact ones: only types that
+  can not have a common subtype with bound (as per Java casting rules) are rejected
+ (fix by @cowtowncoder w/ Claude code)
 #132: `MemberResolver` misses members inherited via self-referential interface
  (fix by @cowtowncoder w/ Claude code)
 

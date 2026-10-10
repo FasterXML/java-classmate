@@ -307,6 +307,8 @@ public class TypeResolver implements Serializable
             }
             typeParams[i] = t;
         }
+        // [classmate#130]: verify that bindings can satisfy bounds of type variables
+        _verifyBounds(subtype, typeParams);
         return resolve(subtype, typeParams);
     }
 
@@ -789,6 +791,77 @@ public class TypeResolver implements Serializable
             }
         }
         return true;
+    }
+
+    /**
+     * Helper method for verifying that types bound to type variables of given subtype
+     * could satisfy bounds of those variables.
+     *<p>
+     * NOTE: since bindings derived from wildcards (and raw types) are resolved to their
+     * upper bounds (like {@code Number} for {@code ? extends Number}), they can not be
+     * told apart from exact bindings: so check is lenient, only failing if binding and
+     * bound can not have a common subtype (as per Java casting rules, using erased types).
+     *
+     * @throws IllegalArgumentException If a binding can not satisfy bound of its type variable
+     *
+     * @since 1.8
+     */
+    private static void _verifyBounds(Class<?> subtype, ResolvedType[] typeParams)
+    {
+        final TypeVariable<?>[] vars = subtype.getTypeParameters();
+        for (int i = 0; i < vars.length; ++i) {
+            final Class<?> boundType = typeParams[i].getErasedType();
+            for (Type b : vars[i].getBounds()) {
+                Class<?> erasedBound = _erasedBound(b, vars, typeParams);
+                if ((erasedBound != null) && _areDisjoint(boundType, erasedBound)) {
+                    throw new IllegalArgumentException(String.format(
+                            "Type parameter #%d/%d (`%s`) of %s bound to %s, not within its bound (%s)",
+                            i+1, vars.length, vars[i].getName(), subtype.getName(),
+                            typeParams[i].getBriefDescription(), b.getTypeName()));
+                }
+            }
+        }
+    }
+
+    /**
+     * @return Erased type of given bound; {@code null} if not known (like for type
+     *    variable not declared by the type itself)
+     */
+    private static Class<?> _erasedBound(Type bound, TypeVariable<?>[] vars, ResolvedType[] typeParams)
+    {
+        if (bound instanceof Class<?>) {
+            return (Class<?>) bound;
+        }
+        if (bound instanceof ParameterizedType) {
+            return (Class<?>) ((ParameterizedType) bound).getRawType();
+        }
+        if (bound instanceof TypeVariable<?>) {
+            int ix = Arrays.asList(vars).indexOf(bound);
+            if (ix >= 0) {
+                return typeParams[ix].getErasedType();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Helper method for checking whether given (erased) types can not have a common
+     * subtype: that is, neither is subtype of the other, and either one is final
+     * (or an array type), or neither is an interface.
+     */
+    private static boolean _areDisjoint(Class<?> a, Class<?> b)
+    {
+        if (a.isAssignableFrom(b) || b.isAssignableFrom(a)) {
+            return false;
+        }
+        if (_isFinal(a) || _isFinal(b)) {
+            return true;
+        }
+        return !a.isInterface() && !b.isInterface();
+    }
+
+    private static boolean _isFinal(Class<?> type) {
+        return type.isArray() || type.isPrimitive() || Modifier.isFinal(type.getModifiers());
     }
 
     /**
