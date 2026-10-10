@@ -41,6 +41,12 @@ public class MemberResolver132Test extends BaseTest
     static abstract class MidK extends Base2<OuterK> implements Ref<OutK> { }
     static abstract class OuterK extends MidK { }
 
+    // Generic variant (for `resolveSubtype()`), with self-reference (`GMid<T>` within
+    // `GOuter<T>`) to incomplete type (due to reference to `GSub<T>`)
+    public interface GMid<T> extends BaseI<GOuter<T>>, Ref<GSub<T>> { }
+    public interface GOuter<T> extends GMid<T> { }
+    static abstract class GSub<T> implements GMid<T> { }
+
     private final TypeResolver _typeResolver = new TypeResolver();
     private final MemberResolver _memberResolver = new MemberResolver(_typeResolver);
 
@@ -140,6 +146,66 @@ public class MemberResolver132Test extends BaseTest
         assertSame(_typeResolver.resolve(MidK.class), mid);
         _verifyRef(outerK.findSupertype(Ref.class), OutK.class);
         assertEquals(Arrays.asList("ref"), _methodNames(outerK));
+    }
+
+    // [classmate#132]: subtype resolution with self-references to incomplete types
+    public void testSubtypeOfIncompleteType()
+    {
+        // supertype only valid within resolution context of `OutJ`
+        ResolvedType midJ = _typeResolver.resolve(OutJ.class)
+                .getImplementedInterfaces().get(0).getTypeParameters().get(0);
+        ResolvedType sub = _typeResolver.resolveSubtype(midJ, OuterJ.class);
+        assertSame(_typeResolver.resolve(OuterJ.class), sub);
+        _verifyRef(sub.findSupertype(Ref.class), OutJ.class);
+
+        // and same for one obtained via self-reference
+        ResolvedType outerJ = midJ.getImplementedInterfaces().get(0).getTypeParameters().get(0);
+        ResolvedType mid = outerJ.getImplementedInterfaces().get(0);
+        assertSame(sub, _typeResolver.resolveSubtype(mid, OuterJ.class));
+    }
+
+    public void testGenericSubtypeWithIncompleteSelfReference()
+    {
+        // `GOuter<P>` (with placeholder for `T` of `GSub`) refers to incomplete `GMid<P>`
+        ResolvedType superType = _typeResolver.resolve(BaseI.class,
+                _typeResolver.resolve(GOuter.class, String.class));
+        ResolvedType sub = _typeResolver.resolveSubtype(superType, GSub.class);
+        assertSame(_typeResolver.resolve(GSub.class, String.class), sub);
+        _verifyGeneric(sub);
+
+        ResolvedType gMid = _typeResolver.resolve(GMid.class, String.class);
+        ResolvedType gOuter = _typeResolver.resolveSubtype(gMid, GOuter.class);
+        assertSame(_typeResolver.resolve(GOuter.class, String.class), gOuter);
+
+        // and with supertype from resolution context of `GSub<String>`
+        ResolvedType outerInSub = sub.findSupertype(BaseI.class).getTypeParameters().get(0);
+        assertEquals(GOuter.class, outerInSub.getErasedType());
+        ResolvedType midInSub = outerInSub.getImplementedInterfaces().get(0);
+        assertFalse(midInSub instanceof ResolvedRecursiveType);
+        System.err.println("DEBUG incomplete="+midInSub._isIncomplete()+" equal="+gMid.equals(midInSub)
+            +" outerInSub.incomplete="+outerInSub._isIncomplete()+" again="+(midInSub == outerInSub.getImplementedInterfaces().get(0))
+            +" cachedNow="+(_typeResolver.resolve(GMid.class, String.class) == midInSub));
+        assertSame(gMid, midInSub);
+        assertSame(gOuter, _typeResolver.resolveSubtype(midInSub, GOuter.class));
+        assertSame(gOuter, _typeResolver.resolveSubtype(
+                _typeResolver.resolve(outerInSub), GOuter.class));
+    }
+
+    private void _verifyGeneric(ResolvedType sub)
+    {
+        // `BaseI<GOuter<String>>`, with `GOuter<String>` implementing `GMid<String>`
+        ResolvedType outer = sub.findSupertype(BaseI.class).getTypeParameters().get(0);
+        assertEquals(GOuter.class, outer.getErasedType());
+        assertEquals(String.class, outer.getTypeParameters().get(0).getErasedType());
+        ResolvedType mid = outer.getImplementedInterfaces().get(0);
+        assertEquals(GMid.class, mid.getErasedType());
+        assertEquals(String.class, mid.getTypeParameters().get(0).getErasedType());
+        // `Ref<GSub<String>>`
+        ResolvedType ref = sub.findSupertype(Ref.class);
+        ResolvedType refParam = ref.getTypeParameters().get(0);
+        assertEquals(GSub.class, refParam.getErasedType());
+        assertEquals(String.class, refParam.getTypeParameters().get(0).getErasedType());
+        assertEquals(Arrays.asList("get", "ref", "top"), _methodNames(sub));
     }
 
     private void _verifyRef(ResolvedType ref, Class<?> expParam)
