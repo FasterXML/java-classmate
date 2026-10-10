@@ -43,12 +43,12 @@ Release notes:
 - Self-references (`ResolvedRecursiveType`) nested in type parameters or array
   element types are equal to fully resolved types with same type bindings
 - Raw self-references have type parameters resolved to bounds, like other raw types
-  (except within bounds of the type itself, like `T` in `RawBound<T extends RawBound>`)
+  (except ones created while resolving bounds of the type itself, like `T` in
+  `RawBound<T extends RawBound>`; types containing those may also be shared)
 - Self-references with bindings different from referenced type (like raw `Mid`
-  within `Mid<String>`, or `N<N<T>>` within `N<T>`) now refer to type with own
-  bindings (`getSelfReferencedType()`, `getParentClass()`, `resolveSubtype()`)
-- Note: for expanding types (like `N<T> extends Base<N<N<T>>[]>`), following
-  `getSelfReferencedType()` repeatedly yields ever deeper types, never terminating
+  within `Mid<String>`, or `N<N<T>>` within `N<T>`) now represent type with own
+  bindings: see new `ResolvedRecursiveType.getActualType()` (also used for
+  `getParentClass()`, members and `resolveSubtype()`)
  (fix by @cowtowncoder w/ Claude code)
 
 1.7.3 (02-Jan-2026)

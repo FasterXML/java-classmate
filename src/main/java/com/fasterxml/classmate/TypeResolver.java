@@ -140,7 +140,7 @@ public class TypeResolver implements Serializable
         } else if (type instanceof GenericType<?>) {
             bindings = TypeBindings.emptyBindings();
             if (noParams) {
-                return _fromGenericType(null, (GenericType<?>) type, bindings);
+                return _completeType(_fromGenericType(null, (GenericType<?>) type, bindings));
             }
             ResolvedType rt = _fromAny(null, type, bindings);
             rawBase = rt.getErasedType();
@@ -169,7 +169,8 @@ public class TypeResolver implements Serializable
             // [classmate#128]: type parameters may be incomplete types (from earlier resolution)
             resolvedParams[i] = _completeType(_fromAny(null, typeParameters[i], bindings));
         }
-        return _fromClass(null, rawBase, TypeBindings.create(rawBase, resolvedParams));
+        // and the type itself may be incomplete due to self-references in type parameters
+        return _completeType(_fromClass(null, rawBase, TypeBindings.create(rawBase, resolvedParams)));
     }
 
     /**
@@ -202,7 +203,7 @@ public class TypeResolver implements Serializable
     public ResolvedType resolve(TypeBindings typeBindings, Type jdkType)
     {
         // [classmate#128]: bindings may contain incomplete types (like when resolving
-        // members of a type), which must not be exposed on their own
+        // members of a type), which need to be completed where possible
         return _completeType(_fromAny(null, jdkType, typeBindings));
     }
 
@@ -416,9 +417,8 @@ public class TypeResolver implements Serializable
         // [classmate#128]: self-references with different bindings (like raw `Mid` within
         // `Mid<String>`) represent differently parameterized type, resolved lazily. Except
         // if within type parameters of the type itself (like `E` in raw `Enum<E extends Enum<E>>`)
-        final TypeBindings resolvedBindings = type.getTypeBindings();
-        context.resolveSelfReferences(type, ref -> ref.getTypeBindings().equals(resolvedBindings)
-                || _containsType(resolvedBindings, ref)
+        final ResolvedType resolved = type;
+        context.resolveSelfReferences(type, ref -> _representsReferenced(ref, resolved)
                 ? null : () -> _standaloneSelfReference(ref));
         // [classmate#128]: nor can types with self-references to types still being
         // resolved (like `B` in `B extends Base<A>`, when resolving `A extends Base<B>`)
@@ -441,7 +441,11 @@ public class TypeResolver implements Serializable
      * Helper method for replacing incomplete type (see {@link ResolvedType}) obtained
      * from an earlier resolution with stand-alone type, to avoid it being used outside
      * of its resolution context (see {@link #_resolveSelfReferences}). Called by public
-     * entry points only. Self-references themselves are retained as-is, however.
+     * entry points only.
+     *<p>
+     * NOTE: self-references themselves are retained as-is, as are incomplete types with
+     * self-references (in type parameters) to enclosing types, since those are only valid
+     * within the enclosing types: so returned type may still be incomplete.
      *
      * @since 1.8
      */
@@ -897,17 +901,35 @@ public class TypeResolver implements Serializable
      */
     private ResolvedType _selfReferenceTarget(ResolvedType selfRef)
     {
-        // [classmate#128]: referenced type has matching bindings, except if self-reference
-        // was not constructed by `TypeResolver`; or is within type parameters of the
-        // referenced type (like `E` in raw `Enum<E extends Enum<E>>`), in which case it
-        // represents the referenced type itself
-        ResolvedType ref = selfRef.getSelfReferencedType();
-        if ((ref != null) && !ref._isIncomplete()
-                && (ref.getTypeBindings().equals(selfRef.getTypeBindings())
-                || _containsType(ref.getTypeBindings(), selfRef))) {
-            return ref;
+        final ResolvedRecursiveType rrt = (ResolvedRecursiveType) selfRef;
+        final ResolvedType ref = rrt.getSelfReferencedType();
+        if ((ref != null) && !ref._isIncomplete()) {
+            if (_representsReferenced(rrt, ref)) {
+                return ref;
+            }
+            // [classmate#128]: actual type (with own bindings), if known (only not known
+            // if self-reference was not constructed by `TypeResolver`)
+            ResolvedType actual = rrt.getActualType();
+            if (actual != ref) {
+                return actual;
+            }
         }
         return _standaloneSelfReference(selfRef);
+    }
+
+    /**
+     * Helper method for checking whether given self-reference represents the type it
+     * references: that is, either has same type bindings, or is within type parameters
+     * of the referenced type (like {@code E} in raw {@code Enum<E extends Enum<E>>}).
+     *
+     * @since 1.8
+     */
+    private static boolean _representsReferenced(ResolvedType selfRef, ResolvedType ref)
+    {
+        final TypeBindings refBindings = ref.getTypeBindings();
+        return refBindings.equals(selfRef.getTypeBindings())
+                || _containsType(refBindings, selfRef,
+                        Collections.newSetFromMap(new IdentityHashMap<ResolvedType, Boolean>()));
     }
 
     /**
@@ -958,16 +980,23 @@ public class TypeResolver implements Serializable
      * Helper method for checking whether given bindings contain given type (by identity)
      * as type parameter or array element type, at any level of nesting.
      *
+     * @param visited Types already checked (by identity), to avoid re-checking shared
+     *    types (which could otherwise take exponential time)
+     *
      * @since 1.8
      */
-    private static boolean _containsType(TypeBindings bindings, ResolvedType target)
+    private static boolean _containsType(TypeBindings bindings, ResolvedType target,
+            Set<ResolvedType> visited)
     {
         for (int i = 0, len = bindings.size(); i < len; ++i) {
             ResolvedType t = bindings.getBoundType(i);
             while (t.isArray()) {
                 t = t.getArrayElementType();
             }
-            if ((t == target) || _containsType(t.getTypeBindings(), target)) {
+            if (t == target) {
+                return true;
+            }
+            if (visited.add(t) && _containsType(t.getTypeBindings(), target, visited)) {
                 return true;
             }
         }
@@ -1002,10 +1031,11 @@ public class TypeResolver implements Serializable
         }
         if (isSelfReference(type)) {
             // Self-reference to an enclosing type (by identity) is valid as-is
+            // [classmate#128]: as long as it represents that type
             if (enclosing != null) {
                 final ResolvedType ref = type.getSelfReferencedType();
                 for (ResolvedType t : enclosing) {
-                    if (t == ref) {
+                    if ((t == ref) && _representsReferenced(type, ref)) {
                         return type;
                     }
                 }

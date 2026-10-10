@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import com.fasterxml.classmate.members.ResolvedField;
+import com.fasterxml.classmate.types.ResolvedRecursiveType;
 
 /**
  * Tests for [classmate#128]: caching of types with self-references via supertypes,
@@ -36,7 +37,9 @@ public class TypeResolver128Test extends BaseTest
     // Self-references nested within other types
     static class LNode extends Base<List<LNode>> { }
 
-    static class N<T> extends Base<N<N<T>>[]> { }
+    static class N<T> extends Base<N<N<T>>[]> {
+        public T value;
+    }
 
     // Self-references via supertypes, escaping resolution via members, subtypes
     static class FieldBase<T> {
@@ -92,6 +95,40 @@ public class TypeResolver128Test extends BaseTest
     static class BMid<X> { }
     @SuppressWarnings("rawtypes")
     static class BOuter<T extends BMid<BOuter>> { }
+
+    // Raw self-reference at the bottom of deeply nested shared type parameters
+    @SuppressWarnings("rawtypes")
+    static class L0<T> extends Base<L0> { }
+    static class L1<T> extends L0<Pair<T, T>> { }
+    static class L2<T> extends L1<Pair<T, T>> { }
+    static class L3<T> extends L2<Pair<T, T>> { }
+    static class L4<T> extends L3<Pair<T, T>> { }
+    static class L5<T> extends L4<Pair<T, T>> { }
+    static class L6<T> extends L5<Pair<T, T>> { }
+    static class L7<T> extends L6<Pair<T, T>> { }
+    static class L8<T> extends L7<Pair<T, T>> { }
+    static class L9<T> extends L8<Pair<T, T>> { }
+    static class L10<T> extends L9<Pair<T, T>> { }
+    static class L11<T> extends L10<Pair<T, T>> { }
+    static class L12<T> extends L11<Pair<T, T>> { }
+    static class L13<T> extends L12<Pair<T, T>> { }
+    static class L14<T> extends L13<Pair<T, T>> { }
+    static class L15<T> extends L14<Pair<T, T>> { }
+    static class L16<T> extends L15<Pair<T, T>> { }
+    static class L17<T> extends L16<Pair<T, T>> { }
+    static class L18<T> extends L17<Pair<T, T>> { }
+    static class L19<T> extends L18<Pair<T, T>> { }
+    static class L20<T> extends L19<Pair<T, T>> { }
+    static class L21<T> extends L20<Pair<T, T>> { }
+    static class L22<T> extends L21<Pair<T, T>> { }
+    static class L23<T> extends L22<Pair<T, T>> { }
+    static class L24<T> extends L23<Pair<T, T>> { }
+    static class L25<T> extends L24<Pair<T, T>> { }
+    static class L26<T> extends L25<Pair<T, T>> { }
+    static class L27<T> extends L26<Pair<T, T>> { }
+    static class L28<T> extends L27<Pair<T, T>> { }
+    static class L29<T> extends L28<Pair<T, T>> { }
+    static class L30<T> extends L29<Pair<T, T>> { }
 
     // Raw self-reference with raw bound
     @SuppressWarnings("rawtypes")
@@ -358,8 +395,45 @@ public class TypeResolver128Test extends BaseTest
         ResolvedType selfRef = resolver.resolve(N.class, String.class).getParentClass()
                 .getTypeParameters().get(0).getArrayElementType();
         assertTrue(TypeResolver.isSelfReference(selfRef));
-        assertEquals(resolver.resolve(N.class, resolver.resolve(N.class, String.class)),
-                selfRef.getSelfReferencedType());
+        ResolvedType nOfString = resolver.resolve(N.class, String.class);
+        // referenced type is the type being resolved (for backwards compatibility)...
+        assertEquals(nOfString, selfRef.getSelfReferencedType());
+        // but actual type has own bindings
+        ResolvedType actual = ((ResolvedRecursiveType) selfRef).getActualType();
+        assertEquals(resolver.resolve(N.class, nOfString), actual);
+        assertSame(actual, ((ResolvedRecursiveType) selfRef).getActualType());
+
+        // and members are resolved using own bindings too
+        ResolvedTypeWithMembers members = new MemberResolver(resolver).resolve(selfRef, null, null);
+        assertEquals(1, members.getMemberFields().length);
+        assertEquals(nOfString, members.getMemberFields()[0].getType());
+    }
+
+    // Checking for self-references must not take exponential time for shared types
+    public void testSelfReferenceWithSharedTypeParameters()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType type = resolver.resolve(L30.class, String.class);
+        ResolvedType l0 = type;
+        while (l0.getErasedType() != L0.class) {
+            l0 = l0.getParentClass();
+        }
+        // raw self-reference (within `L0<Pair<...>>`) represents raw `L0`
+        ResolvedType selfRef = l0.getParentClass().getTypeParameters().get(0);
+        assertTrue(TypeResolver.isSelfReference(selfRef));
+        assertEquals(resolver.resolve(L0.class), ((ResolvedRecursiveType) selfRef).getActualType());
+    }
+
+    // Results of `resolve()` must be complete, so resolving again returns same type
+    public void testResolveWithSelfReferenceParameterIdempotent()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType e = resolver.resolve(Enum.class).getTypeParameters().get(0);
+        assertTrue(TypeResolver.isSelfReference(e));
+        ResolvedType listOfE = resolver.resolve(List.class, e);
+        assertSame(listOfE, resolver.resolve(listOfE));
+        // (not cached, since it contains self-reference, but equal)
+        assertEquals(listOfE, resolver.resolve(List.class, e));
     }
 
     // Self-reference (in raw `Enum`) must be merged with compatible type as the type
