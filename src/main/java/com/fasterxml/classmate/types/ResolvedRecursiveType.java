@@ -154,6 +154,34 @@ public class ResolvedRecursiveType extends ResolvedType
     }
     
     /**
+     * Helper method for replacing self-references in given supertypes (like
+     * implemented interfaces) with types they represent (see {@link #getActualType()}),
+     * since self-references themselves expose no supertypes.
+     *
+     * @since 1.8
+     */
+    static List<ResolvedType> actualTypes(ResolvedType[] types)
+    {
+        if (types.length == 0) {
+            return Collections.<ResolvedType>emptyList();
+        }
+        ResolvedType[] result = types;
+        for (int i = 0; i < types.length; ++i) {
+            if (types[i] instanceof ResolvedRecursiveType) {
+                ResolvedType actual = ((ResolvedRecursiveType) types[i]).getActualType();
+                // may still be unresolved, if called during resolution
+                if (actual != null) {
+                    if (result == types) {
+                        result = types.clone();
+                    }
+                    result[i] = actual;
+                }
+            }
+        }
+        return Arrays.asList(result);
+    }
+
+    /**
      * To avoid infinite loops, will return empty list
      */
     @Override
