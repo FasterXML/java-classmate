@@ -140,8 +140,9 @@ public class TypeResolver128Test extends BaseTest
     }
 
     // Incomplete F-bounded type
-    static class FA extends HBase<FBounded> { }
-    static class FBounded<T extends FBounded<T>> extends HBase<FA> { }
+    @SuppressWarnings("rawtypes")
+    static class FBOuter extends HBase<FBounded> { }
+    static class FBounded<T extends FBounded<T>> extends HBase<FBOuter> { }
 
     // Raw self-reference with raw bound
     @SuppressWarnings("rawtypes")
@@ -478,12 +479,12 @@ public class TypeResolver128Test extends BaseTest
     public void testIncompleteFBoundedTypeCompleted()
     {
         TypeResolver resolver = new TypeResolver();
-        ResolvedType b = resolver.resolve(FA.class).getParentClass().getTypeParameters().get(0);
+        ResolvedType b = resolver.resolve(FBOuter.class).getParentClass().getTypeParameters().get(0);
         assertSame(FBounded.class, b.getErasedType());
         ResolvedType direct = resolver.resolve(FBounded.class);
         assertEquals(direct, b);
         assertSame(direct, resolver.resolve(b));
-        _verifyFullyResolved(resolver.resolve(b).getParentClass().getTypeParameters().get(0), FA.class);
+        _verifyFullyResolved(resolver.resolve(b).getParentClass().getTypeParameters().get(0), FBOuter.class);
     }
 
     public void testRawSelfReferenceWithRawBound()
