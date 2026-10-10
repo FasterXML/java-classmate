@@ -88,6 +88,10 @@ public class TestSubtypeResolution extends BaseTest
 
     static class EnumHolder<E extends Enum<E>> extends Wrapper<Enum<E>> { }
 
+    static class SelfParam<T> extends Wrapper<SelfParam<String>> { }
+
+    static class SelfParamSub<X> extends SelfParam<X> { }
+
     @SuppressWarnings("rawtypes")
     static class Node<N extends Node> { }
 
@@ -392,8 +396,8 @@ public class TestSubtypeResolution extends BaseTest
         assertSame(Map[].class, merged.getErasedType());
     }
 
-    // [classmate#127]: bounds of type variables are not verified (wildcard upper bound
-    // can not be distinguished from actual type; see [classmate#130])
+    // [classmate#127]: bounds of type variables are only verified leniently (wildcard
+    // upper bound can not be distinguished from actual type; see [classmate#130])
     public void testSubtypeOfBoundedWildcard()
     {
         ResolvedType supertype = typeResolver.resolve(new GenericType<Wrapper<? extends Number>>() { });
@@ -413,6 +417,54 @@ public class TestSubtypeResolution extends BaseTest
         assertEquals(typeResolver.resolve(BuilderWrapper.class, MyBuilder.class),
                 typeResolver.resolveSubtype(typeResolver.resolve(Wrapper.class, MyBuilder.class),
                         BuilderWrapper.class));
+    }
+
+    // [classmate#130]: bindings that can not satisfy bounds of type variables
+    public void testSubtypeViolatingBounds()
+    {
+        _verifyOutOfBounds(typeResolver.resolve(Wrapper.class, String[].class), NumArrayWrapper.class);
+        _verifyOutOfBounds(typeResolver.resolve(Wrapper.class, String.class), IntOnlyWrapper.class);
+        _verifyOutOfBounds(typeResolver.resolve(Wrapper.class, Long.class), IntOnlyWrapper.class);
+        _verifyOutOfBounds(typeResolver.resolve(Wrapper.class, String.class), ComparableNumWrapper.class);
+        _verifyOutOfBounds(typeResolver.resolve(Wrapper.class, String.class), BuilderWrapper.class);
+        // bound to another type variable
+        _verifyOutOfBounds(typeResolver.resolve(Pair.class, Integer.class, String.class), KVPair.class);
+    }
+
+    // [classmate#130]: bindings that could satisfy bounds (as bindings from wildcards
+    // and raw types may represent subtypes of bound types) are accepted
+    public void testSubtypePossiblySatisfyingBounds()
+    {
+        // `Object` (like from raw type) may be anything
+        assertEquals(typeResolver.resolve(IntOnlyWrapper.class, Object.class),
+                typeResolver.resolveSubtype(typeResolver.resolve(Wrapper.class), IntOnlyWrapper.class));
+        // as may non-final class and interface
+        assertEquals(typeResolver.resolve(ComparableNumWrapper.class, Runnable.class),
+                typeResolver.resolveSubtype(typeResolver.resolve(Wrapper.class, Runnable.class),
+                        ComparableNumWrapper.class));
+        assertEquals(typeResolver.resolve(KVPair.class, Number.class, Integer.class),
+                typeResolver.resolveSubtype(typeResolver.resolve(Pair.class, Number.class, Integer.class),
+                        KVPair.class));
+    }
+
+    // [classmate#130]: self-reference with bindings different from referenced type
+    // resolves to type with its own bindings
+    public void testSubtypeOfSelfReferenceWithOwnBindings()
+    {
+        ResolvedType selfRef = typeResolver.resolve(SelfParam.class, Integer.class)
+                .getParentClass().getTypeParameters().get(0);
+        assertEquals(typeResolver.resolve(SelfParamSub.class, String.class),
+                typeResolver.resolveSubtype(selfRef, SelfParamSub.class));
+    }
+
+    private void _verifyOutOfBounds(ResolvedType supertype, Class<?> subtype)
+    {
+        try {
+            ResolvedType t = typeResolver.resolveSubtype(supertype, subtype);
+            fail("Expected failure, got: "+t.getFullDescription());
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "not within its bound");
+        }
     }
 
     private void _verifyNoSelfReference(ResolvedType type, Class<?> expRaw)
