@@ -134,6 +134,15 @@ public class TypeResolver128Test extends BaseTest
     static class L29<T> extends L28<Pair<T, T>> { }
     static class L30<T> extends L29<Pair<T, T>> { }
 
+    // Self-reference nested within bound of the type (with different bindings)
+    static class W<P, T extends List<W<String, ?>>> {
+        public T value;
+    }
+
+    // Incomplete F-bounded type
+    static class FA extends HBase<FBounded> { }
+    static class FBounded<T extends FBounded<T>> extends HBase<FA> { }
+
     // Raw self-reference with raw bound
     @SuppressWarnings("rawtypes")
     static class RawBound<T extends RawBound> extends Base<RawBound> { }
@@ -452,6 +461,29 @@ public class TypeResolver128Test extends BaseTest
         ResolvedType sub = resolver.resolveSubtype(
                 resolver.resolve(Pair.class, rawEnum, enumOfColor), Dup.class);
         assertEquals(resolver.resolve(Dup.class, enumOfColor), sub);
+    }
+
+    // Self-reference nested within bounds of a type represents type with own bindings
+    public void testNestedSelfReferenceInBound()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType w = resolver.resolve(W.class);
+        ResolvedTypeWithMembers members = new MemberResolver(resolver).resolve(w, null, null);
+        assertEquals(1, members.getMemberFields().length);
+        ResolvedType expW = resolver.resolve(W.class, String.class, Object.class);
+        assertEquals(resolver.resolve(List.class, expW), members.getMemberFields()[0].getType());
+    }
+
+    // Incomplete raw F-bounded type is equal to (and replaced by) stand-alone raw type
+    public void testIncompleteFBoundedTypeCompleted()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType b = resolver.resolve(FA.class).getParentClass().getTypeParameters().get(0);
+        assertSame(FBounded.class, b.getErasedType());
+        ResolvedType direct = resolver.resolve(FBounded.class);
+        assertEquals(direct, b);
+        assertSame(direct, resolver.resolve(b));
+        _verifyFullyResolved(resolver.resolve(b).getParentClass().getTypeParameters().get(0), FA.class);
     }
 
     public void testRawSelfReferenceWithRawBound()
