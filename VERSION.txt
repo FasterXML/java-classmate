@@ -42,6 +42,7 @@ Release notes:
   and are re-resolved when used later (like for member types)
 - Self-references (`ResolvedRecursiveType`) nested in type parameters or array
   element types are equal to fully resolved types with same type bindings
+  (so f.ex raw `Enum` is now equal to `Enum<Enum<Object>>`)
 - Raw self-references have type parameters resolved to bounds, like other raw types
   (except ones created while resolving bounds of the type itself, like `T` in
   `RawBound<T extends RawBound>`; types containing those may also be shared)
