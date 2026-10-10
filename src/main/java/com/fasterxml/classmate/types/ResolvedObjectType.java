@@ -114,7 +114,9 @@ public class ResolvedObjectType extends ResolvedType
         if (_superClass instanceof ResolvedObjectType) {
             return (ResolvedObjectType) _superClass;
         }
-        ResolvedType rt = ((ResolvedRecursiveType) _superClass).getSelfReferencedType();
+        // [classmate#128]: actual type, in case bindings differ (like raw `Mid` for `Outer extends Mid`
+        // within `Mid<String>`)
+        ResolvedType rt = ((ResolvedRecursiveType) _superClass).getActualType();
         if (!(rt instanceof ResolvedObjectType)) {
             throw new IllegalStateException("Internal error: self-referential parent type ("
                     +_superClass+") does not resolve into proper ResolvedObjectType, but instead to: "

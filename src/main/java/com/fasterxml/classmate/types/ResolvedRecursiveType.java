@@ -2,6 +2,7 @@ package com.fasterxml.classmate.types;
 
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.function.Supplier;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
@@ -24,6 +25,24 @@ public class ResolvedRecursiveType extends ResolvedType
      */
     protected ResolvedType _referencedType;
 
+    /**
+     * For self-references with type bindings different from those of the referenced
+     * type (like raw {@code Mid} within {@code Mid<String>}, or {@code N<N<T>>} within
+     * {@code N<T>}): supplier of the actual type this self-reference represents.
+     * Resolved lazily since doing so eagerly could lead to infinite recursion.
+     *
+     * @since 1.8
+     */
+    protected Supplier<ResolvedType> _actualTypeSupplier;
+
+    /**
+     * Actual type this self-reference represents, if differs from referenced type;
+     * resolved lazily using {@link #_actualTypeSupplier}.
+     *
+     * @since 1.8
+     */
+    protected volatile ResolvedType _actualType;
+
     /*
     /**********************************************************************
     /* Life cycle
@@ -37,16 +56,31 @@ public class ResolvedRecursiveType extends ResolvedType
     
     @Override
     public boolean canCreateSubtypes() {
+        // only depends on erased type, so no need to resolve actual type
         return _referencedType.canCreateSubtypes();
     }
     
     public void setReference(ResolvedType ref)
+    {
+        setReference(ref, null);
+    }
+
+    /**
+     * Alternative to {@link #setReference(ResolvedType)} used when type bindings of
+     * this self-reference differ from those of the referenced type: in that case,
+     * {@link #getActualType()} returns type obtained (lazily) from given supplier
+     * (or referenced type, if equal).
+     *
+     * @since 1.8
+     */
+    public synchronized void setReference(ResolvedType ref, Supplier<ResolvedType> actualType)
     {
         // sanity check; should not be called multiple times
         if (_referencedType != null) {
             throw new IllegalStateException("Trying to re-set self reference; old value = "+_referencedType+", new = "+ref);
         }
         _referencedType = ref;
+        _actualTypeSupplier = actualType;
     }
 
     /*
@@ -63,8 +97,61 @@ public class ResolvedRecursiveType extends ResolvedType
         return null;
     }
 
+    /**
+     * Accessor for the type being resolved that this self-reference points to.
+     * Note that type bindings of this self-reference may differ from those of the
+     * referenced type (like for raw {@code Mid} within {@code Mid<String>}): if so,
+     * {@link #getActualType()} returns the type self-reference actually represents.
+     */
     @Override
     public ResolvedType getSelfReferencedType() { return _referencedType; }
+
+    /**
+     * Accessor for the type this self-reference represents: same as
+     * {@link #getSelfReferencedType()}, unless type bindings of this self-reference
+     * differ from those of the referenced type (like raw {@code Mid} within
+     * {@code Mid<String>}, or {@code N<N<T>>} within {@code N<T>}), in which case
+     * it is the type with bindings of this self-reference (resolved lazily).
+     *<p>
+     * NOTE: for expanding types (like {@code N<T>} above), following actual types
+     * repeatedly yields ever deeper types.
+     *
+     * @return Type this self-reference represents; {@code null} if not yet resolved
+     *
+     * @since 1.8
+     */
+    public ResolvedType getActualType()
+    {
+        ResolvedType actual = _actualType;
+        if (actual != null) {
+            return actual;
+        }
+        final Supplier<ResolvedType> supplier;
+        synchronized (this) {
+            if (_actualType != null) {
+                return _actualType;
+            }
+            supplier = _actualTypeSupplier;
+            if (supplier == null) {
+                return _referencedType;
+            }
+        }
+        // resolved outside of lock, since resolution may access other self-references;
+        // concurrent calls may resolve more than once, but only first one is retained
+        actual = supplier.get();
+        // retain identity if equal
+        if (actual.equals(_referencedType)) {
+            actual = _referencedType;
+        }
+        synchronized (this) {
+            if (_actualType == null) {
+                _actualType = actual;
+                // no longer needed (and may hold on to `TypeResolver`)
+                _actualTypeSupplier = null;
+            }
+            return _actualType;
+        }
+    }
     
     /**
      * To avoid infinite loops, will return empty list
@@ -107,15 +194,15 @@ public class ResolvedRecursiveType extends ResolvedType
      */
 
     @Override
-    public List<RawField> getMemberFields() { return _referencedType.getMemberFields(); }
+    public List<RawField> getMemberFields() { return getActualType().getMemberFields(); }
     @Override
-    public List<RawField> getStaticFields() { return _referencedType.getStaticFields(); }
+    public List<RawField> getStaticFields() { return getActualType().getStaticFields(); }
     @Override
-    public List<RawMethod> getStaticMethods() { return _referencedType.getStaticMethods(); }
+    public List<RawMethod> getStaticMethods() { return getActualType().getStaticMethods(); }
     @Override
-    public List<RawMethod> getMemberMethods() { return _referencedType.getMemberMethods(); }
+    public List<RawMethod> getMemberMethods() { return getActualType().getMemberMethods(); }
     @Override
-    public List<RawConstructor> getConstructors() { return _referencedType.getConstructors(); }
+    public List<RawConstructor> getConstructors() { return getActualType().getConstructors(); }
     
     /*
     /**********************************************************************

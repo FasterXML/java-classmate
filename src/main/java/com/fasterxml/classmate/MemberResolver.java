@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.*;
 
 import com.fasterxml.classmate.members.*;
+import com.fasterxml.classmate.types.ResolvedRecursiveType;
 import com.fasterxml.classmate.util.ClassKey;
 
 /**
@@ -113,10 +114,21 @@ public class MemberResolver implements Serializable
      * @param annotationConfig Configuration of annotation types; which ones to include, how to inherit
      * @param annotationOverrides Definitions of annotation overrides to use, if any (may be null)
      */
-    public ResolvedTypeWithMembers resolve(final ResolvedType mainType,
+    public ResolvedTypeWithMembers resolve(ResolvedType mainType,
             AnnotationConfiguration annotationConfig,
             AnnotationOverrides annotationOverrides)
     {
+        // [classmate#128]: type may be one only valid within its original resolution context
+        // (like one obtained via type parameters of another type), with self-references in
+        // its supertypes: if so, need to resolve it as stand-alone type
+        // (and self-reference itself has no supertypes, so need to use type it represents)
+        if (mainType instanceof ResolvedRecursiveType) {
+            ResolvedType actual = ((ResolvedRecursiveType) mainType).getActualType();
+            if (actual != null) {
+                mainType = actual;
+            }
+        }
+        mainType = _typeResolver.resolve(mainType);
         List<ResolvedType> types;
         HashSet<ClassKey> seenTypes = new HashSet<ClassKey>();
 

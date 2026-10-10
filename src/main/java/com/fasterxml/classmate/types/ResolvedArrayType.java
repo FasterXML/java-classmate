@@ -35,23 +35,12 @@ public final class ResolvedArrayType extends ResolvedType
         _elementType = elementType;
     }
     
+    // [classmate#128]: self-reference as element type (like `Node[]` within
+    // `Node extends Base<Node[]>`) must be equal to fully resolved type
     @Override
     public boolean equals(Object other) {
         return super.equals(other)
-                && _elementsEqual(_elementType, ((ResolvedArrayType) other)._elementType);
-    }
-
-    // Self-reference to element type (like `Node[]` within `Node extends Base<Node[]>`)
-    // must be equal to fully resolved type, so compare erased type and bindings for those
-    private static boolean _elementsEqual(ResolvedType elem1, ResolvedType elem2) {
-        if ((elem1 == null) || (elem2 == null)) {
-            return (elem1 == elem2);
-        }
-        if ((elem1 instanceof ResolvedRecursiveType) || (elem2 instanceof ResolvedRecursiveType)) {
-            return (elem1.getErasedType() == elem2.getErasedType())
-                    && elem1.getTypeBindings().equals(elem2.getTypeBindings());
-        }
-        return Objects.equals(elem1, elem2);
+                && _equalTypes(_elementType, ((ResolvedArrayType) other)._elementType);
     }
 
     // NOTE: consistent with `equals()` since hash code of all types (including

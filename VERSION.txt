@@ -19,8 +19,7 @@ Release notes:
 - Array types are cached by `TypeResolver` using element type as part of the key
 - Types with `TypePlaceHolder`s (from `resolveSubtype()`) or self-references
   (`ResolvedRecursiveType`) in their type parameters (at any level of nesting,
-  including array element types) are no longer cached (but see #128 for
-  self-references via supertypes)
+  including array element types) are no longer cached
 #127: `resolveSubtype()` does not verify or resolve array element types
 - `resolveSubtype()` now rejects type variable bound to conflicting types
   (like `E` in `Dup<E> extends Pair<E[], E>`; except that `Object`, which may
@@ -35,6 +34,24 @@ Release notes:
 - `TypeResolver.resolve(Type, Type...)` and `TypeBindings.create()` now fail with
   `IllegalArgumentException` if any of type parameters is a primitive type
   (like `resolve(List.class, int.class)`)
+ (fix by @cowtowncoder w/ Claude code)
+#128: Self-references via supertypes still cached; self-references not equal
+  to fully resolved types
+- Types containing self-references to types still being resolved (like `B` in
+  `B extends Base<A>` when resolving `A extends Base<B>`) are no longer cached,
+  and are re-resolved when used later (like for member types)
+- Self-references (`ResolvedRecursiveType`) nested in type parameters or array
+  element types are equal to fully resolved types with same type bindings
+  (so f.ex raw `Enum` is now equal to `Enum<Enum<Object>>`)
+- Raw self-references have type parameters resolved to bounds, like other raw types
+  (except ones created while resolving bounds of the type itself, like `T` in
+  `RawBound<T extends RawBound>`; types containing those may also be shared)
+- Self-references with bindings different from referenced type (like raw `Mid`
+  within `Mid<String>`, or `N<N<T>>` within `N<T>`) now represent type with own
+  bindings: see new `ResolvedRecursiveType.getActualType()` (also used for
+  `getParentClass()`, members and `resolveSubtype()`)
+ (fix by @cowtowncoder w/ Claude code)
+#132: `MemberResolver` misses members inherited via self-referential interface
  (fix by @cowtowncoder w/ Claude code)
 
 1.7.3 (02-Jan-2026)
