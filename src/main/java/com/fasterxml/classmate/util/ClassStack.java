@@ -146,15 +146,19 @@ public final class ClassStack
     {
         if (_selfRefs != null) {
             for (ResolvedRecursiveType ref : _selfRefs) {
-                Supplier<ResolvedType> actualType = (actualTypes == null) ? null
-                        : actualTypes.apply(ref);
-                if (actualType == null) {
-                    ref.setReference(resolved);
-                } else {
-                    ref.setReference(resolved, actualType);
-                }
+                ref.setReference(resolved, (actualTypes == null) ? null : actualTypes.apply(ref));
             }
         }
+    }
+
+    /**
+     * @return True if there are self-references to the type this frame represents
+     *    (see {@link #addSelfReference})
+     *
+     * @since 1.8
+     */
+    public boolean hasSelfReferences() {
+        return (_selfRefs != null);
     }
 
     public ClassStack find(Class<?> cls)

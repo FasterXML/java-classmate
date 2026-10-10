@@ -417,10 +417,12 @@ public class TypeResolver implements Serializable
         // [classmate#128]: self-references with different bindings (like raw `Mid` within
         // `Mid<String>`) represent differently parameterized type, resolved lazily. Except
         // if within type parameters of the type itself (like `E` in raw `Enum<E extends Enum<E>>`)
-        final ResolvedType resolved = type;
-        final ContainedTypes contained = new ContainedTypes(resolved.getTypeBindings());
-        context.resolveSelfReferences(type, ref -> _representsReferenced(ref, resolved, contained)
-                ? null : () -> _standaloneSelfReference(ref));
+        if (context.hasSelfReferences()) {
+            final ResolvedType resolved = type;
+            final ContainedTypes contained = new ContainedTypes(resolved);
+            context.resolveSelfReferences(type, ref -> _representsReferenced(ref, resolved, contained)
+                    ? null : () -> _standaloneSelfReference(ref));
+        }
         // [classmate#128]: nor can types with self-references to types still being
         // resolved (like `B` in `B extends Base<A>`, when resolving `A extends Base<B>`)
         // be cached, whether via type parameters, supertypes or array element types
@@ -933,7 +935,7 @@ public class TypeResolver implements Serializable
             return true;
         }
         if (containedInRef == null) {
-            containedInRef = new ContainedTypes(refBindings);
+            containedInRef = new ContainedTypes(ref);
         }
         return containedInRef.contains(selfRef);
     }
@@ -982,7 +984,7 @@ public class TypeResolver implements Serializable
     }
 
     /**
-     * Helper class for checking whether given bindings contain given types (by identity)
+     * Helper class for checking whether bindings of given type contain given types (by identity)
      * as type parameters or array element types, at any level of nesting. Contained types
      * are collected lazily, once, so that checking multiple types takes a single pass
      * (and shared types are only visited once).
@@ -991,17 +993,21 @@ public class TypeResolver implements Serializable
      */
     private static final class ContainedTypes
     {
-        private final TypeBindings _bindings;
+        private final ResolvedType _owner;
         private Set<ResolvedType> _types;
 
-        ContainedTypes(TypeBindings bindings) {
-            _bindings = bindings;
+        ContainedTypes(ResolvedType owner) {
+            _owner = owner;
+        }
+
+        ResolvedType owner() {
+            return _owner;
         }
 
         boolean contains(ResolvedType type) {
             if (_types == null) {
                 _types = Collections.newSetFromMap(new IdentityHashMap<ResolvedType, Boolean>());
-                _collect(_bindings);
+                _collect(_owner.getTypeBindings());
             }
             return _types.contains(type);
         }
@@ -1027,14 +1033,15 @@ public class TypeResolver implements Serializable
      * which are valid as-is. Types containing such self-references via their supertypes
      * (see [classmate#128]) are re-resolved.
      *
-     * @param enclosing Enclosing types (containing given type as type parameter), used as
+     * @param enclosing Enclosing types (containing given type as type parameter; with
+     *    types they contain, see {@link ContainedTypes}), used as
      *    a stack (must be restored before returning); {@code null} if none
      *
      * @return Type with self-references replaced; given type itself if it contains none
      *
      * @since 1.8
      */
-    private ResolvedType _resolveSelfReferences(ResolvedType type, List<ResolvedType> enclosing)
+    private ResolvedType _resolveSelfReferences(ResolvedType type, List<ContainedTypes> enclosing)
     {
         if (!TypeBindings.isContextual(type) && !type._isIncomplete()) {
             return type;
@@ -1049,16 +1056,16 @@ public class TypeResolver implements Serializable
             // [classmate#128]: as long as it represents that type
             if (enclosing != null) {
                 final ResolvedType ref = type.getSelfReferencedType();
-                for (ResolvedType t : enclosing) {
-                    if ((t == ref) && _representsReferenced(type, ref, null)) {
+                for (ContainedTypes t : enclosing) {
+                    if ((t.owner() == ref) && _representsReferenced(type, ref, t)) {
                         return type;
                     }
                 }
             }
             return _selfReferenceTarget(type);
         }
-        final List<ResolvedType> encl = (enclosing == null) ? new ArrayList<>() : enclosing;
-        encl.add(type);
+        final List<ContainedTypes> encl = (enclosing == null) ? new ArrayList<>() : enclosing;
+        encl.add(new ContainedTypes(type));
         final TypeBindings bindings = type.getTypeBindings();
         ResolvedType[] newTypes = _mapTypes(bindings, t -> _resolveSelfReferences(t, encl));
         encl.remove(encl.size() - 1);
