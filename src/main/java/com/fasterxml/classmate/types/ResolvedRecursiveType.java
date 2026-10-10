@@ -67,9 +67,9 @@ public class ResolvedRecursiveType extends ResolvedType
 
     /**
      * Alternative to {@link #setReference(ResolvedType)} used when type bindings of
-     * this self-reference differ from those of the referenced type: in that case,
-     * {@link #getActualType()} returns type obtained (lazily) from given supplier
-     * (or referenced type, if equal).
+     * this self-reference differ from those of the referenced type, or if referenced
+     * type is only valid within its resolution context: in that case,
+     * {@link #getActualType()} returns type obtained (lazily) from given supplier.
      *
      * @since 1.8
      */
@@ -110,8 +110,10 @@ public class ResolvedRecursiveType extends ResolvedType
      * Accessor for the type this self-reference represents: same as
      * {@link #getSelfReferencedType()}, unless type bindings of this self-reference
      * differ from those of the referenced type (like raw {@code Mid} within
-     * {@code Mid<String>}, or {@code N<N<T>>} within {@code N<T>}), in which case
-     * it is the type with bindings of this self-reference (resolved lazily).
+     * {@code Mid<String>}, or {@code N<N<T>>} within {@code N<T>}), or referenced
+     * type is only valid within its resolution context (like {@code B} in
+     * {@code B extends Base<A>}, when resolving {@code A extends Base<B>}), in which
+     * case it is the stand-alone type with bindings of this self-reference (resolved lazily).
      *<p>
      * NOTE: for expanding types (like {@code N<T>} above), following actual types
      * repeatedly yields ever deeper types.
@@ -139,10 +141,6 @@ public class ResolvedRecursiveType extends ResolvedType
         // resolved outside of lock, since resolution may access other self-references;
         // concurrent calls may resolve more than once, but only first one is retained
         actual = supplier.get();
-        // retain identity if equal
-        if (actual.equals(_referencedType)) {
-            actual = _referencedType;
-        }
         synchronized (this) {
             if (_actualType == null) {
                 _actualType = actual;

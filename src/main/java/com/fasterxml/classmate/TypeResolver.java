@@ -416,22 +416,28 @@ public class TypeResolver implements Serializable
         // If not, need to construct
         context = (context == null) ? new ClassStack(rawType) : context.child(rawType);
         type = _constructType(context, rawType, typeBindings);
-        // [classmate#128]: self-references with different bindings (like raw `Mid` within
-        // `Mid<String>`) represent differently parameterized type, resolved lazily. Except
-        // if within type parameters of the type itself (like `E` in raw `Enum<E extends Enum<E>>`)
-        if (context.hasSelfReferences()) {
-            final ResolvedType resolved = type;
-            context.resolveSelfReferences(type, ref -> _representsReferenced(ref, resolved)
-                    ? null : () -> _standaloneSelfReference(ref));
-        }
-        // [classmate#128]: nor can types with self-references to types still being
+        // [classmate#128]: types with self-references to types still being
         // resolved (like `B` in `B extends Base<A>`, when resolving `A extends Base<B>`)
-        // be cached, whether via type parameters, supertypes or array element types
+        // can not be cached, whether via type parameters, supertypes or array element types
         // (note: self-references created within this frame, like ones in bounds of
         // raw type, are accounted for by frame; but type parameters are resolved outside)
         boolean incomplete = context.hasOuterReferences();
         for (ResolvedType param : typeBindings.typeParameterArray()) {
             incomplete |= param._isIncomplete();
+        }
+        // [classmate#128]: self-references with different bindings (like raw `Mid` within
+        // `Mid<String>`) represent differently parameterized type, resolved lazily. Except
+        // if within type parameters of the type itself (like `E` in raw `Enum<E extends Enum<E>>`)
+        // [classmate#132]: but if type is incomplete (only valid within its resolution
+        // context), stand-alone type is needed, except for such type parameters
+        // (since those are only valid within type itself anyway)
+        if (context.hasSelfReferences()) {
+            final ResolvedType resolved = type;
+            final boolean standalone = incomplete;
+            context.resolveSelfReferences(type,
+                    ref -> (standalone ? _isSelfBoundParameter(ref, resolved)
+                            : _representsReferenced(ref, resolved))
+                    ? null : () -> _actualSelfReference(ref, resolved));
         }
         if (incomplete) {
             type._markIncomplete();
@@ -1011,10 +1017,20 @@ public class TypeResolver implements Serializable
      */
     private static boolean _representsReferenced(ResolvedType selfRef, ResolvedType ref)
     {
+        return ref.getTypeBindings().equals(selfRef.getTypeBindings())
+                || _isSelfBoundParameter(selfRef, ref);
+    }
+
+    /**
+     * Helper method for checking whether given self-reference is the type parameter of
+     * the referenced type, for type variable bound to the type itself (like {@code E} in
+     * raw {@code Enum<E extends Enum<E>>}).
+     *
+     * @since 1.8
+     */
+    private static boolean _isSelfBoundParameter(ResolvedType selfRef, ResolvedType ref)
+    {
         final TypeBindings refBindings = ref.getTypeBindings();
-        if (refBindings.equals(selfRef.getTypeBindings())) {
-            return true;
-        }
         for (int i = 0, len = refBindings.size(); i < len; ++i) {
             if ((refBindings.getBoundType(i) == selfRef)
                     && _isBoundToSelf(ref.getErasedType(), i)) {
@@ -1048,6 +1064,24 @@ public class TypeResolver implements Serializable
         // must be parameterized with own type variables, in order (like `Foo<T, U>`)
         return Arrays.equals(((ParameterizedType) bound).getActualTypeArguments(), vars);
     }
+    /**
+     * Helper method for resolving the actual type given self-reference (to given resolved
+     * type) represents: stand-alone type, or resolved type itself if equal to it
+     * and valid outside of its resolution context.
+     *
+     * @since 1.8
+     */
+    private ResolvedType _actualSelfReference(ResolvedType selfRef, ResolvedType resolved)
+    {
+        ResolvedType actual = _standaloneSelfReference(selfRef);
+        // [classmate#132]: incomplete types are equal to stand-alone ones, but not
+        // valid outside their resolution context
+        if (!resolved._isIncomplete() && actual.equals(resolved)) {
+            return resolved;
+        }
+        return actual;
+    }
+
     /**
      * Helper method for resolving stand-alone type that given self-reference represents,
      * using its own type bindings (with self-references in them resolved similarly).
