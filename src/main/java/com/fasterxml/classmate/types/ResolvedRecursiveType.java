@@ -56,7 +56,8 @@ public class ResolvedRecursiveType extends ResolvedType
     
     @Override
     public boolean canCreateSubtypes() {
-        return getActualType().canCreateSubtypes();
+        // only depends on erased type, so no need to resolve actual type
+        return _referencedType.canCreateSubtypes();
     }
     
     public void setReference(ResolvedType ref)

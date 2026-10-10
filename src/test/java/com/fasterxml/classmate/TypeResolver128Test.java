@@ -50,10 +50,14 @@ public class TypeResolver128Test extends BaseTest
     static class FB extends FieldBase<FA> { }
     static class FSub<T> extends FieldBase<T> { }
 
-    static class Pair<A, B> { }
+    static class Pair<K, V> { }
     static class Dup<E> extends Pair<E, E> { }
     enum Color { RED }
-    static class SubPair<A, B> extends Pair<A, B> { }
+
+    // (note: type parameters must not be named like classes `A`, `B` declared here:
+    // javac 8 would resolve them as those classes in `extends` clause)
+    static class SubPair<K, V> extends Pair<K, V> { }
+
     static class X extends Base<Y> { }
     static class Y extends Base<Z> { }
     static class Z extends Pair<X, List<Y>> { }
