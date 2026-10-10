@@ -425,16 +425,17 @@ public class TypeResolver implements Serializable
         // [classmate#128]: nor can types with self-references to types still being
         // resolved (like `B` in `B extends Base<A>`, when resolving `A extends Base<B>`)
         // be cached, whether via type parameters, supertypes or array element types
-        int paramDepth = Integer.MAX_VALUE;
-        for (ResolvedType param : type.getTypeBindings().typeParameterArray()) {
-            paramDepth = Math.min(paramDepth, _incompleteDepth(context, param));
+        // (note: self-references created within this frame, like ones in bounds of
+        // raw type, are accounted for by frame; but type parameters are resolved outside)
+        boolean incomplete = context.hasOuterReferences();
+        for (ResolvedType param : typeBindings.typeParameterArray()) {
+            incomplete |= param._isIncomplete();
         }
-        if (context.typeConstructed(key, type, paramDepth)) {
-            if (key != null) {
-                _resolvedTypes.put(key, type);
-            }
-        } else {
+        if (incomplete) {
             type._markIncomplete();
+            context.addIncomplete(key, type);
+        } else if (key != null) {
+            _resolvedTypes.put(key, type);
         }
         return type;
     }
@@ -475,25 +476,6 @@ public class TypeResolver implements Serializable
             type = context.findIncomplete(key);
         }
         return type;
-    }
-
-    /**
-     * Helper method for finding depth of the shallowest frame still being resolved that
-     * given type contains self-references to (see {@link ClassStack#incompleteDepth}).
-     *
-     * @param context Resolution context, if any; {@code null} if none
-     *
-     * @return {@code Integer.MAX_VALUE} if type is complete; -1 if it is incomplete
-     *    but not valid within given context
-     *
-     * @since 1.8
-     */
-    private static int _incompleteDepth(ClassStack context, ResolvedType type)
-    {
-        if (!type._isIncomplete()) {
-            return Integer.MAX_VALUE;
-        }
-        return (context == null) ? -1 : context.incompleteDepth(type);
     }
 
     /**
@@ -650,16 +632,13 @@ public class TypeResolver implements Serializable
         if (type == null) {
             type = new ResolvedArrayType(arrayClass, TypeBindings.emptyBindings(), elementType);
             // [classmate#128]: element type may contain self-references to types still being resolved
-            int depth = _incompleteDepth(context, elementType);
-            if (depth == Integer.MAX_VALUE) {
-                if (key != null) {
-                    _resolvedTypes.put(key, type);
-                }
-            } else {
+            if (elementType._isIncomplete()) {
                 type._markIncomplete();
                 if (context != null) {
-                    context.containerConstructed(key, type, depth);
+                    context.addIncomplete(key, type);
                 }
+            } else if (key != null) {
+                _resolvedTypes.put(key, type);
             }
         }
         return (ResolvedArrayType) type;
