@@ -59,8 +59,9 @@ public class ResolvedInterfaceType extends ResolvedType
     
     @Override
     public List<ResolvedType> getImplementedInterfaces() {
-        return (_superInterfaces.length == 0) ?
-                Collections.<ResolvedType>emptyList() : Arrays.asList(_superInterfaces);
+        // [classmate#132]: actual types for self-referential interfaces, if any
+        // (same as with `getParentClass()`)
+        return ResolvedRecursiveType.actualTypes(_superInterfaces);
     }
     
     @Override

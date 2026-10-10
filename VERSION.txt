@@ -58,6 +58,9 @@ Release notes:
   can not have a common subtype with bound (as per Java casting rules) are rejected
  (fix by @cowtowncoder w/ Claude code)
 #132: `MemberResolver` misses members inherited via self-referential interface
+- `getImplementedInterfaces()` now returns types self-referential interfaces
+  represent (`ResolvedRecursiveType.getActualType()`), same as `getParentClass()`
+  (so f.ex `findSupertype()` now finds supertypes reachable via such interfaces)
  (fix by @cowtowncoder w/ Claude code)
 
 1.7.3 (02-Jan-2026)
