@@ -51,6 +51,8 @@ Release notes:
   bindings: see new `ResolvedRecursiveType.getActualType()` (also used for
   `getParentClass()`, members and `resolveSubtype()`)
  (fix by @cowtowncoder w/ Claude code)
+#132: `MemberResolver` misses members inherited via self-referential interface
+ (fix by @cowtowncoder w/ Claude code)
 
 1.7.3 (02-Jan-2026)
 

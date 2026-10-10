@@ -900,11 +900,40 @@ public class TypeResolver implements Serializable
     }
 
     /**
+     * Helper method for checking whether given type has a self-reference to its own
+     * class as (direct) type parameter, like raw F-bounded types do.
+     *
+     * @since 1.8
+     */
+    private static boolean _hasSelfReferenceParameter(ResolvedType type)
+    {
+        final TypeBindings bindings = type.getTypeBindings();
+        for (int i = 0, len = bindings.size(); i < len; ++i) {
+            ResolvedType t = bindings.getBoundType(i);
+            if (isSelfReference(t) && (t.getErasedType() == type.getErasedType())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return Stand-alone raw type of given type, if equal to it; otherwise given type
+     *
+     * @since 1.8
+     */
+    private ResolvedType _rawIfEqual(ResolvedType type)
+    {
+        ResolvedType rawType = _fromClass(null, type.getErasedType(), TypeBindings.emptyBindings());
+        return rawType.equals(type) ? rawType : type;
+    }
+
+    /**
      * Helper method for checking whether given self-reference represents the type it
-     * references: that is, either has same type bindings, or is (directly) a type parameter
-     * of the referenced type (like {@code E} in raw {@code Enum<E extends Enum<E>>}).
-     * Note that self-references nested deeper (like {@code W<String,?>} within
-     * {@code W<A, T extends List<W<String,?>>>}) represent differently parameterized types.
+     * references: that is, either has same type bindings, or is the type parameter of
+     * the referenced type, for type variable bound to the type itself (like {@code E} in
+     * raw {@code Enum<E extends Enum<E>>}). Other self-references (like {@code W<String,?>}
+     * in {@code W<A, T extends W<String,?>>}) represent differently parameterized types.
      *
      * @since 1.8
      */
@@ -915,15 +944,41 @@ public class TypeResolver implements Serializable
             return true;
         }
         for (int i = 0, len = refBindings.size(); i < len; ++i) {
-            ResolvedType t = refBindings.getBoundType(i);
-            while (t.isArray()) {
-                t = t.getArrayElementType();
-            }
-            if (t == selfRef) {
-                return true;
+            if (refBindings.getBoundType(i) == selfRef) {
+                return _isBoundToSelf(ref.getErasedType(), i);
             }
         }
         return false;
+    }
+
+    /**
+     * Helper method for checking whether type variable with given index of given class is
+     * bound to the class itself: either raw ({@code T extends Foo}), or parameterized with
+     * its own type variables ({@code T extends Foo<T>}).
+     *
+     * @since 1.8
+     */
+    private static boolean _isBoundToSelf(Class<?> raw, int index)
+    {
+        TypeVariable<?>[] vars = raw.getTypeParameters();
+        if (index >= vars.length) {
+            return false;
+        }
+        Type bound = vars[index].getBounds()[0];
+        if (bound == raw) {
+            return true;
+        }
+        if (!(bound instanceof ParameterizedType)
+                || (((ParameterizedType) bound).getRawType() != raw)) {
+            return false;
+        }
+        for (Type arg : ((ParameterizedType) bound).getActualTypeArguments()) {
+            if (!(arg instanceof TypeVariable<?>)
+                    || (((TypeVariable<?>) arg).getGenericDeclaration() != raw)) {
+                return false;
+            }
+        }
+        return true;
     }
     /**
      * Helper method for resolving stand-alone type that given self-reference represents,
@@ -1023,9 +1078,8 @@ public class TypeResolver implements Serializable
             if (bindings.hasContextualTypes()) {
                 // ... although incomplete raw type with self-references to itself (like
                 // `B<T extends B<T>>`) may be replaced with equal stand-alone raw type
-                ResolvedType rawType = _fromClass(null, type.getErasedType(),
-                        TypeBindings.emptyBindings());
-                return rawType.equals(type) ? rawType : type;
+                return _hasSelfReferenceParameter(type)
+                        ? _rawIfEqual(type) : type;
             }
             newTypes = bindings.typeParameterArray();
         }

@@ -139,6 +139,17 @@ public class TypeResolver128Test extends BaseTest
         public T value;
     }
 
+    // Self-reference as type parameter (with different bindings), not F-bounded
+    static class WD<A, T extends WD<String, ?>> {
+        public A a;
+    }
+
+    // [classmate#132]: members via self-referential interface
+    interface Top { void top(); }
+    interface BaseI<X> extends Top { X get(); }
+    interface MidI<T> extends BaseI<OuterI> { }
+    interface OuterI extends MidI<String> { }
+
     // Incomplete F-bounded type
     @SuppressWarnings("rawtypes")
     static class FBOuter extends HBase<FBounded> { }
@@ -473,6 +484,35 @@ public class TypeResolver128Test extends BaseTest
         assertEquals(1, members.getMemberFields().length);
         ResolvedType expW = resolver.resolve(W.class, String.class, Object.class);
         assertEquals(resolver.resolve(List.class, expW), members.getMemberFields()[0].getType());
+    }
+
+    // Self-reference as type parameter represents the type itself only if bound to it
+    // (like `E` in `Enum<E extends Enum<E>>`), not otherwise
+    public void testSelfReferenceTypeParameterNotBoundToSelf()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType param = resolver.resolve(WD.class).getTypeParameters().get(1);
+        assertTrue(TypeResolver.isSelfReference(param));
+        ResolvedType exp = resolver.resolve(WD.class, String.class, Object.class);
+        assertEquals(exp, ((ResolvedRecursiveType) param).getActualType());
+        assertEquals(exp, resolver.resolveSubtype(param, WD.class));
+
+        ResolvedTypeWithMembers members = new MemberResolver(resolver).resolve(param, null, null);
+        assertEquals(1, members.getMemberFields().length);
+        assertSame(String.class, members.getMemberFields()[0].getType().getErasedType());
+    }
+
+    // [classmate#132]: members inherited via self-referential interface (of type only
+    // valid within its resolution context) must not be lost
+    public void testMembersViaSelfReferentialInterface()
+    {
+        TypeResolver resolver = new TypeResolver();
+        MemberResolver mr = new MemberResolver(resolver);
+        ResolvedType outerInMid = resolver.resolve(MidI.class, String.class)
+                .getImplementedInterfaces().get(0).getTypeParameters().get(0);
+        assertSame(OuterI.class, outerInMid.getErasedType());
+        assertEquals(2, mr.resolve(outerInMid, null, null).getMemberMethods().length);
+        assertEquals(2, mr.resolve(resolver.resolve(OuterI.class), null, null).getMemberMethods().length);
     }
 
     // Incomplete raw F-bounded type is equal to (and replaced by) stand-alone raw type
