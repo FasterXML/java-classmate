@@ -433,11 +433,13 @@ public class TypeResolver implements Serializable
         // (since those are only valid within type itself anyway)
         if (context.hasSelfReferences()) {
             final ResolvedType resolved = type;
-            final boolean standalone = incomplete;
-            context.resolveSelfReferences(type,
-                    ref -> (standalone ? _isSelfBoundParameter(ref, resolved)
-                            : _representsReferenced(ref, resolved))
-                    ? null : () -> _actualSelfReference(ref, resolved));
+            if (incomplete) {
+                context.resolveSelfReferences(type, ref -> _isSelfBoundParameter(ref, resolved)
+                        ? null : () -> _standaloneSelfReference(ref));
+            } else {
+                context.resolveSelfReferences(type, ref -> _representsReferenced(ref, resolved)
+                        ? null : () -> _actualSelfReference(ref, resolved));
+            }
         }
         if (incomplete) {
             type._markIncomplete();
@@ -1065,21 +1067,16 @@ public class TypeResolver implements Serializable
         return Arrays.equals(((ParameterizedType) bound).getActualTypeArguments(), vars);
     }
     /**
-     * Helper method for resolving the actual type given self-reference (to given resolved
-     * type) represents: stand-alone type, or resolved type itself if equal to it
-     * and valid outside of its resolution context.
+     * Helper method for resolving the actual type given self-reference (to given
+     * resolved type, valid outside of its resolution context) represents: stand-alone
+     * type, or resolved type itself if equal to it (to retain identity).
      *
      * @since 1.8
      */
     private ResolvedType _actualSelfReference(ResolvedType selfRef, ResolvedType resolved)
     {
         ResolvedType actual = _standaloneSelfReference(selfRef);
-        // [classmate#132]: incomplete types are equal to stand-alone ones, but not
-        // valid outside their resolution context
-        if (!resolved._isIncomplete() && actual.equals(resolved)) {
-            return resolved;
-        }
-        return actual;
+        return actual.equals(resolved) ? resolved : actual;
     }
 
     /**

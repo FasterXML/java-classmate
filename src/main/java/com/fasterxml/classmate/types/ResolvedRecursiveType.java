@@ -28,7 +28,8 @@ public class ResolvedRecursiveType extends ResolvedType
     /**
      * For self-references with type bindings different from those of the referenced
      * type (like raw {@code Mid} within {@code Mid<String>}, or {@code N<N<T>>} within
-     * {@code N<T>}): supplier of the actual type this self-reference represents.
+     * {@code N<T>}), or to a referenced type only valid within its resolution context:
+     * supplier of the actual type this self-reference represents.
      * Resolved lazily since doing so eagerly could lead to infinite recursion.
      *
      * @since 1.8
@@ -36,8 +37,8 @@ public class ResolvedRecursiveType extends ResolvedType
     protected Supplier<ResolvedType> _actualTypeSupplier;
 
     /**
-     * Actual type this self-reference represents, if differs from referenced type;
-     * resolved lazily using {@link #_actualTypeSupplier}.
+     * Actual type this self-reference represents, if (possibly) differs from referenced
+     * type; resolved lazily using {@link #_actualTypeSupplier}.
      *
      * @since 1.8
      */
@@ -100,7 +101,8 @@ public class ResolvedRecursiveType extends ResolvedType
     /**
      * Accessor for the type being resolved that this self-reference points to.
      * Note that type bindings of this self-reference may differ from those of the
-     * referenced type (like for raw {@code Mid} within {@code Mid<String>}): if so,
+     * referenced type (like for raw {@code Mid} within {@code Mid<String>}), or
+     * referenced type may only be valid within its resolution context: if so,
      * {@link #getActualType()} returns the type self-reference actually represents.
      */
     @Override

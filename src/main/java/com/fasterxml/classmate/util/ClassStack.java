@@ -100,7 +100,8 @@ public final class ClassStack
      * Method called when type that this stack frame represents is
      * fully resolved, allowing self-references to be completed
      * (if there are any). Self-references that represent a type different from the
-     * resolved one (like ones with different type bindings) get the actual type they
+     * resolved one (like ones with different type bindings, or any if resolved type
+     * is only valid within its resolution context) get the actual type they
      * represent from supplier given by function (null if self-reference represents the
      * resolved type), if any (see {@link ResolvedRecursiveType#setReference(ResolvedType, Supplier)}).
      *
