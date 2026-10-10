@@ -150,6 +150,24 @@ public class TypeResolver128Test extends BaseTest
     interface MidI<T> extends BaseI<OuterI> { }
     interface OuterI extends MidI<String> { }
 
+    // Self-reference as main type for member resolution
+    static class SB {
+        public int base;
+    }
+    static class SR<T extends SR<T>> extends SB {
+        public T x;
+    }
+
+    // Bound with own type variables, but not in order
+    static class PP<T extends PP<T, T>, U> {
+        public U u;
+    }
+
+    // Incomplete F-bounded type, self-reference nested in bound
+    @SuppressWarnings("rawtypes")
+    static class NOuter extends HBase<NFB> { }
+    static class NFB<T extends List<NFB<T>>> extends HBase<NOuter> { }
+
     // Incomplete F-bounded type
     @SuppressWarnings("rawtypes")
     static class FBOuter extends HBase<FBounded> { }
@@ -513,6 +531,43 @@ public class TypeResolver128Test extends BaseTest
         assertSame(OuterI.class, outerInMid.getErasedType());
         assertEquals(2, mr.resolve(outerInMid, null, null).getMemberMethods().length);
         assertEquals(2, mr.resolve(resolver.resolve(OuterI.class), null, null).getMemberMethods().length);
+    }
+
+    // Members of self-reference include inherited ones
+    public void testMembersOfSelfReference()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType selfRef = resolver.resolve(SR.class).getTypeParameters().get(0);
+        assertTrue(TypeResolver.isSelfReference(selfRef));
+        ResolvedTypeWithMembers members = new MemberResolver(resolver).resolve(selfRef, null, null);
+        assertEquals(2, members.getMemberFields().length);
+    }
+
+    // Self-reference represents the type itself only if bound to it with own type
+    // variables in order (`PP<T,T>` means `PP<T,U>` with `U = T`, not raw `PP`)
+    public void testSelfReferenceWithReorderedBound()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType raw = resolver.resolve(PP.class);
+        ResolvedType selfRef = raw.getTypeParameters().get(0);
+        assertTrue(TypeResolver.isSelfReference(selfRef));
+        ResolvedType actual = ((ResolvedRecursiveType) selfRef).getActualType();
+        assertNotSame(raw, actual);
+        assertEquals(selfRef.getTypeParameters(), actual.getTypeParameters());
+    }
+
+    // Incomplete raw F-bounded type with nested self-reference is completed too
+    // (nested self-reference representing type with own bindings)
+    public void testIncompleteNestedFBoundedTypeCompleted()
+    {
+        TypeResolver resolver = new TypeResolver();
+        ResolvedType b = resolver.resolve(NOuter.class).getParentClass().getTypeParameters().get(0);
+        assertSame(NFB.class, b.getErasedType());
+        assertTrue(b._isIncomplete());
+        ResolvedType completed = resolver.resolve(b);
+        assertFalse(completed._isIncomplete());
+        assertEquals(resolver.resolve(NFB.class), completed);
+        assertSame(completed, resolver.resolve(b));
     }
 
     // Incomplete raw F-bounded type is equal to (and replaced by) stand-alone raw type

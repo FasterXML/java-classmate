@@ -916,7 +916,6 @@ public class TypeResolver implements Serializable
         }
         return false;
     }
-
     /**
      * @return Stand-alone raw type of given type, if equal to it; otherwise given type
      *
@@ -944,8 +943,9 @@ public class TypeResolver implements Serializable
             return true;
         }
         for (int i = 0, len = refBindings.size(); i < len; ++i) {
-            if (refBindings.getBoundType(i) == selfRef) {
-                return _isBoundToSelf(ref.getErasedType(), i);
+            if ((refBindings.getBoundType(i) == selfRef)
+                    && _isBoundToSelf(ref.getErasedType(), i)) {
+                return true;
             }
         }
         return false;
@@ -954,7 +954,7 @@ public class TypeResolver implements Serializable
     /**
      * Helper method for checking whether type variable with given index of given class is
      * bound to the class itself: either raw ({@code T extends Foo}), or parameterized with
-     * its own type variables ({@code T extends Foo<T>}).
+     * its own type variables, in order ({@code T extends Foo<T>}).
      *
      * @since 1.8
      */
@@ -972,13 +972,8 @@ public class TypeResolver implements Serializable
                 || (((ParameterizedType) bound).getRawType() != raw)) {
             return false;
         }
-        for (Type arg : ((ParameterizedType) bound).getActualTypeArguments()) {
-            if (!(arg instanceof TypeVariable<?>)
-                    || (((TypeVariable<?>) arg).getGenericDeclaration() != raw)) {
-                return false;
-            }
-        }
-        return true;
+        // must be parameterized with own type variables, in order (like `Foo<T, U>`)
+        return Arrays.equals(((ParameterizedType) bound).getActualTypeArguments(), vars);
     }
     /**
      * Helper method for resolving stand-alone type that given self-reference represents,
