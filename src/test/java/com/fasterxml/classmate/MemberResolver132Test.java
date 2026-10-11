@@ -6,43 +6,38 @@ import com.fasterxml.classmate.members.ResolvedMethod;
 import com.fasterxml.classmate.types.ResolvedRecursiveType;
 
 /**
- * Tests for [classmate#132]: members inherited via self-referential
- * implemented interfaces must not be dropped.
+ * Tests for [classmate#132]: supertypes (and members inherited via them) of
+ * self-referential supertypes must not be dropped.
  */
 public class MemberResolver132Test extends BaseTest
 {
     public interface Top { void top(); }
     public interface BaseI<X> extends Top { X get(); }
+    public interface Ref<R> { R ref(); }
+
+    // Self-referential interface: `MidI<String>` within `OuterI`
     public interface MidI<T> extends BaseI<OuterI> { }
     public interface OuterI extends MidI<String> { }
 
-    // Same with class implementing interface
-    static abstract class BaseC<X> implements BaseI<X> { }
-    static abstract class MidC<T> extends BaseC<OuterC> { }
-    static abstract class OuterC extends MidC<String> {
-        public void own() { }
-    }
+    // Self-referential parent class
+    static abstract class MidC<T> implements BaseI<OuterC> { }
+    static abstract class OuterC extends MidC<String> { }
 
-    // Class directly implementing self-referential interface
+    // Class implementing self-referential interface
     public interface MidI2<T> extends BaseI<OuterC2> { }
-    static abstract class OuterC2 implements MidI2<String> {
-        public void own() { }
-    }
+    static abstract class OuterC2 implements MidI2<String> { }
 
     // Self-referential supertypes (`MidJ`, `MidK`) that also refer to a type still being
     // resolved (`OutJ`, `OutK`), so are only valid within their resolution context
-    public interface Ref<R> { R ref(); }
     static abstract class OutJ implements BaseI<MidJ> { }
     public interface MidJ extends BaseI<OuterJ>, Ref<OutJ> { }
     public interface OuterJ extends MidJ { }
 
-    static class Base2<Q> { }
-    static abstract class OutK extends Base2<MidK> { }
-    static abstract class MidK extends Base2<OuterK> implements Ref<OutK> { }
+    static abstract class OutK implements BaseI<MidK> { }
+    static abstract class MidK implements BaseI<OuterK>, Ref<OutK> { }
     static abstract class OuterK extends MidK { }
 
-    // Generic variant (for `resolveSubtype()`), with self-reference (`GMid<T>` within
-    // `GOuter<T>`) to incomplete type (due to reference to `GSub<T>`)
+    // Generic variant, for `resolveSubtype()`
     public interface GMid<T> extends BaseI<GOuter<T>>, Ref<GSub<T>> { }
     public interface GOuter<T> extends GMid<T> { }
     static abstract class GSub<T> implements GMid<T> { }
@@ -50,188 +45,102 @@ public class MemberResolver132Test extends BaseTest
     private final TypeResolver _typeResolver = new TypeResolver();
     private final MemberResolver _memberResolver = new MemberResolver(_typeResolver);
 
-    public void testStandAloneInterface()
-    {
-        ResolvedType outer = _typeResolver.resolve(OuterI.class);
-        assertEquals(Arrays.asList("get", "top"), _methodNames(outer));
-    }
-
     public void testInterfaceViaTypeParameter()
     {
-        ResolvedType outerInMid = _typeResolver.resolve(MidI.class, String.class)
-                .getImplementedInterfaces().get(0).getTypeParameters().get(0);
-        assertEquals(OuterI.class, outerInMid.getErasedType());
-        assertEquals(Arrays.asList("get", "top"), _methodNames(outerInMid));
-        // and `get()` should have proper return type
-        ResolvedMethod get = _findMethod(outerInMid, "get");
-        assertEquals(OuterI.class, get.getReturnType().getErasedType());
-    }
-
-    public void testImplementedInterfacesViaTypeParameter()
-    {
-        ResolvedType outerInMid = _typeResolver.resolve(MidI.class, String.class)
-                .getImplementedInterfaces().get(0).getTypeParameters().get(0);
-        // `MidI<String>` was still being resolved, but must not be exposed as self-reference
-        List<ResolvedType> ifs = outerInMid.getImplementedInterfaces();
-        assertEquals(1, ifs.size());
-        ResolvedType mid = ifs.get(0);
-        assertFalse(mid instanceof ResolvedRecursiveType);
+        ResolvedType outer = _verifyViaContext(_typeResolver.resolve(MidI.class, String.class),
+                OuterI.class, "get", "top");
+        ResolvedType mid = outer.getImplementedInterfaces().get(0);
         assertEquals(MidI.class, mid.getErasedType());
         assertEquals(String.class, mid.getTypeParameters().get(0).getErasedType());
-        assertEquals(BaseI.class, mid.getImplementedInterfaces().get(0).getErasedType());
-
-        // and supertypes reachable via it must be found
-        ResolvedType base = outerInMid.findSupertype(BaseI.class);
-        assertNotNull(base);
-        assertEquals(OuterI.class, base.getTypeParameters().get(0).getErasedType());
-        assertNotNull(outerInMid.findSupertype(Top.class));
+        assertEquals(OuterI.class, _findMethod(outer, "get").getReturnType().getErasedType());
     }
 
     public void testClassViaTypeParameter()
     {
-        ResolvedType standAlone = _typeResolver.resolve(OuterC.class);
-        assertEquals(Arrays.asList("get", "own", "top"), _methodNames(standAlone));
-
-        ResolvedType outerInMid = _typeResolver.resolve(MidC.class, String.class)
-                .getParentClass().getTypeParameters().get(0);
-        assertEquals(OuterC.class, outerInMid.getErasedType());
-        assertEquals(Arrays.asList("get", "own", "top"), _methodNames(outerInMid));
-        assertNotNull(outerInMid.findSupertype(BaseI.class));
-        assertNotNull(outerInMid.findSupertype(Top.class));
+        _verifyViaContext(_typeResolver.resolve(MidC.class, String.class), OuterC.class, "get", "top");
+        _verifyViaContext(_typeResolver.resolve(MidI2.class, String.class), OuterC2.class, "get", "top");
     }
 
-    public void testClassImplementingInterfaceViaTypeParameter()
+    // Self-reference itself as the type to resolve members of
+    public void testSelfReferenceAsMainType()
     {
-        ResolvedType standAlone = _typeResolver.resolve(OuterC2.class);
-        assertEquals(Arrays.asList("get", "own", "top"), _methodNames(standAlone));
-
-        ResolvedType outerInMid = _typeResolver.resolve(MidI2.class, String.class)
-                .getImplementedInterfaces().get(0).getTypeParameters().get(0);
-        assertEquals(OuterC2.class, outerInMid.getErasedType());
-        List<ResolvedType> ifs = outerInMid.getImplementedInterfaces();
-        assertEquals(1, ifs.size());
-        assertFalse(ifs.get(0) instanceof ResolvedRecursiveType);
-        assertEquals(MidI2.class, ifs.get(0).getErasedType());
-        assertEquals(String.class, ifs.get(0).getTypeParameters().get(0).getErasedType());
-
-        assertEquals(Arrays.asList("get", "own", "top"), _methodNames(outerInMid));
-        assertNotNull(outerInMid.findSupertype(BaseI.class));
-        assertNotNull(outerInMid.findSupertype(Top.class));
+        ResolvedType selfRef = _typeResolver.resolve(OuterI.class)
+                .findSupertype(BaseI.class).getTypeParameters().get(0);
+        assertTrue(selfRef instanceof ResolvedRecursiveType);
+        assertEquals(Arrays.asList("get", "top"), _methodNames(selfRef));
     }
 
-    // Self-referential interface whose type is only valid within its resolution context
-    public void testIncompleteInterfaceViaTypeParameter()
+    // Self-referential supertypes only valid within their resolution context must
+    // be replaced with stand-alone types
+    public void testIncompleteSupertypes()
     {
-        ResolvedType midJ = _typeResolver.resolve(OutJ.class)
-                .getImplementedInterfaces().get(0).getTypeParameters().get(0);
-        ResolvedType outerJ = midJ.getImplementedInterfaces().get(0).getTypeParameters().get(0);
-        assertEquals(OuterJ.class, outerJ.getErasedType());
+        ResolvedType midJ = _param(_typeResolver.resolve(OutJ.class));
+        ResolvedType outerJ = _verifyViaContext(midJ, OuterJ.class, "get", "ref", "top");
+        assertSame(_typeResolver.resolve(MidJ.class), outerJ.getImplementedInterfaces().get(0));
+        _verifyRef(outerJ, OutJ.class);
 
-        // must be stand-alone type, not one from resolution context of `OutJ`
-        ResolvedType mid = outerJ.getImplementedInterfaces().get(0);
-        assertSame(_typeResolver.resolve(MidJ.class), mid);
-        _verifyRef(outerJ.findSupertype(Ref.class), OutJ.class);
-        assertEquals(Arrays.asList("get", "ref", "top"), _methodNames(outerJ));
+        ResolvedType midK = _param(_typeResolver.resolve(OutK.class));
+        ResolvedType outerK = _verifyViaContext(midK, OuterK.class, "get", "ref", "top");
+        assertSame(_typeResolver.resolve(MidK.class), outerK.getParentClass());
+        _verifyRef(outerK, OutK.class);
     }
 
-    // Same for self-referential parent class
-    public void testIncompleteClassViaTypeParameter()
-    {
-        ResolvedType midK = _typeResolver.resolve(OutK.class)
-                .getParentClass().getTypeParameters().get(0);
-        ResolvedType outerK = midK.getParentClass().getTypeParameters().get(0);
-        assertEquals(OuterK.class, outerK.getErasedType());
-
-        ResolvedType mid = outerK.getParentClass();
-        assertSame(_typeResolver.resolve(MidK.class), mid);
-        _verifyRef(outerK.findSupertype(Ref.class), OutK.class);
-        assertEquals(Arrays.asList("ref"), _methodNames(outerK));
-    }
-
-    // [classmate#132]: subtype resolution with self-references to incomplete types
     public void testSubtypeOfIncompleteType()
     {
-        // supertype only valid within resolution context of `OutJ`
-        ResolvedType midJ = _typeResolver.resolve(OutJ.class)
-                .getImplementedInterfaces().get(0).getTypeParameters().get(0);
-        ResolvedType sub = _typeResolver.resolveSubtype(midJ, OuterJ.class);
-        assertSame(_typeResolver.resolve(OuterJ.class), sub);
-        _verifyRef(sub.findSupertype(Ref.class), OutJ.class);
+        ResolvedType midJ = _param(_typeResolver.resolve(OutJ.class));
+        assertSame(_typeResolver.resolve(OuterJ.class), _typeResolver.resolveSubtype(midJ, OuterJ.class));
 
-        // and same for one obtained via self-reference
-        ResolvedType outerJ = midJ.getImplementedInterfaces().get(0).getTypeParameters().get(0);
-        ResolvedType mid = outerJ.getImplementedInterfaces().get(0);
-        assertSame(sub, _typeResolver.resolveSubtype(mid, OuterJ.class));
-    }
-
-    public void testGenericSubtypeWithIncompleteSelfReference()
-    {
-        // `GOuter<P>` (with placeholder for `T` of `GSub`) refers to incomplete `GMid<P>`
+        // generic subtype, with self-reference to incomplete type (`GMid<T>` within
+        // `GOuter<T>`, due to reference to `GSub<T>`)
         ResolvedType superType = _typeResolver.resolve(BaseI.class,
                 _typeResolver.resolve(GOuter.class, String.class));
         ResolvedType sub = _typeResolver.resolveSubtype(superType, GSub.class);
         assertSame(_typeResolver.resolve(GSub.class, String.class), sub);
-        _verifyGeneric(sub);
-
-        ResolvedType gMid = _typeResolver.resolve(GMid.class, String.class);
-        ResolvedType gOuter = _typeResolver.resolveSubtype(gMid, GOuter.class);
-        assertSame(_typeResolver.resolve(GOuter.class, String.class), gOuter);
-
-        // and with supertype from resolution context of `GSub<String>`
-        ResolvedType outerInSub = sub.findSupertype(BaseI.class).getTypeParameters().get(0);
-        assertEquals(GOuter.class, outerInSub.getErasedType());
-        ResolvedType midInSub = outerInSub.getImplementedInterfaces().get(0);
-        assertFalse(midInSub instanceof ResolvedRecursiveType);
-        System.err.println("DEBUG incomplete="+midInSub._isIncomplete()+" equal="+gMid.equals(midInSub)
-            +" outerInSub.incomplete="+outerInSub._isIncomplete()+" again="+(midInSub == outerInSub.getImplementedInterfaces().get(0))
-            +" cachedNow="+(_typeResolver.resolve(GMid.class, String.class) == midInSub));
-        assertSame(gMid, midInSub);
-        assertSame(gOuter, _typeResolver.resolveSubtype(midInSub, GOuter.class));
-        assertSame(gOuter, _typeResolver.resolveSubtype(
-                _typeResolver.resolve(outerInSub), GOuter.class));
-    }
-
-    private void _verifyGeneric(ResolvedType sub)
-    {
-        // `BaseI<GOuter<String>>`, with `GOuter<String>` implementing `GMid<String>`
-        ResolvedType outer = sub.findSupertype(BaseI.class).getTypeParameters().get(0);
-        assertEquals(GOuter.class, outer.getErasedType());
-        assertEquals(String.class, outer.getTypeParameters().get(0).getErasedType());
-        ResolvedType mid = outer.getImplementedInterfaces().get(0);
-        assertEquals(GMid.class, mid.getErasedType());
-        assertEquals(String.class, mid.getTypeParameters().get(0).getErasedType());
-        // `Ref<GSub<String>>`
-        ResolvedType ref = sub.findSupertype(Ref.class);
-        ResolvedType refParam = ref.getTypeParameters().get(0);
-        assertEquals(GSub.class, refParam.getErasedType());
-        assertEquals(String.class, refParam.getTypeParameters().get(0).getErasedType());
+        assertEquals(_typeResolver.resolve(GMid.class, String.class),
+                _param(sub).getImplementedInterfaces().get(0));
+        assertEquals(_typeResolver.resolve(GSub.class, String.class),
+                sub.findSupertype(Ref.class).getTypeParameters().get(0));
         assertEquals(Arrays.asList("get", "ref", "top"), _methodNames(sub));
     }
 
-    private void _verifyRef(ResolvedType ref, Class<?> expParam)
+    /**
+     * Verifies type obtained as type parameter of {@code BaseI} of given type: must have
+     * same supertypes and members as stand-alone type, without self-references.
+     */
+    private ResolvedType _verifyViaContext(ResolvedType context, Class<?> expType,
+            String... expMethods)
     {
-        assertNotNull(ref);
-        ResolvedType param = ref.getTypeParameters().get(0);
-        assertFalse(param instanceof ResolvedRecursiveType);
-        assertEquals(expParam, param.getErasedType());
-        // and as stand-alone type, supertypes must be accessible
-        assertNotNull(param.getParentClass());
+        ResolvedType type = _param(context);
+        assertEquals(expType, type.getErasedType());
+        List<ResolvedType> supertypes = new ArrayList<>(type.getImplementedInterfaces());
+        if (type.getParentClass() != null) {
+            supertypes.add(type.getParentClass());
+        }
+        assertFalse(supertypes.isEmpty());
+        for (ResolvedType t : supertypes) {
+            assertFalse(t instanceof ResolvedRecursiveType);
+        }
+        assertNotNull(type.findSupertype(Top.class));
+        List<String> methods = _methodNames(type);
+        assertEquals(Arrays.asList(expMethods), methods);
+        assertEquals(_methodNames(_typeResolver.resolve(expType)), methods);
+        return type;
     }
 
-    public void testSelfReferenceAsMainType()
+    private void _verifyRef(ResolvedType type, Class<?> expParam)
     {
-        // self-reference itself as the type to resolve members of
-        ResolvedType outer = _typeResolver.resolve(OuterI.class);
-        ResolvedType selfRef = outer.getImplementedInterfaces().get(0) // MidI<String>
-                .getImplementedInterfaces().get(0) // BaseI<OuterI>
-                .getTypeParameters().get(0);
-        assertEquals(OuterI.class, selfRef.getErasedType());
-        assertEquals(Arrays.asList("get", "top"), _methodNames(selfRef));
+        ResolvedType param = type.findSupertype(Ref.class).getTypeParameters().get(0);
+        assertFalse(param instanceof ResolvedRecursiveType);
+        assertEquals(expParam, param.getErasedType());
+    }
+
+    private static ResolvedType _param(ResolvedType type) {
+        return type.findSupertype(BaseI.class).getTypeParameters().get(0);
     }
 
     private List<String> _methodNames(ResolvedType type)
     {
-        List<String> names = new ArrayList<String>();
+        List<String> names = new ArrayList<>();
         for (ResolvedMethod m : _memberResolver.resolve(type, null, null).getMemberMethods()) {
             names.add(m.getName());
         }
