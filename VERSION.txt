@@ -58,6 +58,14 @@ Release notes:
   can not have a common subtype with bound (as per Java casting rules) are rejected
  (fix by @cowtowncoder w/ Claude code)
 #132: `MemberResolver` misses members inherited via self-referential interface
+  (`ResolvedRecursiveType` as implemented interface)
+- `getImplementedInterfaces()` returns types self-referential interfaces represent
+  (same as `getParentClass()`): for expanding generic types (like `D<T>` for
+  `C<T> extends Base<D<T>>`, `D<T> extends C<List<T>>`), following supertypes and
+  their type parameters may yield ever deeper types
+- `ResolvedRecursiveType.getActualType()` returns stand-alone type if referenced
+  type is only valid within its resolution context (like `B` in `B extends Base<A>`,
+  when resolving `A extends Base<B>`)
  (fix by @cowtowncoder w/ Claude code)
 
 1.7.3 (02-Jan-2026)

@@ -98,6 +98,14 @@ public abstract class ResolvedType
      * {@link java.lang.Object}.
      * Also, placeholders for cyclic (recursive) types return null for
      * this method.
+     *<p>
+     * NOTE: if parent class is a self-reference ({@link ResolvedRecursiveType}),
+     * type it represents is returned instead (see {@link ResolvedRecursiveType#getActualType()}).
+     * For generic types that expand, like {@code D<T>} in
+     * {@code C<T> extends Base<D<T>>} and {@code D<T> extends C<List<T>>}, following
+     * supertypes and their type parameters may therefore yield ever deeper types
+     * ({@code D<String>}, {@code C<List<String>>}, {@code D<List<String>>} and so on):
+     * code traversing types this way needs to limit depth of traversal.
      */
     public abstract ResolvedType getParentClass();
 
@@ -121,6 +129,12 @@ public abstract class ResolvedType
      * <b>directly</b> implements.
      * NOTE: returned list does NOT include transitively implemented types (that is,
      * interfaces implemented by parent classes or interfaces).
+     *
+     *<p>
+     * NOTE: self-referential interfaces ({@link ResolvedRecursiveType}) are replaced with
+     * types they represent (see {@link ResolvedRecursiveType#getActualType()}): as with
+     * {@link #getParentClass()}, following supertypes and their type parameters may therefore
+     * yield ever deeper types for expanding generic types.
      *
      * @return List of interfaces this type implements, if any; empty list if none (never
      *    {@code null}).

@@ -28,7 +28,8 @@ public class ResolvedRecursiveType extends ResolvedType
     /**
      * For self-references with type bindings different from those of the referenced
      * type (like raw {@code Mid} within {@code Mid<String>}, or {@code N<N<T>>} within
-     * {@code N<T>}): supplier of the actual type this self-reference represents.
+     * {@code N<T>}), or to a referenced type only valid within its resolution context:
+     * supplier of the actual type this self-reference represents.
      * Resolved lazily since doing so eagerly could lead to infinite recursion.
      *
      * @since 1.8
@@ -36,8 +37,8 @@ public class ResolvedRecursiveType extends ResolvedType
     protected Supplier<ResolvedType> _actualTypeSupplier;
 
     /**
-     * Actual type this self-reference represents, if differs from referenced type;
-     * resolved lazily using {@link #_actualTypeSupplier}.
+     * Actual type this self-reference represents, if (possibly) differs from referenced
+     * type; resolved lazily using {@link #_actualTypeSupplier}.
      *
      * @since 1.8
      */
@@ -67,9 +68,9 @@ public class ResolvedRecursiveType extends ResolvedType
 
     /**
      * Alternative to {@link #setReference(ResolvedType)} used when type bindings of
-     * this self-reference differ from those of the referenced type: in that case,
-     * {@link #getActualType()} returns type obtained (lazily) from given supplier
-     * (or referenced type, if equal).
+     * this self-reference differ from those of the referenced type, or if referenced
+     * type is only valid within its resolution context: in that case,
+     * {@link #getActualType()} returns type obtained (lazily) from given supplier.
      *
      * @since 1.8
      */
@@ -100,7 +101,8 @@ public class ResolvedRecursiveType extends ResolvedType
     /**
      * Accessor for the type being resolved that this self-reference points to.
      * Note that type bindings of this self-reference may differ from those of the
-     * referenced type (like for raw {@code Mid} within {@code Mid<String>}): if so,
+     * referenced type (like for raw {@code Mid} within {@code Mid<String>}), or
+     * referenced type may only be valid within its resolution context: if so,
      * {@link #getActualType()} returns the type self-reference actually represents.
      */
     @Override
@@ -110,8 +112,10 @@ public class ResolvedRecursiveType extends ResolvedType
      * Accessor for the type this self-reference represents: same as
      * {@link #getSelfReferencedType()}, unless type bindings of this self-reference
      * differ from those of the referenced type (like raw {@code Mid} within
-     * {@code Mid<String>}, or {@code N<N<T>>} within {@code N<T>}), in which case
-     * it is the type with bindings of this self-reference (resolved lazily).
+     * {@code Mid<String>}, or {@code N<N<T>>} within {@code N<T>}), or referenced
+     * type is only valid within its resolution context (like {@code B} in
+     * {@code B extends Base<A>}, when resolving {@code A extends Base<B>}), in which
+     * case it is the stand-alone type with bindings of this self-reference (resolved lazily).
      *<p>
      * NOTE: for expanding types (like {@code N<T>} above), following actual types
      * repeatedly yields ever deeper types.
@@ -139,10 +143,6 @@ public class ResolvedRecursiveType extends ResolvedType
         // resolved outside of lock, since resolution may access other self-references;
         // concurrent calls may resolve more than once, but only first one is retained
         actual = supplier.get();
-        // retain identity if equal
-        if (actual.equals(_referencedType)) {
-            actual = _referencedType;
-        }
         synchronized (this) {
             if (_actualType == null) {
                 _actualType = actual;
@@ -153,6 +153,34 @@ public class ResolvedRecursiveType extends ResolvedType
         }
     }
     
+    /**
+     * Helper method for replacing self-references in given supertypes (like
+     * implemented interfaces) with types they represent (see {@link #getActualType()}),
+     * since self-references themselves expose no supertypes.
+     *
+     * @since 1.8
+     */
+    static List<ResolvedType> actualTypes(ResolvedType[] types)
+    {
+        if (types.length == 0) {
+            return Collections.<ResolvedType>emptyList();
+        }
+        ResolvedType[] result = types;
+        for (int i = 0; i < types.length; ++i) {
+            if (types[i] instanceof ResolvedRecursiveType) {
+                ResolvedType actual = ((ResolvedRecursiveType) types[i]).getActualType();
+                // may still be unresolved, if called during resolution
+                if (actual != null) {
+                    if (result == types) {
+                        result = types.clone();
+                    }
+                    result[i] = actual;
+                }
+            }
+        }
+        return Arrays.asList(result);
+    }
+
     /**
      * To avoid infinite loops, will return empty list
      */
