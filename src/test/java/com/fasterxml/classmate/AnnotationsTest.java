@@ -1,34 +1,40 @@
 package com.fasterxml.classmate;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AnnotationsTest
 {
     @Retention(RetentionPolicy.RUNTIME)
     private static @interface Marker { }
 
-    @Test @Marker
+    // Annotation with a property, to verify `toString()` output
+    @Retention(RetentionPolicy.RUNTIME)
+    private static @interface Configured {
+        int timeout() default 0;
+    }
+
+    @Test @Marker @Configured
     public void addAsDefault() throws Exception {
         Annotations annotations = new Annotations();
         Method thisMethod = AnnotationsTest.class.getDeclaredMethod("addAsDefault");
 
-        assertNull(annotations.get(Test.class));
+        assertNull(annotations.get(Configured.class));
         assertNull(annotations.get(Marker.class));
 
-        Annotation testAnnotation = thisMethod.getAnnotation(Test.class);
+        Annotation testAnnotation = thisMethod.getAnnotation(Configured.class);
         annotations.addAsDefault(testAnnotation);
 
         Annotation markerAnnotation = thisMethod.getAnnotation(Marker.class);
         annotations.addAsDefault(markerAnnotation);
 
-        assertNotNull(annotations.get(Test.class));
+        assertNotNull(annotations.get(Configured.class));
         assertNotNull(annotations.get(Marker.class));
 
         assertEquals(2, annotations.size());
@@ -43,7 +49,7 @@ public class AnnotationsTest
 
         assertEquals(0, annotations.size());
 
-        Annotation testAnnotation = thisMethod.getAnnotation(Test.class);
+        Annotation testAnnotation = thisMethod.getAnnotation(Configured.class);
         annotations.addAsDefault(testAnnotation);
 
         assertEquals(1, annotations.size());
@@ -61,20 +67,14 @@ public class AnnotationsTest
 
         assertEquals("[null]", annotations.toString());
 
-        Annotation testAnnotation = thisMethod.getAnnotation(Test.class);
+        Annotation testAnnotation = thisMethod.getAnnotation(Configured.class);
         annotations.addAsDefault(testAnnotation);
 
         // order is unspecified as the internal representation is a HashMap; just assert the constituent parts are present
         String asString = _normalize(annotations.toString());
-        assertTrue(asString.contains("{interface org.junit.Test=@org.junit.Test("));
-        assertTrue(asString.contains("timeout=0"));
-
-        // 15-Nov-2016, tatu: Java 9 changes description slightly, need to modify
-        // 05-Dec-2025, tatu: Java 21 adds further variation
-        if (!(asString.contains("expected=class org.junit.Test.None") // until Java 8
-                || asString.contains("expected=org.junit.Test.None"))) {
-            fail("No 'expected' in: "+asString);
-        }
+        assertTrue(asString.contains("{interface com.fasterxml.classmate.AnnotationsTest.Configured=@com.fasterxml.classmate.AnnotationsTest.Configured("),
+                asString);
+        assertTrue(asString.contains("timeout=0"), asString);
 
         Annotation markerAnnotation = thisMethod.getAnnotation(Marker.class);
         annotations.addAsDefault(markerAnnotation);
@@ -85,18 +85,13 @@ public class AnnotationsTest
         if (!asString.contains(exp)) {
             fail("Expected: ["+exp+"]\nin ["+asString+"]");
         }
-        assertTrue(asString.contains("interface org.junit.Test=@org.junit.Test"));
-        assertTrue(asString.contains("timeout=0"));
-        // 15-Nov-2016, tatu: Java 9 changes description slightly, need to modify
-        // 05-Dec-2025, tatu: Java 21 adds further variation
-        if (!(asString.contains("expected=class org.junit.Test.None") // until Java 8
-                || asString.contains("expected=org.junit.Test.None"))) {
-            fail("No 'expected' in: "+asString);
-        }
+        assertTrue(asString.contains("interface com.fasterxml.classmate.AnnotationsTest.Configured=@com.fasterxml.classmate.AnnotationsTest.Configured("),
+                asString);
+        assertTrue(asString.contains("timeout=0"), asString);
     }
 
     private static String _normalize(String str) {
-        // 05-Dec-2025, tatu: Java 21 changes from "org.junit.Test$None" to "org.junit.Test.None"
+        // Nested type names use '$' on some JDKs and '.' on others
         String str2;
         while ((str2 = str.replace('$', '.')) != str) {
             str = str2;

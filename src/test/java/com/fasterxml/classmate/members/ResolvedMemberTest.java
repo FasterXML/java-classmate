@@ -3,7 +3,7 @@ package com.fasterxml.classmate.members;
 import com.fasterxml.classmate.Annotations;
 import com.fasterxml.classmate.types.ResolvedObjectType;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
@@ -12,7 +12,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import static junit.framework.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author blangel

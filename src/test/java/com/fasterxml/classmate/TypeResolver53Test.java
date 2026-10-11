@@ -1,5 +1,8 @@
 package com.fasterxml.classmate;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.*;
 
 // for [classmate#53]: Raw Comparator
@@ -25,6 +28,7 @@ public class TypeResolver53Test extends BaseTest
     protected final TypeResolver RESOLVER = new TypeResolver();
 
     // [classmate#53] Problem with Raw types - single type parameter
+    @Test
     public void testResolvingRawType() {
         ResolvedType rt = RESOLVER.resolve(Comparator53.class);
         List<ResolvedType> params = rt.typeParametersFor(Comparator.class);
@@ -33,6 +37,7 @@ public class TypeResolver53Test extends BaseTest
     }
 
     // [classmate#53] Raw type with multiple type parameters (Map<K,V>)
+    @Test
     public void testRawTypeMultipleParameters() {
         ResolvedType rt = RESOLVER.resolve(Map53.class);
         List<ResolvedType> params = rt.typeParametersFor(Map.class);
@@ -43,6 +48,7 @@ public class TypeResolver53Test extends BaseTest
     }
 
     // [classmate#53] Raw type with bounded type parameter
+    @Test
     public void testRawTypeWithBoundedParameter() {
         ResolvedType rt = RESOLVER.resolve(BoundedRaw.class);
         List<ResolvedType> params = rt.typeParametersFor(Comparable.class);
@@ -53,6 +59,7 @@ public class TypeResolver53Test extends BaseTest
     }
 
     // [classmate#125] Raw interface must not use bindings of implementing class
+    @Test
     public void testRawInterfaceInGenericClass() {
         ResolvedType rt = RESOLVER.resolve(BoundedRawComparable.class, Integer.class);
         List<ResolvedType> params = rt.typeParametersFor(Comparable.class);
@@ -61,6 +68,7 @@ public class TypeResolver53Test extends BaseTest
     }
 
     // [classmate#53] Nested raw types (List<Map> where Map is raw)
+    @Test
     public void testNestedRawType() {
         ResolvedType rt = RESOLVER.resolve(NestedRaw.class);
         List<ResolvedType> params = rt.typeParametersFor(java.util.ArrayList.class);

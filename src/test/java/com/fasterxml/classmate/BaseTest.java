@@ -1,5 +1,7 @@
 package com.fasterxml.classmate;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -8,9 +10,8 @@ import java.util.Set;
 import com.fasterxml.classmate.members.RawMember;
 import com.fasterxml.classmate.members.ResolvedMember;
 
-import junit.framework.TestCase;
 
-public abstract class BaseTest extends TestCase
+public abstract class BaseTest
 {
     protected void verifyException(Throwable e, String... matches)
     {

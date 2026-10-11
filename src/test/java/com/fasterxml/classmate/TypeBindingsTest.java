@@ -5,9 +5,9 @@ import java.util.*;
 
 import com.fasterxml.classmate.types.ResolvedObjectType;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static junit.framework.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TypeBindingsTest
 {
@@ -31,8 +31,8 @@ public class TypeBindingsTest
             TypeBindings.create(Comparable.class, Collections.singletonList(intType));
             fail("Expected failure");
         } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage(), e.getMessage().contains(
-                    "Can not use primitive type (int) as type parameter #1/1 of java.lang.Comparable"));
+            assertTrue(e.getMessage().contains(
+                    "Can not use primitive type (int) as type parameter #1/1 of java.lang.Comparable"), e.getMessage());
         }
     }
 

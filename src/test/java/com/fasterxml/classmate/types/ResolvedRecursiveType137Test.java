@@ -1,5 +1,8 @@
 package com.fasterxml.classmate.types;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.List;
 
 import com.fasterxml.classmate.*;
@@ -28,6 +31,7 @@ public class ResolvedRecursiveType137Test extends BaseTest
 
     private final TypeResolver _typeResolver = new TypeResolver();
 
+    @Test
     public void testSupertypesOfSelfReferenceInInterface()
     {
         ResolvedType outer = _typeResolver.resolve(OuterI.class);
@@ -59,6 +63,7 @@ public class ResolvedRecursiveType137Test extends BaseTest
         assertNull(selfRef.typeParametersFor(String.class));
     }
 
+    @Test
     public void testSupertypesOfGenericSelfReference()
     {
         ResolvedType sym = _typeResolver.resolve(Sym.class);
@@ -73,6 +78,7 @@ public class ResolvedRecursiveType137Test extends BaseTest
         assertEquals(Object.class, selfRef.findSupertype(Object.class).getErasedType());
     }
 
+    @Test
     public void testSupertypesOfExpandingSelfReference()
     {
         // `D<String>` -> `C<List<String>>` -> `Base<D<List<String>>>`, where

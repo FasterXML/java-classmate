@@ -1,16 +1,17 @@
 package com.fasterxml.classmate.members;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.fasterxml.classmate.types.ResolvedObjectType;
 
 import java.lang.reflect.*;
 
-import junit.framework.TestCase;
 
 /**
  * @author blangel
  */
 public class RawMemberTest
-    extends TestCase
 {
 
     @SuppressWarnings("unused")
@@ -58,6 +59,7 @@ public class RawMemberTest
         }
     }
 
+    @Test
     public void testIsStatic() {
         RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
         RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(RawMember.class, null, null, null), getRawMemberMethod);
@@ -74,6 +76,7 @@ public class RawMemberTest
         assertTrue(rawStaticField.isStatic());
     }
 
+    @Test
     public void testIsFinal() {
         RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
         RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), finalMethodMethod);
@@ -90,6 +93,7 @@ public class RawMemberTest
         assertFalse(rawField2.isFinal());
     }
 
+    @Test
     public void testIsPrivate() {
         RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), getTestMethod);
         RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), finalMethodMethod);
@@ -104,6 +108,7 @@ public class RawMemberTest
         assertFalse(rawField1.isPrivate());
     }
 
+    @Test
     public void testIsProtected() {
         RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), getTestMethod);
         RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), finalMethodMethod);
@@ -122,6 +127,7 @@ public class RawMemberTest
         assertTrue(rawField2.isProtected());
     }
 
+    @Test
     public void testIsPublic() {
         RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), getTestMethod);
         RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(ModifiersClass.class, null, null, null), finalMethodMethod);
@@ -136,6 +142,7 @@ public class RawMemberTest
         assertTrue(rawField1.isPublic());
     }
 
+    @Test
     public void testRawMemberHashCode() {
         RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
         RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(RawMember.class, null, null, null), getRawMemberMethod);
@@ -152,6 +159,7 @@ public class RawMemberTest
         assertEquals(testField.hashCode(), rawStaticField.hashCode());
     }
 
+    @Test
     public void testGetModifiers() {
         RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
         RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(RawMember.class, null, null, null), getRawMemberMethod);
@@ -173,6 +181,7 @@ public class RawMemberTest
         assertEquals(objectConstructor.hashCode(), rawConstructor.hashCode());
     }
 
+    @Test
     public void testRawMemberToString() {
         RawMethod rawMethod = new RawMethod(ResolvedObjectType.create(Object.class, null, null, null), toStringMethod);
         RawMethod rawMethod1 = new RawMethod(ResolvedObjectType.create(RawMember.class, null, null, null), getRawMemberMethod);

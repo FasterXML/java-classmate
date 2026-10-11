@@ -1,5 +1,8 @@
 package com.fasterxml.classmate;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.*;
 
 import com.fasterxml.classmate.members.ResolvedMethod;
@@ -45,6 +48,7 @@ public class MemberResolver132Test extends BaseTest
     private final TypeResolver _typeResolver = new TypeResolver();
     private final MemberResolver _memberResolver = new MemberResolver(_typeResolver);
 
+    @Test
     public void testInterfaceViaTypeParameter()
     {
         ResolvedType outer = _verifyViaContext(_typeResolver.resolve(MidI.class, String.class),
@@ -55,6 +59,7 @@ public class MemberResolver132Test extends BaseTest
         assertEquals(OuterI.class, _findMethod(outer, "get").getReturnType().getErasedType());
     }
 
+    @Test
     public void testClassViaTypeParameter()
     {
         _verifyViaContext(_typeResolver.resolve(MidC.class, String.class), OuterC.class, "get", "top");
@@ -62,6 +67,7 @@ public class MemberResolver132Test extends BaseTest
     }
 
     // Self-reference itself as the type to resolve members of
+    @Test
     public void testSelfReferenceAsMainType()
     {
         ResolvedType selfRef = _typeResolver.resolve(OuterI.class)
@@ -72,6 +78,7 @@ public class MemberResolver132Test extends BaseTest
 
     // Self-referential supertypes only valid within their resolution context must
     // be replaced with stand-alone types
+    @Test
     public void testIncompleteSupertypes()
     {
         ResolvedType midJ = _param(_typeResolver.resolve(OutJ.class));
@@ -85,6 +92,7 @@ public class MemberResolver132Test extends BaseTest
         _verifyRef(outerK, OutK.class);
     }
 
+    @Test
     public void testSubtypeOfIncompleteType()
     {
         ResolvedType midJ = _param(_typeResolver.resolve(OutJ.class));

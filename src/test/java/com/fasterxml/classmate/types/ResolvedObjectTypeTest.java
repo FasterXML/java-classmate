@@ -1,5 +1,7 @@
 package com.fasterxml.classmate.types;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.*;
 
 import com.fasterxml.classmate.BaseTest;
@@ -8,7 +10,7 @@ import com.fasterxml.classmate.TypeBindings;
 import com.fasterxml.classmate.members.RawConstructor;
 import com.fasterxml.classmate.members.RawField;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author blangel

@@ -1,5 +1,8 @@
 package com.fasterxml.classmate;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.List;
 
 import com.fasterxml.classmate.members.RawMethod;
@@ -77,6 +80,7 @@ public class TypeResolver117Test extends BaseTest
      * - For ResolvedRecursiveType, this calls both super.equals() AND
      *   _referencedType.equals(), creating a cycle
      */
+    @Test
     public void testRawSelfBoundedCausesStackOverflow() {
         // This should not throw StackOverflowError
         ResolvedType rt = RESOLVER.resolve(RawSelfBounded.class);
@@ -84,18 +88,21 @@ public class TypeResolver117Test extends BaseTest
         // If we get here without StackOverflowError, the test passes
     }
 
+    @Test
     public void testRawSelfReferentialInterface() {
         // Test with raw interface that has self-referential type parameter
         ResolvedType rt = RESOLVER.resolve(RawSelfReferential.class);
         assertNotNull(rt);
     }
 
+    @Test
     public void testRealEnumType() {
         // Test with a real enum type (Enum<E extends Enum<E>>)
         ResolvedType rt = RESOLVER.resolve(TestEnum.class);
         assertNotNull(rt);
     }
 
+    @Test
     public void testRawComparableViaEnum() {
         // Test with class implementing raw Comparable
         // (Comparable is the interface that Enum implements)
@@ -107,6 +114,7 @@ public class TypeResolver117Test extends BaseTest
      * This test checks that equals() on recursive types doesn't cause
      * infinite recursion
      */
+    @Test
     public void testRecursiveTypeEquals() {
         ResolvedType rt1 = RESOLVER.resolve(RawSelfBounded.class);
         ResolvedType rt2 = RESOLVER.resolve(RawSelfBounded.class);
@@ -118,6 +126,7 @@ public class TypeResolver117Test extends BaseTest
     /**
      * Test equals with self-referential interface
      */
+    @Test
     public void testRecursiveInterfaceEquals() {
         ResolvedType rt1 = RESOLVER.resolve(RawSelfReferential.class);
         ResolvedType rt2 = RESOLVER.resolve(RawSelfReferential.class);
@@ -129,6 +138,7 @@ public class TypeResolver117Test extends BaseTest
     /**
      * Test with doubly-recursive type (two type parameters that reference each other)
      */
+    @Test
     public void testDoublyRecursiveType() {
         ResolvedType rt = RESOLVER.resolve(RawDoublyRecursive.class);
         assertNotNull(rt);
@@ -137,6 +147,7 @@ public class TypeResolver117Test extends BaseTest
     /**
      * Test with recursive chain (recursive type extending another recursive type)
      */
+    @Test
     public void testRecursiveChain() {
         ResolvedType rt = RESOLVER.resolve(RawRecursiveChain.class);
         assertNotNull(rt);
@@ -145,6 +156,7 @@ public class TypeResolver117Test extends BaseTest
     /**
      * Test equals on doubly-recursive type
      */
+    @Test
     public void testDoublyRecursiveEquals() {
         ResolvedType rt1 = RESOLVER.resolve(RawDoublyRecursive.class);
         ResolvedType rt2 = RESOLVER.resolve(RawDoublyRecursive.class);
@@ -158,6 +170,7 @@ public class TypeResolver117Test extends BaseTest
      * This is the most likely candidate for reproducing the issue
      * since Enum has the recursive pattern: Enum<E extends Enum<E>>
      */
+    @Test
     public void testDirectEnumResolution() {
         // Try resolving Enum.class directly (as a raw type)
         @SuppressWarnings("rawtypes")
@@ -169,6 +182,7 @@ public class TypeResolver117Test extends BaseTest
     /**
      * Test equals on Enum type
      */
+    @Test
     public void testEnumTypeEquals() {
         @SuppressWarnings("rawtypes")
         Class enumClass = Enum.class;
@@ -182,6 +196,7 @@ public class TypeResolver117Test extends BaseTest
     /**
      * Stress test: resolve many recursive types to trigger caching/equality checks
      */
+    @Test
     public void testMultipleRecursiveResolutions() {
         // Resolve the same types multiple times
         for (int i = 0; i < 10; i++) {
@@ -199,6 +214,7 @@ public class TypeResolver117Test extends BaseTest
     /**
      * Test resolving type parameters directly
      */
+    @Test
     public void testRecursiveTypeParameters() {
         @SuppressWarnings("rawtypes")
         Class enumClass = Enum.class;
@@ -230,6 +246,7 @@ public class TypeResolver117Test extends BaseTest
      * Deep inspection test: examine the structure of resolved recursive types
      * to understand if the cycle exists
      */
+    @Test
     public void testRecursiveTypeStructure() {
         ResolvedType rt = RESOLVER.resolve(RawSelfBounded.class);
 
@@ -258,6 +275,7 @@ public class TypeResolver117Test extends BaseTest
      * Test that explicitly verifies the issue is resolved or documents
      * that it could not be reproduced in unit tests
      */
+    @Test
     public void testIssue117Summary() {
         // This test documents the investigation of issue #117
 
@@ -279,13 +297,14 @@ public class TypeResolver117Test extends BaseTest
         // b) The issue requires a specific integration scenario not covered by unit tests
         // c) The issue manifests only with certain JDK versions or configurations
 
-        assertTrue("Issue #117 tests completed without StackOverflowError", true);
+        assertTrue(true, "Issue #117 tests completed without StackOverflowError");
     }
 
     /**
      * Test using MemberResolver which might trigger more complex resolution
      * and cache lookups
      */
+    @Test
     public void testMemberResolverWithRecursiveTypes() {
         MemberResolver memberResolver = new MemberResolver(RESOLVER);
 
@@ -304,6 +323,7 @@ public class TypeResolver117Test extends BaseTest
     /**
      * Test MemberResolver with java.lang.Enum
      */
+    @Test
     public void testMemberResolverWithEnum() {
         MemberResolver memberResolver = new MemberResolver(RESOLVER);
 
@@ -321,6 +341,7 @@ public class TypeResolver117Test extends BaseTest
     /**
      * Test with multiple TypeResolver instances to ensure no cross-cache issues
      */
+    @Test
     public void testMultipleResolvers() {
         TypeResolver resolver1 = new TypeResolver();
         TypeResolver resolver2 = new TypeResolver();
@@ -336,6 +357,7 @@ public class TypeResolver117Test extends BaseTest
      * Test that specifically tries to trigger cache comparison by
      * resolving the same type multiple times
      */
+    @Test
     public void testCacheLookupWithRecursiveTypes() {
         // First resolution - should cache it
         ResolvedType rt1 = RESOLVER.resolve(Enum.class);
@@ -355,6 +377,7 @@ public class TypeResolver117Test extends BaseTest
     /**
      * Test resolving type parameters for recursive types
      */
+    @Test
     public void testTypeParametersForRecursiveTypes() {
         // Resolve Enum
         ResolvedType enumType = RESOLVER.resolve(Enum.class);
@@ -382,6 +405,7 @@ public class TypeResolver117Test extends BaseTest
     /**
      * Test with typeParametersFor which might trigger different code paths
      */
+    @Test
     public void testTypeParametersForMethod() {
         ResolvedType rt = RESOLVER.resolve(TestEnum.class);
 
@@ -399,6 +423,7 @@ public class TypeResolver117Test extends BaseTest
     /**
      * Test comparing TypeBindings directly
      */
+    @Test
     public void testTypeBindingsComparison() {
         ResolvedType rt1 = RESOLVER.resolve(Enum.class);
         ResolvedType rt2 = RESOLVER.resolve(Enum.class);
@@ -422,6 +447,7 @@ public class TypeResolver117Test extends BaseTest
      * - TypeBindings.equals() -> ResolvedType.equals() (on type parameters)
      * - ResolvedRecursiveType.equals() -> _referencedType.equals() -> ... (cycle)
      */
+    @Test
     public void testFreshResolversWithRecursiveTypes() {
         // Use fresh resolver each time to avoid caching
         TypeResolver fresh1 = new TypeResolver();
@@ -452,6 +478,7 @@ public class TypeResolver117Test extends BaseTest
      * Test resolving through different paths to create different
      * but equivalent recursive type structures
      */
+    @Test
     public void testDifferentResolutionPaths() {
         TypeResolver resolver = new TypeResolver();
 
@@ -481,6 +508,7 @@ public class TypeResolver117Test extends BaseTest
      * many recursive types and comparing them all.
      * This amplifies the issue by comparing types from multiple different resolvers.
      */
+    @Test
     public void testMassiveRecursiveTypeComparison() {
         TypeResolver[] resolvers = new TypeResolver[5];
         ResolvedType[][] types = new ResolvedType[5][4];
@@ -508,6 +536,7 @@ public class TypeResolver117Test extends BaseTest
     /**
      * Test findSupertype which might trigger different resolution paths
      */
+    @Test
     public void testFindSupertypeWithRecursive() {
         ResolvedType testEnumType = RESOLVER.resolve(TestEnum.class);
 
@@ -528,6 +557,7 @@ public class TypeResolver117Test extends BaseTest
      * This tests that cache lookups succeed when comparing ResolvedTypeKeys
      * that contain ResolvedRecursiveType instances.
      */
+    @Test
     public void testCacheCorrectness() {
         TypeResolver resolver = new TypeResolver();
 
@@ -537,7 +567,7 @@ public class TypeResolver117Test extends BaseTest
 
         // Resolve Enum second time - should get from cache (same instance)
         ResolvedType enum2 = resolver.resolve(Enum.class);
-        assertSame("Should return same instance from cache", enum1, enum2);
+        assertSame(enum1, enum2, "Should return same instance from cache");
 
         // Verify type parameters contain recursive types
         List<ResolvedType> params = enum1.getTypeParameters();
@@ -554,13 +584,14 @@ public class TypeResolver117Test extends BaseTest
         // Resolve RawSelfBounded - also has recursive structure
         ResolvedType sb1 = resolver.resolve(RawSelfBounded.class);
         ResolvedType sb2 = resolver.resolve(RawSelfBounded.class);
-        assertSame("RawSelfBounded should also be cached", sb1, sb2);
+        assertSame(sb1, sb2, "RawSelfBounded should also be cached");
     }
 
     /**
      * Test that ResolvedRecursiveType instances with same structure
      * but from different resolvers are equal (but not same instance)
      */
+    @Test
     public void testRecursiveTypeEqualityAcrossResolvers() {
         TypeResolver resolver1 = new TypeResolver();
         TypeResolver resolver2 = new TypeResolver();
@@ -569,10 +600,10 @@ public class TypeResolver117Test extends BaseTest
         ResolvedType enum2 = resolver2.resolve(Enum.class);
 
         // Should be equal (structural equality)
-        assertEquals("Types from different resolvers should be equal", enum1, enum2);
+        assertEquals(enum1, enum2, "Types from different resolvers should be equal");
 
         // But not same instance
-        assertNotSame("Should not be same instance", enum1, enum2);
+        assertNotSame(enum1, enum2, "Should not be same instance");
 
         // Type parameters should also be equal
         List<ResolvedType> params1 = enum1.getTypeParameters();
@@ -582,8 +613,7 @@ public class TypeResolver117Test extends BaseTest
         for (int i = 0; i < params1.size(); i++) {
             // This is the critical test - comparing ResolvedRecursiveTypes
             // from different resolvers should work without StackOverflow
-            assertEquals("Type parameter " + i + " should be equal",
-                    params1.get(i), params2.get(i));
+            assertEquals(params1.get(i), params2.get(i), "Type parameter " + i + " should be equal");
         }
     }
 
@@ -591,6 +621,7 @@ public class TypeResolver117Test extends BaseTest
      * Verify that _referencedType is only used for navigation,
      * not for equality determination
      */
+    @Test
     public void testReferencedTypeIsForNavigation() {
         ResolvedType enumType = RESOLVER.resolve(Enum.class);
         List<ResolvedType> params = enumType.getTypeParameters();
@@ -606,7 +637,7 @@ public class TypeResolver117Test extends BaseTest
                 // selfRef should allow navigation to members
                 // (this is what _referencedType is used for)
                 List<RawMethod> methods = selfRef.getMemberMethods();
-                assertNotNull("Should be able to get methods via referenced type", methods);
+                assertNotNull(methods, "Should be able to get methods via referenced type");
             }
         }
     }

@@ -1,5 +1,8 @@
 package com.fasterxml.classmate;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.*;
 import java.lang.reflect.*;
 
@@ -90,6 +93,7 @@ public class TypeResolverTest extends BaseTest
     /**********************************************************************
      */
 
+    @Test
     public void testResolveWithEmptyTypeParameters()
     {
         ResolvedType reference = typeResolver.resolve(List.class);
@@ -109,6 +113,7 @@ public class TypeResolverTest extends BaseTest
         assertSame(reference, type);
     }
 
+    @Test
     public void testResolveGenericWithFailures()
     {
         final GenericType<String> type = new GenericType<String>() { };
@@ -139,6 +144,7 @@ public class TypeResolverTest extends BaseTest
         }
     }
     
+    @Test
     public void testSimpleTypes()
     {
         // let's check some default java types
@@ -154,6 +160,7 @@ public class TypeResolverTest extends BaseTest
         assertSame(objectType, stringParent);
     }
 
+    @Test
     public void testArrayTypes()
     {
         ResolvedType arrayType = typeResolver.resolve(int[].class);
@@ -173,6 +180,7 @@ public class TypeResolverTest extends BaseTest
         assertSame(elemType, arrayType3.getArrayElementType());
     }    
 
+    @Test
     public void testGenericMap()
     {
         // First, direct ref
@@ -200,6 +208,7 @@ public class TypeResolverTest extends BaseTest
         assertSame(Boolean.class, params2.get(1).getErasedType());
     }
 
+    @Test
     public void testParametricMap()
     {
         ResolvedType mapType = typeResolver.resolve(MyStringLongMap.class);
@@ -222,6 +231,7 @@ public class TypeResolverTest extends BaseTest
     /**
      * Unit test for verifying that it is ok to sub-class {@link GenericType}
      */
+    @Test
     public void testIndirectGeneric()
     {
         ResolvedType type = typeResolver.resolve(new IndirectRef());
@@ -254,6 +264,7 @@ public class TypeResolverTest extends BaseTest
         assertSame(Long.class, mapParams.get(1).getErasedType());
     }
 
+    @Test
     public void testJdkType() throws Exception
     {
         ResolvedType wrapperType = typeResolver.resolve(StringListWrapper.class);
@@ -277,6 +288,7 @@ public class TypeResolverTest extends BaseTest
         assertSame(String.class, tp.get(0).getErasedType());
     }
 
+    @Test
     public void testSimpleSelfRef()
     {
         ResolvedType type = typeResolver.resolve(SelfRefType.class);
@@ -296,6 +308,7 @@ public class TypeResolverTest extends BaseTest
         assertSame(type, compParam.getSelfReferencedType());
     }
 
+    @Test
     public void testTypesFromMapField() throws Exception
     {
         ResolvedType type = typeResolver.resolve(StringLongMapBean.class);
@@ -308,6 +321,7 @@ public class TypeResolverTest extends BaseTest
         assertSame(Long.class, mapTypes.get(1).getErasedType());
     }
 
+    @Test
     public void testTypesFromListField() throws Exception
     {
         ResolvedType type = typeResolver.resolve(StringListBean.class);
@@ -319,6 +333,7 @@ public class TypeResolverTest extends BaseTest
         assertSame(String.class, listType.get(0).getErasedType());
     }
 
+    @Test
     public void testResolvedTypeAsType()
     {
         ResolvedType t1 = typeResolver.resolve(getClass());
@@ -335,6 +350,7 @@ public class TypeResolverTest extends BaseTest
     /**
      * Unit test to verify that discrepancies are properly detected
      */
+    @Test
     public void testGenericParamMismatch()
     {
         // Maps require 2 type params:
@@ -355,6 +371,7 @@ public class TypeResolverTest extends BaseTest
     }
 
     // [classmate#127]: primitive types are not valid type parameters
+    @Test
     public void testPrimitiveTypeParameter()
     {
         try {
@@ -380,6 +397,7 @@ public class TypeResolverTest extends BaseTest
         assertSame(int[].class, t.getTypeParameters().get(0).getErasedType());
     }
 
+    @Test
     public void testInvalidSubtype()
     {
         ResolvedType supertype = typeResolver.resolve(String.class);
@@ -429,6 +447,7 @@ public class TypeResolverTest extends BaseTest
         }
     }
 
+    @Test
     public void testResolveOfSelfReferencedType()
     {
         ResolvedType supertype = typeResolver.resolve(SelfRefType.class);
@@ -446,6 +465,7 @@ public class TypeResolverTest extends BaseTest
         assertTrue(TypeResolver.isSelfReference(selfSuperType));
     }
 
+    @Test
     public void testWildcardType()
     {
         @SuppressWarnings("rawtypes")
@@ -459,6 +479,7 @@ public class TypeResolverTest extends BaseTest
         assertEquals(List.class, typeParameters.get(1).getErasedType());
     }
 
+    @Test
     public void testUnknownJdkType()
     {
         Type type = new Type() { };
@@ -470,6 +491,7 @@ public class TypeResolverTest extends BaseTest
         }
     }
 
+    @Test
     public void testMissingSuperclass() throws IllegalAccessException, InvocationTargetException
     {
         ResolvedType resolvedType = typeResolver.resolve(TypeResolver.class);
@@ -486,6 +508,7 @@ public class TypeResolverTest extends BaseTest
         assertNull(resolveSuperClassMethod.invoke(typeResolver, null, Comparator.class, null));
     }
 
+    @Test
     public void testTypesMatch() throws IllegalAccessException, InvocationTargetException
     {
         ResolvedType resolvedType = typeResolver.resolve(TypeResolver.class);
@@ -525,6 +548,7 @@ public class TypeResolverTest extends BaseTest
         assertFalse((Boolean) typesMatchMethod.invoke(typeResolver, matchBListResolved, matchAListResolved));
     }
 
+    @Test
     public void testMultiDimensionalGenericArrays() throws Exception
     {
         ResolvedType resolvedType = typeResolver.resolve(new GenericType<List<String>[][]>() { });

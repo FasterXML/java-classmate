@@ -2,7 +2,7 @@ package com.fasterxml.classmate;
 
 import com.fasterxml.classmate.members.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
@@ -11,7 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static junit.framework.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * User: blangel

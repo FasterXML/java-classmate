@@ -1,10 +1,12 @@
 package com.fasterxml.classmate;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.io.Serializable;
 import java.nio.CharBuffer;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.fasterxml.classmate.types.ResolvedArrayType;
 import com.fasterxml.classmate.types.ResolvedInterfaceType;

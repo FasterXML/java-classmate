@@ -1,5 +1,8 @@
 package com.fasterxml.classmate.util;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.fasterxml.classmate.GenericType;
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeResolver;
@@ -7,13 +10,11 @@ import com.fasterxml.classmate.types.ResolvedInterfaceType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
 import com.fasterxml.classmate.types.TypePlaceHolder;
 
-import junit.framework.TestCase;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class TestResolvedTypeCache extends TestCase
+public class TestResolvedTypeCache
 {
     static class KeySubclass extends ResolvedTypeKey {
         KeySubclass(Class<?> simpleType) {
@@ -21,12 +22,14 @@ public class TestResolvedTypeCache extends TestCase
         }
     }
 
+    @Test
     public void testSimpleLRUCaching()
     {
         LRUTypeCache cache = (LRUTypeCache) ResolvedTypeCache.lruCache(2);
         _testSimple(cache, true);
     }
 
+    @Test
     public void testSimpleConcurrentCaching()
     {
         ConcurrentTypeCache cache = (ConcurrentTypeCache) ResolvedTypeCache.concurrentCache(2);
@@ -72,6 +75,7 @@ public class TestResolvedTypeCache extends TestCase
     }
     
     // Types with TypePlaceHolders must not be cached, even if nested
+    @Test
     public void testNoCachingForPlaceHolders()
     {
         ResolvedTypeCache cache = ResolvedTypeCache.lruCache(200);
@@ -96,6 +100,7 @@ public class TestResolvedTypeCache extends TestCase
     static class ListGenericType extends GenericType<List<Integer>> { }
 
     // [classmate#125]: GenericType must not use bindings of enclosing context
+    @Test
     public void testGenericTypeCachedOnce()
     {
         ResolvedTypeCache cache = ResolvedTypeCache.lruCache(200);
@@ -110,6 +115,7 @@ public class TestResolvedTypeCache extends TestCase
         assertEquals(size, cache.size());
     }
 
+    @Test
     public void testKeyEquals()
     {
         try {

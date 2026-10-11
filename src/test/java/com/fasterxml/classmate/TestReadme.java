@@ -1,7 +1,9 @@
 package com.fasterxml.classmate;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.fasterxml.classmate.members.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
@@ -66,26 +68,20 @@ public class TestReadme
         MemberResolver memberResolver = new MemberResolver(typeResolver);
         ResolvedTypeWithMembers arrayListTypeWithMembers = memberResolver.resolve(arrayListType, null, null);
         ResolvedMethod[] staticArrayListMethods = arrayListTypeWithMembers.getStaticMethods();
-        /* 13-May-2013, tatu: Java 7 causing trouble here, adding 2 new static methods...
-         *   Needs to be fixed.
-         */
-        switch (staticArrayListMethods.length) {
-        case 0: // JDK 1.6 and prior, fine
-            break;
-        case 2: // JDK 1.7; must verify
-            matchMembers(staticArrayListMethods, new String[] { "hugeCapacity", "subListRangeCheck" });
-            break;
-        default: // other
-            fail("Should find 0 or 2 static methods in ArrayList, but found "+staticArrayListMethods.length
-                    +": "+Arrays.asList(staticArrayListMethods));
+        // Exact set of (private) static methods varies by JDK version, so only verify they are static
+        for (ResolvedMethod m : staticArrayListMethods) {
+            assertTrue(m.isStatic(), "Non-static method: "+m);
         }
         ResolvedMethod[] arrayListMethods = arrayListTypeWithMembers.getMemberMethods();
-        // either 34 (1.6) or 40 (1.7)
-        int count = arrayListMethods.length;
-        if (count != 34 && count != 40) {
-            fail("Expected either 34 (JDK 1.6 and prior) or 40 (JDK 1.7) methods in ArrayList: got "+count);
+        // Exact count varies by JDK version too, so just verify some well-known ones exist
+        Set<String> methodNames = new HashSet<String>();
+        for (ResolvedMethod m : arrayListMethods) {
+            assertFalse(m.isStatic(), "Static method: "+m);
+            methodNames.add(m.getName());
         }
-
+        for (String name : new String[] { "add", "get", "size", "iterator" }) {
+            assertTrue(methodNames.contains(name), "Missing method '"+name+"' in "+methodNames);
+        }
         ResolvedField[] arrayListFields = arrayListTypeWithMembers.getMemberFields();
         assertEquals(3, arrayListFields.length);
 

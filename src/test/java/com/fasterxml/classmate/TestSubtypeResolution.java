@@ -1,5 +1,9 @@
 package com.fasterxml.classmate;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.fasterxml.classmate.types.ResolvedObjectType;
 import com.fasterxml.classmate.types.ResolvedRecursiveType;
 import com.fasterxml.classmate.util.ResolvedTypeCache;
@@ -112,8 +116,8 @@ public class TestSubtypeResolution extends BaseTest
 
     protected TypeResolver typeResolver;
 
-    @Override
-    protected void setUp()
+    @BeforeEach
+    public void setUp()
     {
         // Let's use a single instance for all tests, to increase chance of seeing failures
         typeResolver = new TypeResolver();
@@ -126,6 +130,7 @@ public class TestSubtypeResolution extends BaseTest
      */
 
     // Types with nested placeholders (like `Wrapper<List<P0>>`) are not to be cached
+    @Test
     public void testSubtypeWithNestedPlaceholderNotCached()
     {
         ResolvedTypeCache cache = ResolvedTypeCache.lruCache(200);
@@ -143,6 +148,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: type variables within array types must be resolved
+    @Test
     public void testSubtypeWithArrayOfTypeVariable()
     {
         ResolvedType supertype = typeResolver.resolve(Wrapper.class, String[].class);
@@ -163,6 +169,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: matching generic array element types are accepted
+    @Test
     public void testSubtypeWithMatchingGenericArray()
     {
         ResolvedType supertype = typeResolver.resolve(Wrapper.class,
@@ -177,6 +184,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: same type variable bound consistently is fine
+    @Test
     public void testSubtypeWithRepeatedTypeVariable()
     {
         ResolvedType supertype = typeResolver.resolve(Pair.class, String[].class, String.class);
@@ -187,6 +195,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: raw self-reference as (array element) type parameter
+    @Test
     public void testSubtypeWithRawSelfReference()
     {
         ResolvedType supertype = typeResolver.resolve(Wrapper.class, RawSelfArray[].class);
@@ -199,6 +208,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: self-reference in supertype must not leak into subtype
+    @Test
     public void testSubtypeWithSelfReferenceInSupertype()
     {
         ResolvedType supertype = typeResolver.resolve(RawSelfArray.class).getParentClass();
@@ -212,6 +222,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: self-references nested within bound type must not leak into subtype
+    @Test
     public void testSubtypeWithNestedSelfReferenceInSupertype()
     {
         ResolvedType supertype = typeResolver.resolve(RawSelfArray.class).getParentClass();
@@ -228,6 +239,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: same type with and without self-reference must bind consistently
+    @Test
     public void testSubtypeWithSelfReferenceAndRepeatedTypeVariable()
     {
         ResolvedType withSelfRef = typeResolver.resolve(SelfInList.class).getParentClass()
@@ -239,6 +251,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: self-reference as supertype is resolved to referenced type
+    @Test
     public void testSubtypeOfSelfReference()
     {
         ResolvedType rawEnum = typeResolver.resolve(Enum.class);
@@ -249,6 +262,7 @@ public class TestSubtypeResolution extends BaseTest
 
     // [classmate#127]: self-reference (in raw `Node`) compared to non-self-reference
     // type (`Node<Node>`) in subtype
+    @Test
     public void testSubtypeWithSelfReferenceComparedToType()
     {
         ResolvedType supertype = typeResolver.resolve(Wrapper.class, Node.class);
@@ -260,6 +274,7 @@ public class TestSubtypeResolution extends BaseTest
 
     // [classmate#127]: self-reference to another instance of the same class (from
     // different resolution context) must not be retained
+    @Test
     public void testSubtypeWithSelfReferenceFromOtherContext()
     {
         ResolvedType listOfSelfRef = typeResolver.resolve(RecInList.class, String.class)
@@ -277,6 +292,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: raw `Enum` (with self-reference) bound consistently
+    @Test
     public void testSubtypeWithRawEnumAndRepeatedTypeVariable()
     {
         ResolvedType rawEnum = typeResolver.resolve(Enum.class);
@@ -291,6 +307,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: self-references valid as-is (like in raw `Enum`) must be retained
+    @Test
     public void testSubtypeWithSelfBoundedTypeParameter()
     {
         for (Class<?> selfBounded : new Class<?>[] { Enum.class, Builder.class }) {
@@ -302,6 +319,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: `Object` (from wildcard or raw type) compatible with more specific binding
+    @Test
     public void testSubtypeWithWildcardAndRepeatedTypeVariable()
     {
         ResolvedType supertype = typeResolver.resolve(new GenericType<java.util.function.Function<String,?>>() { });
@@ -319,6 +337,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: no self-references in result even if no actual sub-classing done
+    @Test
     public void testSubtypeSameAsSupertypeWithSelfReference()
     {
         ResolvedType supertype = typeResolver.resolve(RawSelfArray.class).getParentClass();
@@ -330,6 +349,7 @@ public class TestSubtypeResolution extends BaseTest
 
     // [classmate#127]: `Object` type parameters (possibly from wildcard or raw type)
     // are not verified against bounds
+    @Test
     public void testSubtypeWithObjectNotVerifiedAgainstBounds()
     {
         // `V extends K`
@@ -348,6 +368,7 @@ public class TestSubtypeResolution extends BaseTest
 
     // [classmate#127]: self-reference (valid within enclosing type) must not become
     // stand-alone type parameter of subtype
+    @Test
     public void testSubtypeBindingSelfReference()
     {
         ResolvedType supertype = typeResolver.resolve(Wrapper.class, Enum.class);
@@ -360,6 +381,7 @@ public class TestSubtypeResolution extends BaseTest
 
     // [classmate#127]: `Object` (from wildcard or raw type) nested within type
     // compatible with more specific binding
+    @Test
     public void testSubtypeWithNestedWildcardAndRepeatedTypeVariable()
     {
         ResolvedType listOfString = typeResolver.resolve(List.class, String.class);
@@ -398,6 +420,7 @@ public class TestSubtypeResolution extends BaseTest
 
     // [classmate#127]: bounds of type variables are only verified leniently (wildcard
     // upper bound can not be distinguished from actual type; see [classmate#130])
+    @Test
     public void testSubtypeOfBoundedWildcard()
     {
         ResolvedType supertype = typeResolver.resolve(new GenericType<Wrapper<? extends Number>>() { });
@@ -406,6 +429,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: bounded type variables bound to types satisfying bounds
+    @Test
     public void testSubtypeSatisfyingBounds()
     {
         assertEquals(typeResolver.resolve(NumArrayWrapper.class, Integer.class),
@@ -420,6 +444,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#130]: bindings that can not satisfy bounds of type variables
+    @Test
     public void testSubtypeViolatingBounds()
     {
         _verifyOutOfBounds(typeResolver.resolve(Wrapper.class, String[].class), NumArrayWrapper.class);
@@ -433,6 +458,7 @@ public class TestSubtypeResolution extends BaseTest
 
     // [classmate#130]: bindings that could satisfy bounds (as bindings from wildcards
     // and raw types may represent subtypes of bound types) are accepted
+    @Test
     public void testSubtypePossiblySatisfyingBounds()
     {
         // `Object` (like from raw type) may be anything
@@ -449,6 +475,7 @@ public class TestSubtypeResolution extends BaseTest
 
     // [classmate#130]: self-reference with bindings different from referenced type
     // resolves to type with its own bindings
+    @Test
     public void testSubtypeOfSelfReferenceWithOwnBindings()
     {
         ResolvedType selfRef = typeResolver.resolve(SelfParam.class, Integer.class)
@@ -479,6 +506,7 @@ public class TestSubtypeResolution extends BaseTest
      * Test to ensure a properly parameterized {@link List} can be be made
      * more specific while still keeping parameterization.
      */
+    @Test
     public void testMoreSpecificListType()
     {
         ResolvedType supertype = typeResolver.resolve(List.class, Integer.class);
@@ -501,6 +529,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // Similar to above, but via Collection, not List
+    @Test
     public void testMoreSpecificCollectionType()
     {
         final Class<?> elemType = String.class;
@@ -539,6 +568,7 @@ public class TestSubtypeResolution extends BaseTest
     /**********************************************************************
      */
 
+    @Test
     public void testValidUntypedSubtype()
     {
         // First, make a concrete type that extends specified generic interface:
@@ -557,6 +587,7 @@ public class TestSubtypeResolution extends BaseTest
      * Let's test that we can also resolve to incomplete types; might
      * be useful occasionally
      */
+    @Test
     public void testValidIncompleteSubtype()
     {
         ResolvedType supertype = typeResolver.resolve(Map.class, String.class, Long.class);
@@ -582,6 +613,7 @@ public class TestSubtypeResolution extends BaseTest
     /**********************************************************************
      */
 
+    @Test
     public void testValidGenericSubClass()
     {
         // First, make a concrete type that extends specified generic interface:
@@ -605,6 +637,7 @@ public class TestSubtypeResolution extends BaseTest
      * Unit test for verifying that we can "sub-class" from rather low-level secondary
      * interfaces, too
      */
+    @Test
     public void testValidGenericSubInterface()
     {
         ResolvedType supertype = typeResolver.resolve(Iterable.class, Byte.class);
@@ -620,6 +653,7 @@ public class TestSubtypeResolution extends BaseTest
         assertEquals("java.util.Set<java.lang.Byte>", setType.getBriefDescription());    
     }
 
+    @Test
     public void testValidGenericSubInterfaceWithMap()
     {
         ResolvedType supertype = typeResolver.resolve(Map.class, String.class, Long.class);
@@ -632,6 +666,7 @@ public class TestSubtypeResolution extends BaseTest
         assertSame(Long.class, tb.getBoundType(1).getErasedType());
     }
 
+    @Test
     public void testValidNestedType()
     {
         // Let's try to get to ListWrapper<String>, from Wrapper<List<String>>
@@ -650,6 +685,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // inspired by [JACKSON-677]
+    @Test
     public void testValidInnerType()
     {
         ResolvedType type = typeResolver.resolve(OuterType.Inner.class);
@@ -675,6 +711,7 @@ public class TestSubtypeResolution extends BaseTest
      */
     
     // Test to verify that type erasures are compatible
+    @Test
     public void testInvalidSubClass()
     {
         ResolvedType supertype = typeResolver.resolve(List.class, Integer.class);
@@ -687,6 +724,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // Test to further verify that type parameters are compatible
+    @Test
     public void testIncompatibleTypeParametersList()
     {
         ResolvedType supertype = typeResolver.resolve(ArrayList.class, String.class);
@@ -698,6 +736,7 @@ public class TestSubtypeResolution extends BaseTest
         }
     }
 
+    @Test
     public void testIncompatibleTypeParametersMap()
     {
         ResolvedType supertype = typeResolver.resolve(Map.class, String.class, Integer.class);
@@ -710,6 +749,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: array element types must be verified
+    @Test
     public void testIncompatibleGenericArrayElementType()
     {
         ResolvedType supertype = typeResolver.resolve(Wrapper.class,
@@ -722,6 +762,7 @@ public class TestSubtypeResolution extends BaseTest
         }
     }
 
+    @Test
     public void testIncompatibleArrayElementType()
     {
         ResolvedType supertype = typeResolver.resolve(Wrapper.class, long[].class);
@@ -742,6 +783,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: primitive types can not be bound to type variables
+    @Test
     public void testPrimitiveArrayElementForTypeVariable()
     {
         _verifyIncompatible(typeResolver.resolve(Wrapper.class, int[].class), ArrayWrapper.class);
@@ -751,6 +793,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: type variable must not be bound to conflicting types
+    @Test
     public void testConflictingTypeVariableBindings()
     {
         ResolvedType supertype = typeResolver.resolve(Pair.class, String[].class, Integer.class);
@@ -779,6 +822,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: raw self-reference resolves to bounds, same as other raw types
+    @Test
     public void testRawSelfReferenceVerifiedAsRaw()
     {
         ResolvedType supertype = typeResolver.resolve(Wrapper.class,
@@ -788,6 +832,7 @@ public class TestSubtypeResolution extends BaseTest
     }
 
     // [classmate#127]: `Object[]` is not compatible with primitive array
+    @Test
     public void testObjectArrayNotCompatibleWithPrimitiveArray()
     {
         _verifyIncompatible(typeResolver.resolve(Wrapper.class, Object[].class), IntArrayWrapper.class);
@@ -795,6 +840,7 @@ public class TestSubtypeResolution extends BaseTest
 
     // [classmate#127]: self-reference (in raw type) is not merged with other type
     // (raw types not yet handled as such, see [classmate#130])
+    @Test
     public void testSelfReferenceNotMergedWithOtherType()
     {
         ResolvedType rawEnum = typeResolver.resolve(Enum.class);
@@ -808,6 +854,7 @@ public class TestSubtypeResolution extends BaseTest
 
     // [classmate#127]: types constructed directly (not via `TypeResolver`) may lack
     // bindings for type parameters
+    @Test
     public void testSubtypeWithTypeMissingBindings()
     {
         ResolvedType rawList = new ResolvedObjectType(List.class, TypeBindings.emptyBindings(),
@@ -819,6 +866,7 @@ public class TestSubtypeResolution extends BaseTest
 
     // [classmate#127]: self-reference constructed directly (not via `TypeResolver`)
     // may lack referenced type
+    @Test
     public void testSubtypeWithUnresolvedSelfReference()
     {
         ResolvedType listOfString = typeResolver.resolve(List.class, String.class);

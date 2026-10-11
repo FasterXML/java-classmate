@@ -1,5 +1,8 @@
 package com.fasterxml.classmate;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.fasterxml.classmate.members.ResolvedField;
 import com.fasterxml.classmate.members.ResolvedMethod;
 import com.fasterxml.classmate.types.ResolvedRecursiveType;
@@ -32,16 +35,19 @@ public class MemberResolver133Test extends BaseTest
     private final TypeResolver _typeResolver = new TypeResolver();
     private final MemberResolver _memberResolver = new MemberResolver(_typeResolver);
 
+    @Test
     public void testGenericSelfReference()
     {
         _verify(Sym.class, Sym.class, Base.class);
     }
 
+    @Test
     public void testRawSelfReferenceInTypeParameter()
     {
         _verify(RB.class, RA.class, Object.class);
     }
 
+    @Test
     public void testBareRawSelfReference()
     {
         // sanity check: type parameter is a raw self-reference
@@ -53,6 +59,7 @@ public class MemberResolver133Test extends BaseTest
     }
 
     // Self-reference passed directly to public `resolve()` methods
+    @Test
     public void testResolveSelfReference()
     {
         ResolvedType rawEnum = _typeResolver.resolve(Enum.class);
@@ -84,7 +91,7 @@ public class MemberResolver133Test extends BaseTest
         _verifyStandalone(value, expValueType, expParent);
 
         ResolvedType elem = arr.getArrayElementType();
-        assertFalse("Should not be self-reference: "+elem, elem instanceof ResolvedRecursiveType);
+        assertFalse(elem instanceof ResolvedRecursiveType, "Should not be self-reference: "+elem);
         assertEquals(elem, value);
         assertEquals(elem.hashCode(), value.hashCode());
         assertEquals(elem.getFullDescription(), value.getFullDescription());
@@ -101,7 +108,7 @@ public class MemberResolver133Test extends BaseTest
 
     private void _verifyStandalone(ResolvedType type, Class<?> expType, Class<?> expParent)
     {
-        assertFalse("Should not be self-reference: "+type, type instanceof ResolvedRecursiveType);
+        assertFalse(type instanceof ResolvedRecursiveType, "Should not be self-reference: "+type);
         assertEquals(expType, type.getErasedType());
         assertNotNull(type.getParentClass());
         assertEquals(expParent, type.getParentClass().getErasedType());

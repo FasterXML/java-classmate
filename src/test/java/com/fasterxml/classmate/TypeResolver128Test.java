@@ -1,5 +1,8 @@
 package com.fasterxml.classmate;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -183,6 +186,7 @@ public class TypeResolver128Test extends BaseTest
     /**********************************************************************
      */
 
+    @Test
     public void testSelfReferenceViaSupertypeNotCached()
     {
         TypeResolver resolver = new TypeResolver();
@@ -194,6 +198,7 @@ public class TypeResolver128Test extends BaseTest
         assertSame(resolver.resolve(B.class), resolver.resolve(B.class));
     }
 
+    @Test
     public void testSelfReferenceViaSuperclassNotCached()
     {
         TypeResolver resolver = new TypeResolver();
@@ -202,6 +207,7 @@ public class TypeResolver128Test extends BaseTest
                 .getTypeParameters().get(0), Outer.class);
     }
 
+    @Test
     public void testSelfReferenceViaSupertypeInArrayNotCached()
     {
         TypeResolver resolver = new TypeResolver();
@@ -212,6 +218,7 @@ public class TypeResolver128Test extends BaseTest
         _verifyFullyResolved(elem.getParentClass().getTypeParameters().get(0), ArrA.class);
     }
 
+    @Test
     public void testSelfReferenceViaSupertypeInTypeParameterNotCached()
     {
         TypeResolver resolver = new TypeResolver();
@@ -222,6 +229,7 @@ public class TypeResolver128Test extends BaseTest
     }
 
     // Types not containing self-references to types being resolved are still cached
+    @Test
     public void testTypesWithoutSelfReferencesCached()
     {
         TypeResolver resolver = new TypeResolver();
@@ -233,6 +241,7 @@ public class TypeResolver128Test extends BaseTest
 
     // Incomplete types obtained from resolved type must not be cached when used
     // for resolving other types later on
+    @Test
     public void testIncompleteTypeViaMembersNotCached()
     {
         TypeResolver resolver = new TypeResolver();
@@ -259,6 +268,7 @@ public class TypeResolver128Test extends BaseTest
                 .getTypeParameters().get(0), FA.class);
     }
 
+    @Test
     public void testIncompleteTypeViaArrayTypeNotCached()
     {
         TypeResolver resolver = new TypeResolver();
@@ -268,6 +278,7 @@ public class TypeResolver128Test extends BaseTest
                 .getParentClass().getTypeParameters().get(0), FA.class);
     }
 
+    @Test
     public void testIncompleteTypeViaSubtypeNotCached()
     {
         TypeResolver resolver = new TypeResolver();
@@ -282,6 +293,7 @@ public class TypeResolver128Test extends BaseTest
                 .get(0).getParentClass().getTypeParameters().get(0), FA.class);
     }
 
+    @Test
     public void testIncompleteReferencedTypeViaSubtypeNotCached()
     {
         TypeResolver resolver = new TypeResolver();
@@ -299,6 +311,7 @@ public class TypeResolver128Test extends BaseTest
 
     // Subtyping types with self-references to incomplete types, cyclic via
     // type parameters, must terminate and produce stand-alone types
+    @Test
     public void testSubtypeWithCyclicIncompleteTypes()
     {
         TypeResolver resolver = new TypeResolver();
@@ -316,6 +329,7 @@ public class TypeResolver128Test extends BaseTest
     }
 
     // Incomplete types must be completed by all `resolve()` methods
+    @Test
     public void testIncompleteTypeResolvedDirectly()
     {
         TypeResolver resolver = new TypeResolver();
@@ -328,6 +342,7 @@ public class TypeResolver128Test extends BaseTest
     }
 
     // Incomplete types nested within types with self-references must be completed too
+    @Test
     public void testIncompleteTypeNestedWithSelfReferenceCompleted()
     {
         TypeResolver resolver = new TypeResolver();
@@ -344,6 +359,7 @@ public class TypeResolver128Test extends BaseTest
 
     // Self-references to enclosing types (within incomplete types) are valid as-is,
     // so subtyping to the type itself must not change it
+    @Test
     public void testSubtypeRetainsSelfReferenceToEnclosingType()
     {
         TypeResolver resolver = new TypeResolver();
@@ -356,6 +372,7 @@ public class TypeResolver128Test extends BaseTest
         assertSame(sub, resolver.resolveSubtype(outer, BOuter.class));
     }
 
+    @Test
     public void testIncompleteTypesReusedWithinResolution()
     {
         TypeResolver resolver = new TypeResolver();
@@ -378,6 +395,7 @@ public class TypeResolver128Test extends BaseTest
     /**********************************************************************
      */
 
+    @Test
     public void testSelfReferenceInTypeParameterEquality()
     {
         TypeResolver resolver = new TypeResolver();
@@ -389,6 +407,7 @@ public class TypeResolver128Test extends BaseTest
         _verifyEqual(direct, viaParent);
     }
 
+    @Test
     public void testNestedSelfReferenceEquality()
     {
         TypeResolver resolver = new TypeResolver();
@@ -406,6 +425,7 @@ public class TypeResolver128Test extends BaseTest
         assertFalse(other.equals(viaParent));
     }
 
+    @Test
     public void testSelfReferenceResolvedForSubtype()
     {
         TypeResolver resolver = new TypeResolver();
@@ -416,6 +436,7 @@ public class TypeResolver128Test extends BaseTest
 
     // Raw self-reference must refer to raw type, not to (differently parameterized)
     // type being resolved
+    @Test
     public void testRawSelfReferenceToGenericType()
     {
         TypeResolver resolver = new TypeResolver();
@@ -432,6 +453,7 @@ public class TypeResolver128Test extends BaseTest
 
     // Self-reference with nested bindings (like `N<N<T>>` within `N<T>`) must refer
     // to type with those bindings
+    @Test
     public void testNestedSelfReferenceReferencedType()
     {
         TypeResolver resolver = new TypeResolver();
@@ -453,6 +475,7 @@ public class TypeResolver128Test extends BaseTest
     }
 
     // Checking for self-references must not take exponential time for shared types
+    @Test
     public void testSelfReferenceWithSharedTypeParameters()
     {
         TypeResolver resolver = new TypeResolver();
@@ -468,6 +491,7 @@ public class TypeResolver128Test extends BaseTest
     }
 
     // Results of `resolve()` must be complete, so resolving again returns same type
+    @Test
     public void testResolveWithSelfReferenceParameterIdempotent()
     {
         TypeResolver resolver = new TypeResolver();
@@ -481,6 +505,7 @@ public class TypeResolver128Test extends BaseTest
 
     // Self-reference (in raw `Enum`) must be merged with compatible type as the type
     // it represents
+    @Test
     public void testSubtypeMergingSelfReference()
     {
         TypeResolver resolver = new TypeResolver();
@@ -494,6 +519,7 @@ public class TypeResolver128Test extends BaseTest
     }
 
     // Self-reference nested within bounds of a type represents type with own bindings
+    @Test
     public void testNestedSelfReferenceInBound()
     {
         TypeResolver resolver = new TypeResolver();
@@ -506,6 +532,7 @@ public class TypeResolver128Test extends BaseTest
 
     // Self-reference as type parameter represents the type itself only if bound to it
     // (like `E` in `Enum<E extends Enum<E>>`), not otherwise
+    @Test
     public void testSelfReferenceTypeParameterNotBoundToSelf()
     {
         TypeResolver resolver = new TypeResolver();
@@ -522,6 +549,7 @@ public class TypeResolver128Test extends BaseTest
 
     // [classmate#132]: members inherited via self-referential interface (of type only
     // valid within its resolution context) must not be lost
+    @Test
     public void testMembersViaSelfReferentialInterface()
     {
         TypeResolver resolver = new TypeResolver();
@@ -534,6 +562,7 @@ public class TypeResolver128Test extends BaseTest
     }
 
     // Members of self-reference include inherited ones
+    @Test
     public void testMembersOfSelfReference()
     {
         TypeResolver resolver = new TypeResolver();
@@ -545,6 +574,7 @@ public class TypeResolver128Test extends BaseTest
 
     // Self-reference represents the type itself only if bound to it with own type
     // variables in order (`PP<T,T>` means `PP<T,U>` with `U = T`, not raw `PP`)
+    @Test
     public void testSelfReferenceWithReorderedBound()
     {
         TypeResolver resolver = new TypeResolver();
@@ -558,6 +588,7 @@ public class TypeResolver128Test extends BaseTest
 
     // Incomplete raw F-bounded type with nested self-reference is completed too
     // (nested self-reference representing type with own bindings)
+    @Test
     public void testIncompleteNestedFBoundedTypeCompleted()
     {
         TypeResolver resolver = new TypeResolver();
@@ -571,6 +602,7 @@ public class TypeResolver128Test extends BaseTest
     }
 
     // Incomplete raw F-bounded type is equal to (and replaced by) stand-alone raw type
+    @Test
     public void testIncompleteFBoundedTypeCompleted()
     {
         TypeResolver resolver = new TypeResolver();
@@ -582,6 +614,7 @@ public class TypeResolver128Test extends BaseTest
         _verifyFullyResolved(resolver.resolve(b).getParentClass().getTypeParameters().get(0), FBOuter.class);
     }
 
+    @Test
     public void testRawSelfReferenceWithRawBound()
     {
         TypeResolver resolver = new TypeResolver();
