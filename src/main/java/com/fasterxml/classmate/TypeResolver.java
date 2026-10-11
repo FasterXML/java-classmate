@@ -122,6 +122,11 @@ public class TypeResolver implements Serializable
      * resolved ({@link ResolvedType}), type-erased ({@link java.lang.Class}) or
      * generic type reference ({@link GenericType}).
      *
+     *<p>
+     * NOTE: as of 1.8, result is never a self-reference ({@link #isSelfReference}):
+     * if {@code type} (with no type parameters) is or resolves to one, type it
+     * represents is returned instead (see [classmate#133]).
+     *
      * @throws IllegalArgumentException If any of type parameters is a primitive type
      *   (since 1.8)
      */
@@ -175,6 +180,10 @@ public class TypeResolver implements Serializable
 
     /**
      * Factory method for constructing array type of given element type.
+     *<p>
+     * NOTE: as of 1.8, element type is never a self-reference ({@link #isSelfReference}):
+     * if {@code elementType} is or resolves to one, type it represents is used instead
+     * (see [classmate#133]).
      */
     public ResolvedArrayType arrayType(Type elementType)
     {
@@ -196,6 +205,10 @@ public class TypeResolver implements Serializable
      * {@code List.class} results in {@code List<Object>}. To construct parameterized
      * types, use {@link #resolve(Type, Type...)} instead.
      * (behavior changed in 1.8, see [classmate#125])
+     *<p>
+     * NOTE: as of 1.8, result is never a self-reference ({@link #isSelfReference}):
+     * if {@code jdkType} resolves to one (like type variable bound to one), type it
+     * represents is returned instead (see [classmate#133]).
      *<p>
      * NOTE: order of arguments was reversed for 0.8, to avoid problems with
      * overload varargs method.
@@ -456,18 +469,18 @@ public class TypeResolver implements Serializable
      * of its resolution context (see {@link #_resolveSelfReferences}). Called by public
      * entry points only.
      *<p>
-     * NOTE: self-references themselves are retained as-is, as are incomplete types with
-     * self-references (in type parameters) to enclosing types, since those are only valid
-     * within the enclosing types: so returned type may still be incomplete.
+     * NOTE: top-level self-references are replaced with the type they represent
+     * (see [classmate#133]); but incomplete types with self-references (in type parameters)
+     * to enclosing types are retained, since those are only valid within the enclosing types:
+     * so returned type may still be incomplete.
      *
      * @since 1.8
      */
     private ResolvedType _completeType(ResolvedType type)
     {
-        if (type._isIncomplete() && !isSelfReference(type)) {
-            return _resolveSelfReferences(type, null);
-        }
-        return type;
+        // [classmate#133]: includes bare self-reference (like member type of type variable
+        // bound to one), same as when used within other types (like `T[]`)
+        return _resolveSelfReferences(type, null);
     }
 
     /**
