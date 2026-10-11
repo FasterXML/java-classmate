@@ -61,3 +61,5 @@ Use the Maven wrapper (`./mvnw`), not `mvn`.
 ## Testing
 
 Tests mirror the main package layout under `src/test/java/com/fasterxml/classmate/`. `TestReadme.java` contains runnable versions of the README usage examples — keep it in sync when changing README examples.
+
+Tests use JUnit 5: every test method needs `@Test` (no `test*` name discovery), and assertion messages go last.
