@@ -84,6 +84,9 @@ Release notes:
 - `ResolvedRecursiveType.findSupertype()` (and so `typeParametersFor()`) now looks up
   supertypes from type self-reference represents (`getActualType()`); `getParentClass()`
   and `getImplementedInterfaces()` of self-references still return no supertypes
+- NOTE: `findSupertype()` with erased type of self-reference itself now returns the
+  type it represents, instead of the self-reference (so it is no longer
+  `ResolvedRecursiveType`)
  (fix by @cowtowncoder w/ Claude code)
 
 1.7.3 (02-Jan-2026)

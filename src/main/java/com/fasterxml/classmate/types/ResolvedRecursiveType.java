@@ -91,7 +91,9 @@ public class ResolvedRecursiveType extends ResolvedType
      */
     
     /**
-     * To avoid infinite loops, will return null;
+     * To avoid infinite loops (when traversing supertypes and their type parameters),
+     * will return null; supertypes are accessible using {@link #findSupertype}, or
+     * via type this self-reference represents (see {@link #getActualType()}).
      */
     @Override
     public ResolvedType getParentClass() {
@@ -197,7 +199,9 @@ public class ResolvedRecursiveType extends ResolvedType
     }
 
     /**
-     * To avoid infinite loops, will return empty list
+     * To avoid infinite loops (when traversing supertypes and their type parameters),
+     * will return empty list; supertypes are accessible using {@link #findSupertype}, or
+     * via type this self-reference represents (see {@link #getActualType()}).
      */
     @Override
     public List<ResolvedType> getImplementedInterfaces() {
