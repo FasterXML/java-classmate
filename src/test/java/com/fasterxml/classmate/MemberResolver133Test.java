@@ -68,6 +68,10 @@ public class MemberResolver133Test extends BaseTest
         ResolvedType type2 = _typeResolver.resolve(TypeBindings.emptyBindings(), param);
         assertFalse(TypeResolver.isSelfReference(type2));
         assertEquals(type, type2);
+
+        ResolvedType elem = _typeResolver.arrayType(param).getArrayElementType();
+        assertFalse(TypeResolver.isSelfReference(elem));
+        assertEquals(type, elem);
     }
 
     private void _verify(Class<?> type, Class<?> expValueType, Class<?> expParent)

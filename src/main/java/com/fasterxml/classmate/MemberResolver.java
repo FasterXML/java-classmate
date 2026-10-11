@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.*;
 
 import com.fasterxml.classmate.members.*;
-import com.fasterxml.classmate.types.ResolvedRecursiveType;
 import com.fasterxml.classmate.util.ClassKey;
 
 /**
@@ -121,13 +120,8 @@ public class MemberResolver implements Serializable
         // [classmate#128]: type may be one only valid within its original resolution context
         // (like one obtained via type parameters of another type), with self-references in
         // its supertypes: if so, need to resolve it as stand-alone type
-        // (and self-reference itself has no supertypes, so need to use type it represents)
-        if (mainType instanceof ResolvedRecursiveType) {
-            ResolvedType actual = ((ResolvedRecursiveType) mainType).getActualType();
-            if (actual != null) {
-                mainType = actual;
-            }
-        }
+        // [classmate#133]: (also replaces self-reference with type it represents, since
+        // self-reference itself has no supertypes)
         mainType = _typeResolver.resolve(mainType);
         List<ResolvedType> types;
         HashSet<ClassKey> seenTypes = new HashSet<ClassKey>();

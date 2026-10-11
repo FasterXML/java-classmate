@@ -180,6 +180,10 @@ public class TypeResolver implements Serializable
 
     /**
      * Factory method for constructing array type of given element type.
+     *<p>
+     * NOTE: as of 1.8, element type is never a self-reference ({@link #isSelfReference}):
+     * if {@code elementType} is or resolves to one, type it represents is used instead
+     * (see [classmate#133]).
      */
     public ResolvedArrayType arrayType(Type elementType)
     {
@@ -474,12 +478,9 @@ public class TypeResolver implements Serializable
      */
     private ResolvedType _completeType(ResolvedType type)
     {
-        // [classmate#133]: bare self-reference (like member type of type variable bound
-        // to one) also to be replaced, same as when used within other types (like `T[]`)
-        if (isSelfReference(type) || type._isIncomplete()) {
-            return _resolveSelfReferences(type, null);
-        }
-        return type;
+        // [classmate#133]: includes bare self-reference (like member type of type variable
+        // bound to one), same as when used within other types (like `T[]`)
+        return _resolveSelfReferences(type, null);
     }
 
     /**

@@ -73,6 +73,11 @@ Release notes:
   `resolve(Type, Type...)` now return type self-reference represents (instead of
   `ResolvedRecursiveType`) when given type resolves to a self-reference: f.ex type of
   field `X value` of `Base<X>`, inherited by `Sym<T extends Sym<T>> extends Base<T>`
+- Same for element type of array constructed with `TypeResolver.arrayType(Type)`
+- NOTE: potentially incompatible change: member types (and results of above methods)
+  are never `ResolvedRecursiveType`s now, so code that relies on
+  `TypeResolver.isSelfReference()` (or `getSelfReferencedType()`) of member types
+  to detect cycles needs to use other means (like tracking types already visited)
  (fix by @cowtowncoder w/ Claude code)
 
 1.7.3 (02-Jan-2026)
