@@ -456,15 +456,21 @@ public class TypeResolver implements Serializable
      * of its resolution context (see {@link #_resolveSelfReferences}). Called by public
      * entry points only.
      *<p>
-     * NOTE: self-references themselves are retained as-is, as are incomplete types with
-     * self-references (in type parameters) to enclosing types, since those are only valid
-     * within the enclosing types: so returned type may still be incomplete.
+     * NOTE: top-level self-references are replaced with the type they represent
+     * (see [classmate#133]); but incomplete types with self-references (in type parameters)
+     * to enclosing types are retained, since those are only valid within the enclosing types:
+     * so returned type may still be incomplete.
      *
      * @since 1.8
      */
     private ResolvedType _completeType(ResolvedType type)
     {
-        if (type._isIncomplete() && !isSelfReference(type)) {
+        // [classmate#133]: bare self-reference (like member type of type variable bound
+        // to one) to be replaced, same as when used within other types (like `T[]`)
+        if (isSelfReference(type)) {
+            return _selfReferenceTarget(type);
+        }
+        if (type._isIncomplete()) {
             return _resolveSelfReferences(type, null);
         }
         return type;

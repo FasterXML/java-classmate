@@ -3,7 +3,7 @@
     <parent>
         <groupId>com.fasterxml</groupId>
         <artifactId>oss-parent</artifactId>
-        <version>74</version>
+        <version>80</version>
     </parent>
     <artifactId>classmate</artifactId>
     <name>ClassMate</name>
