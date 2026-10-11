@@ -203,7 +203,7 @@ public class ResolvedRecursiveType extends ResolvedType
         ResolvedType actual = getActualType();
         // may still be unresolved, if called during resolution
         if (actual == null) {
-            return (erasedSupertype == _erasedType) ? this : null;
+            return super.findSupertype(erasedSupertype);
         }
         return actual.findSupertype(erasedSupertype);
     }

@@ -38,7 +38,7 @@ public class ResolvedRecursiveType137Test extends BaseTest
         ResolvedType top = selfRef.findSupertype(Top.class);
         assertNotNull(top);
         assertEquals(Top.class, top.getErasedType());
-        assertEquals(actual.findSupertype(Top.class), top);
+        assertEquals(_typeResolver.resolve(OuterI.class).findSupertype(Top.class), top);
 
         List<ResolvedType> params = selfRef.typeParametersFor(BaseI.class);
         assertNotNull(params);
@@ -75,16 +75,16 @@ public class ResolvedRecursiveType137Test extends BaseTest
 
     public void testSupertypesOfExpandingSelfReference()
     {
-        ResolvedType c = _typeResolver.resolve(new GenericType<C<String>>() { });
-        ResolvedType selfRef = c.findSupertype(Base.class).getTypeParameters().get(0);
+        // `D<String>` -> `C<List<String>>` -> `Base<D<List<String>>>`, where
+        // `D<List<String>>` is a self-reference (`D` being resolved)
+        ResolvedType d = _typeResolver.resolve(new GenericType<D<String>>() { });
+        ResolvedType selfRef = d.findSupertype(Base.class).getTypeParameters().get(0);
+        assertTrue(TypeResolver.isSelfReference(selfRef));
         assertEquals(D.class, selfRef.getErasedType());
 
-        // `D<String>` -> `C<List<String>>` -> `Base<D<List<String>>>`
-        ResolvedType base = selfRef.findSupertype(Base.class);
-        assertNotNull(base);
-        assertEquals("Base<D<List<String>>>", base.getBriefDescription()
-                .replace(getClass().getName()+"$", "").replace("java.util.", "")
-                .replace("java.lang.", ""));
-        assertEquals(C.class, selfRef.findSupertype(C.class).getErasedType());
+        // `D<List<String>>` -> `C<List<List<String>>>` -> `Base<D<List<List<String>>>>`
+        ResolvedType expC = _typeResolver.resolve(new GenericType<C<List<List<String>>>>() { });
+        assertEquals(expC, selfRef.findSupertype(C.class));
+        assertEquals(expC.findSupertype(Base.class), selfRef.findSupertype(Base.class));
     }
 }
