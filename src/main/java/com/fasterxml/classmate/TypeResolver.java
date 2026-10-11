@@ -122,6 +122,11 @@ public class TypeResolver implements Serializable
      * resolved ({@link ResolvedType}), type-erased ({@link java.lang.Class}) or
      * generic type reference ({@link GenericType}).
      *
+     *<p>
+     * NOTE: as of 1.8, result is never a self-reference ({@link #isSelfReference}):
+     * if {@code type} (with no type parameters) is or resolves to one, type it
+     * represents is returned instead (see [classmate#133]).
+     *
      * @throws IllegalArgumentException If any of type parameters is a primitive type
      *   (since 1.8)
      */
@@ -196,6 +201,10 @@ public class TypeResolver implements Serializable
      * {@code List.class} results in {@code List<Object>}. To construct parameterized
      * types, use {@link #resolve(Type, Type...)} instead.
      * (behavior changed in 1.8, see [classmate#125])
+     *<p>
+     * NOTE: as of 1.8, result is never a self-reference ({@link #isSelfReference}):
+     * if {@code jdkType} resolves to one (like type variable bound to one), type it
+     * represents is returned instead (see [classmate#133]).
      *<p>
      * NOTE: order of arguments was reversed for 0.8, to avoid problems with
      * overload varargs method.
@@ -466,11 +475,8 @@ public class TypeResolver implements Serializable
     private ResolvedType _completeType(ResolvedType type)
     {
         // [classmate#133]: bare self-reference (like member type of type variable bound
-        // to one) to be replaced, same as when used within other types (like `T[]`)
-        if (isSelfReference(type)) {
-            return _selfReferenceTarget(type);
-        }
-        if (type._isIncomplete()) {
+        // to one) also to be replaced, same as when used within other types (like `T[]`)
+        if (isSelfReference(type) || type._isIncomplete()) {
             return _resolveSelfReferences(type, null);
         }
         return type;
