@@ -79,6 +79,12 @@ Release notes:
   `TypeResolver.isSelfReference()` (or `getSelfReferencedType()`) of member types
   to detect cycles needs to use other means (like tracking types already visited)
  (fix by @cowtowncoder w/ Claude code)
+#137: Supertype lookups (`findSupertype()`) on a self-reference (`ResolvedRecursiveType`)
+  return `null`
+- `ResolvedRecursiveType.findSupertype()` (and so `typeParametersFor()`) now looks up
+  supertypes from type self-reference represents (`getActualType()`); `getParentClass()`
+  and `getImplementedInterfaces()` of self-references still return no supertypes
+ (fix by @cowtowncoder w/ Claude code)
 
 1.7.3 (02-Jan-2026)
 

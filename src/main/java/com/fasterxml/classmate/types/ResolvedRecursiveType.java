@@ -190,6 +190,25 @@ public class ResolvedRecursiveType extends ResolvedType
     }
     
     /**
+     * Although self-reference itself exposes no supertypes (see {@link #getParentClass()}
+     * and {@link #getImplementedInterfaces()}), supertypes are looked up from
+     * the type it represents (see {@link #getActualType()}), including the type itself
+     * (if given its erased type): this terminates since lookup is by erased type.
+     *
+     * @since 1.8
+     */
+    @Override
+    public ResolvedType findSupertype(Class<?> erasedSupertype)
+    {
+        ResolvedType actual = getActualType();
+        // may still be unresolved, if called during resolution
+        if (actual == null) {
+            return (erasedSupertype == _erasedType) ? this : null;
+        }
+        return actual.findSupertype(erasedSupertype);
+    }
+
+    /**
      * To avoid infinite loops, will return null type
      */
     @Override
