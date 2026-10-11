@@ -98,8 +98,10 @@ public class MemberResolver132Test extends BaseTest
         assertSame(_typeResolver.resolve(GSub.class, String.class), sub);
         assertEquals(_typeResolver.resolve(GMid.class, String.class),
                 _param(sub).getImplementedInterfaces().get(0));
-        assertEquals(_typeResolver.resolve(GSub.class, String.class),
-                sub.findSupertype(Ref.class).getTypeParameters().get(0));
+        // (self-reference to `GSub<String>` itself)
+        ResolvedType refParam = sub.findSupertype(Ref.class).getTypeParameters().get(0);
+        assertEquals(GSub.class, refParam.getErasedType());
+        assertEquals(String.class, refParam.getTypeParameters().get(0).getErasedType());
         assertEquals(Arrays.asList("get", "ref", "top"), _methodNames(sub));
     }
 
