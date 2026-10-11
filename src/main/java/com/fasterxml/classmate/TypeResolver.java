@@ -965,15 +965,17 @@ public class TypeResolver implements Serializable
     {
         final ResolvedRecursiveType rrt = (ResolvedRecursiveType) selfRef;
         final ResolvedType ref = rrt.getSelfReferencedType();
-        if ((ref != null) && !ref._isIncomplete()) {
+        if (ref != null) {
             // [classmate#128]: actual type (with own bindings), if differs
+            // [classmate#132]: (or stand-alone type, if referenced type is incomplete)
             ResolvedType actual = rrt.getActualType();
             if (actual != ref) {
                 return actual;
             }
-            // otherwise referenced type, if self-reference represents it (only not known
-            // if self-reference was not constructed by `TypeResolver`)
-            if (_representsReferenced(rrt, ref)) {
+            // otherwise referenced type, if valid outside its resolution context and
+            // self-reference represents it (only not known if self-reference was not
+            // constructed by `TypeResolver`)
+            if (!ref._isIncomplete() && _representsReferenced(rrt, ref)) {
                 return ref;
             }
         }
