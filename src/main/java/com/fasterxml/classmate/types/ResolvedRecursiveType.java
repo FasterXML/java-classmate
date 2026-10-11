@@ -154,9 +154,27 @@ public class ResolvedRecursiveType extends ResolvedType
     }
     
     /**
+     * Helper method for replacing given type, if it is a self-reference, with the type
+     * it represents (see {@link #getActualType()}), since self-references themselves
+     * expose no supertypes. Self-references not yet resolved (if called during
+     * resolution), and other types, are returned as-is.
+     *
+     * @since 1.8
+     */
+    static ResolvedType actualType(ResolvedType type)
+    {
+        if (type instanceof ResolvedRecursiveType) {
+            ResolvedType actual = ((ResolvedRecursiveType) type).getActualType();
+            if (actual != null) {
+                return actual;
+            }
+        }
+        return type;
+    }
+
+    /**
      * Helper method for replacing self-references in given supertypes (like
-     * implemented interfaces) with types they represent (see {@link #getActualType()}),
-     * since self-references themselves expose no supertypes.
+     * implemented interfaces) with types they represent: see {@link #actualType}.
      *
      * @since 1.8
      */
@@ -167,15 +185,12 @@ public class ResolvedRecursiveType extends ResolvedType
         }
         ResolvedType[] result = types;
         for (int i = 0; i < types.length; ++i) {
-            if (types[i] instanceof ResolvedRecursiveType) {
-                ResolvedType actual = ((ResolvedRecursiveType) types[i]).getActualType();
-                // may still be unresolved, if called during resolution
-                if (actual != null) {
-                    if (result == types) {
-                        result = types.clone();
-                    }
-                    result[i] = actual;
+            ResolvedType actual = actualType(types[i]);
+            if (actual != types[i]) {
+                if (result == types) {
+                    result = types.clone();
                 }
+                result[i] = actual;
             }
         }
         return Arrays.asList(result);
@@ -200,9 +215,9 @@ public class ResolvedRecursiveType extends ResolvedType
     @Override
     public ResolvedType findSupertype(Class<?> erasedSupertype)
     {
-        ResolvedType actual = getActualType();
+        ResolvedType actual = actualType(this);
         // may still be unresolved, if called during resolution
-        if (actual == null) {
+        if (actual == this) {
             return super.findSupertype(erasedSupertype);
         }
         return actual.findSupertype(erasedSupertype);
