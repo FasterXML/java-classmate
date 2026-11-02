@@ -16,7 +16,6 @@ import com.fasterxml.classmate.ResolvedType;
  *<p>
  * Like all {@link ResolvedTypeCache} implementations,
  * access is thread-safe and caller need not (and should not) use additional synchronization.
- *<p>
  *
  * @see ConcurrentTypeCache
  *
