@@ -331,22 +331,17 @@ public class ResolvedTypeWithMembers
                 // Ok, now, mix-ins only contribute annotations; whereas 'real' types methods
                 if (type.isMixin()) { // mix-in: only get annotations
                     for (Annotation ann : method.getAnnotations()) {
+                        // Keep overrides in case a later class method replaces an interface method.
+                        Annotations oldAnn = overrides.get(key);
+                        if (oldAnn == null) {
+                            oldAnn = new Annotations();
+                            overrides.put(key, oldAnn);
+                        }
+                        oldAnn.addAsDefault(ann);
                         // If already have a method, must be inheritable to include
-                        if (old != null) {
-                            if (!methodCanInherit(ann)) {
-                                continue;
-                            }
+                        if (old != null && methodCanInherit(ann)) {
                             // and if so, apply as default (i.e. do not override)
                             old.applyDefault(ann);
-                        } else { // If no method, need to add to annotation override map
-                            Annotations oldAnn = overrides.get(key);
-                            if (oldAnn == null) {
-                                oldAnn = new Annotations();
-                                oldAnn.add(ann);
-                                overrides.put(key, oldAnn);
-                            } else {
-                                oldAnn.addAsDefault(ann);
-                            }
                         }
                     }
 
@@ -399,6 +394,28 @@ public class ResolvedTypeWithMembers
                                 newMethod.applyParamOverrides(i, annotations[i]);
                             }
                         }
+                    } else if (old.getDeclaringType().isInterface() && old.isPublic()
+                            && !method.getDeclaringType().isInterface() && method.isPublic()) {
+                        // A class implementation takes precedence over an interface declaration.
+                        ResolvedMethod newMethod = resolveMethod(method);
+                        Annotations overrideAnn = overrides.get(key);
+                        if (overrideAnn != null) {
+                            newMethod.applyOverrides(overrideAnn);
+                        }
+                        // Retain the existing priority of inheritable annotations.
+                        for (Annotation ann : old.getAnnotations()) {
+                            if (methodCanInherit(ann)) {
+                                newMethod.applyOverride(ann);
+                            }
+                        }
+                        for (int i = 0; i < old.getArgumentCount(); i++) {
+                            for (Annotation ann : old.getParameterAnnotations(i)) {
+                                if (parameterCanInherit(ann)) {
+                                    newMethod.applyParamOverride(i, ann);
+                                }
+                            }
+                        }
+                        methods.put(key, newMethod);
                     } else { // method masked by something else? can only contribute annotations
                         for (Annotation ann : method.getAnnotations()) {
                             if (methodCanInherit(ann)) {
