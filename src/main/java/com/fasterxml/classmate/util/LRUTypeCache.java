@@ -76,6 +76,7 @@ public class LRUTypeCache extends ResolvedTypeCache
         protected final int _maxEntries;
         
         public CacheMap(int maxEntries) {
+            super(16, 0.75f, true);
             _maxEntries = maxEntries;
         }
 
