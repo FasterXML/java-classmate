@@ -1,0 +1,46 @@
+name: Post Coverage Comment
+# Runs in the context of the base repository (with write access) after "Build"
+# completes for a pull request, so comments can be posted on PRs from forks too.
+# Only consumes the pre-rendered comment artifact; never checks out PR code.
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
+
+permissions:
+  actions: read
+  pull-requests: write
+
+jobs:
+  comment:
+    runs-on: ubuntu-24.04
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    steps:
+    - name: Download comment artifact
+      uses: dawidd6/action-download-artifact@a92c7ae74cf1df8810783758581e485ac3aaa309 # v28
+      with:
+        name: pr-comment
+        path: pr-comment/
+        run_id: ${{ github.event.workflow_run.id }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Post coverage comment
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REPO: ${{ github.repository }}
+      run: |
+        PR_NUMBER=$(cat pr-comment/pr-number.txt)
+        # Artifact comes from an untrusted PR run: make sure PR number is numeric
+        if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+          echo "Invalid PR number: '$PR_NUMBER'"
+          exit 1
+        fi
+
+        # Find and delete existing coverage comment(s) (REST API gives numeric ids)
+        for COMMENT_ID in $(gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments" \
+            --jq '.[] | select(.body | contains("<!-- jacoco-coverage-comment -->")) | .id'); do
+          gh api -X DELETE "repos/$REPO/issues/comments/$COMMENT_ID" || true
+        done
+
+        # Post new comment
+        gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file pr-comment/comment-body.txt
