@@ -74,9 +74,10 @@ public class LRUTypeCache extends ResolvedTypeCache
         extends LinkedHashMap<ResolvedTypeKey, ResolvedType>
     {
         protected final int _maxEntries;
-        
+
         public CacheMap(int maxEntries) {
-            super(16, 0.75f, true);
+            // Pre-size to avoid resizing (up to 256 entries), but no smaller than default 16
+            super(Math.max(16, Math.min(maxEntries, 256) * 4 / 3 + 1), 0.75f, true);
             _maxEntries = maxEntries;
         }
 
