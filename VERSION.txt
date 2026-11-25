@@ -5,6 +5,8 @@ Release notes:
 
 1.8.1 (not yet released)
 
+#143: Use access order for LRU type cache eviction
+ (contributed by @Mr-KnightCLI)
 - Upgrade to JUnit 5
 
 1.8.0 (10-Oct-2026)
