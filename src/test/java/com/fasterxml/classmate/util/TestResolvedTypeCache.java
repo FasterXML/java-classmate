@@ -30,6 +30,44 @@ public class TestResolvedTypeCache
     }
 
     @Test
+    public void testLRUCacheRetainsRecentlyAccessedEntry()
+    {
+        ResolvedTypeCache cache = ResolvedTypeCache.lruCache(2);
+        ResolvedType first = new ResolvedInterfaceType(Map.class, null, null);
+        ResolvedType second = new ResolvedInterfaceType(Set.class, null, null);
+        ResolvedType third = new ResolvedInterfaceType(List.class, null, null);
+        cache._addForTest(first);
+        cache._addForTest(second);
+
+        assertSame(first, cache.find(cache.key(Map.class)));
+        cache._addForTest(third);
+
+        assertEquals(2, cache.size());
+        assertNull(cache.find(cache.key(Set.class)));
+        assertSame(first, cache.find(cache.key(Map.class)));
+        assertSame(third, cache.find(cache.key(List.class)));
+    }
+
+    @Test
+    public void testLRUCacheReplacementRefreshesAccessOrder()
+    {
+        ResolvedTypeCache cache = ResolvedTypeCache.lruCache(2);
+        ResolvedType first = new ResolvedInterfaceType(Map.class, null, null);
+        ResolvedType replacement = new ResolvedInterfaceType(Map.class, null, null);
+        ResolvedType second = new ResolvedInterfaceType(Set.class, null, null);
+        ResolvedType third = new ResolvedInterfaceType(List.class, null, null);
+        cache._addForTest(first);
+        cache._addForTest(second);
+        cache._addForTest(replacement);
+        cache._addForTest(third);
+
+        assertEquals(2, cache.size());
+        assertNull(cache.find(cache.key(Set.class)));
+        assertSame(replacement, cache.find(cache.key(Map.class)));
+        assertSame(third, cache.find(cache.key(List.class)));
+    }
+
+    @Test
     public void testSimpleConcurrentCaching()
     {
         ConcurrentTypeCache cache = (ConcurrentTypeCache) ResolvedTypeCache.concurrentCache(2);
