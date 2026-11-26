@@ -2,6 +2,7 @@ package com.fasterxml.classmate.types;
 
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.function.Supplier;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeBindings;
@@ -24,6 +25,25 @@ public class ResolvedRecursiveType extends ResolvedType
      */
     protected ResolvedType _referencedType;
 
+    /**
+     * For self-references with type bindings different from those of the referenced
+     * type (like raw {@code Mid} within {@code Mid<String>}, or {@code N<N<T>>} within
+     * {@code N<T>}), or to a referenced type only valid within its resolution context:
+     * supplier of the actual type this self-reference represents.
+     * Resolved lazily since doing so eagerly could lead to infinite recursion.
+     *
+     * @since 1.8
+     */
+    protected Supplier<ResolvedType> _actualTypeSupplier;
+
+    /**
+     * Actual type this self-reference represents, if (possibly) differs from referenced
+     * type; resolved lazily using {@link #_actualTypeSupplier}.
+     *
+     * @since 1.8
+     */
+    protected volatile ResolvedType _actualType;
+
     /*
     /**********************************************************************
     /* Life cycle
@@ -37,16 +57,31 @@ public class ResolvedRecursiveType extends ResolvedType
     
     @Override
     public boolean canCreateSubtypes() {
+        // only depends on erased type, so no need to resolve actual type
         return _referencedType.canCreateSubtypes();
     }
     
     public void setReference(ResolvedType ref)
+    {
+        setReference(ref, null);
+    }
+
+    /**
+     * Alternative to {@link #setReference(ResolvedType)} used when type bindings of
+     * this self-reference differ from those of the referenced type, or if referenced
+     * type is only valid within its resolution context: in that case,
+     * {@link #getActualType()} returns type obtained (lazily) from given supplier.
+     *
+     * @since 1.8
+     */
+    public synchronized void setReference(ResolvedType ref, Supplier<ResolvedType> actualType)
     {
         // sanity check; should not be called multiple times
         if (_referencedType != null) {
             throw new IllegalStateException("Trying to re-set self reference; old value = "+_referencedType+", new = "+ref);
         }
         _referencedType = ref;
+        _actualTypeSupplier = actualType;
     }
 
     /*
@@ -56,24 +91,142 @@ public class ResolvedRecursiveType extends ResolvedType
      */
     
     /**
-     * To avoid infinite loops, will return null;
+     * To avoid infinite loops (when traversing supertypes and their type parameters),
+     * will return null; supertypes are accessible using {@link #findSupertype}, or
+     * via type this self-reference represents (see {@link #getActualType()}).
      */
     @Override
     public ResolvedType getParentClass() {
         return null;
     }
 
+    /**
+     * Accessor for the type being resolved that this self-reference points to.
+     * Note that type bindings of this self-reference may differ from those of the
+     * referenced type (like for raw {@code Mid} within {@code Mid<String>}), or
+     * referenced type may only be valid within its resolution context: if so,
+     * {@link #getActualType()} returns the type self-reference actually represents.
+     */
     @Override
     public ResolvedType getSelfReferencedType() { return _referencedType; }
+
+    /**
+     * Accessor for the type this self-reference represents: same as
+     * {@link #getSelfReferencedType()}, unless type bindings of this self-reference
+     * differ from those of the referenced type (like raw {@code Mid} within
+     * {@code Mid<String>}, or {@code N<N<T>>} within {@code N<T>}), or referenced
+     * type is only valid within its resolution context (like {@code B} in
+     * {@code B extends Base<A>}, when resolving {@code A extends Base<B>}), in which
+     * case it is the stand-alone type with bindings of this self-reference (resolved lazily).
+     *<p>
+     * NOTE: for expanding types (like {@code N<T>} above), following actual types
+     * repeatedly yields ever deeper types.
+     *
+     * @return Type this self-reference represents; {@code null} if not yet resolved
+     *
+     * @since 1.8
+     */
+    public ResolvedType getActualType()
+    {
+        ResolvedType actual = _actualType;
+        if (actual != null) {
+            return actual;
+        }
+        final Supplier<ResolvedType> supplier;
+        synchronized (this) {
+            if (_actualType != null) {
+                return _actualType;
+            }
+            supplier = _actualTypeSupplier;
+            if (supplier == null) {
+                return _referencedType;
+            }
+        }
+        // resolved outside of lock, since resolution may access other self-references;
+        // concurrent calls may resolve more than once, but only first one is retained
+        actual = supplier.get();
+        synchronized (this) {
+            if (_actualType == null) {
+                _actualType = actual;
+                // no longer needed (and may hold on to `TypeResolver`)
+                _actualTypeSupplier = null;
+            }
+            return _actualType;
+        }
+    }
     
     /**
-     * To avoid infinite loops, will return empty list
+     * Helper method for replacing given type, if it is a self-reference, with the type
+     * it represents (see {@link #getActualType()}), since self-references themselves
+     * expose no supertypes. Self-references not yet resolved (if called during
+     * resolution), and other types, are returned as-is.
+     *
+     * @since 1.8
+     */
+    static ResolvedType actualType(ResolvedType type)
+    {
+        if (type instanceof ResolvedRecursiveType) {
+            ResolvedType actual = ((ResolvedRecursiveType) type).getActualType();
+            if (actual != null) {
+                return actual;
+            }
+        }
+        return type;
+    }
+
+    /**
+     * Helper method for replacing self-references in given supertypes (like
+     * implemented interfaces) with types they represent: see {@link #actualType}.
+     *
+     * @since 1.8
+     */
+    static List<ResolvedType> actualTypes(ResolvedType[] types)
+    {
+        if (types.length == 0) {
+            return Collections.<ResolvedType>emptyList();
+        }
+        ResolvedType[] result = types;
+        for (int i = 0; i < types.length; ++i) {
+            ResolvedType actual = actualType(types[i]);
+            if (actual != types[i]) {
+                if (result == types) {
+                    result = types.clone();
+                }
+                result[i] = actual;
+            }
+        }
+        return Arrays.asList(result);
+    }
+
+    /**
+     * To avoid infinite loops (when traversing supertypes and their type parameters),
+     * will return empty list; supertypes are accessible using {@link #findSupertype}, or
+     * via type this self-reference represents (see {@link #getActualType()}).
      */
     @Override
     public List<ResolvedType> getImplementedInterfaces() {
         return Collections.<ResolvedType>emptyList();
     }
     
+    /**
+     * Although self-reference itself exposes no supertypes (see {@link #getParentClass()}
+     * and {@link #getImplementedInterfaces()}), supertypes are looked up from
+     * the type it represents (see {@link #getActualType()}), including the type itself
+     * (if given its erased type): this terminates since lookup is by erased type.
+     *
+     * @since 1.8
+     */
+    @Override
+    public ResolvedType findSupertype(Class<?> erasedSupertype)
+    {
+        ResolvedType actual = actualType(this);
+        // may still be unresolved, if called during resolution
+        if (actual == this) {
+            return super.findSupertype(erasedSupertype);
+        }
+        return actual.findSupertype(erasedSupertype);
+    }
+
     /**
      * To avoid infinite loops, will return null type
      */
@@ -107,15 +260,15 @@ public class ResolvedRecursiveType extends ResolvedType
      */
 
     @Override
-    public List<RawField> getMemberFields() { return _referencedType.getMemberFields(); }
+    public List<RawField> getMemberFields() { return getActualType().getMemberFields(); }
     @Override
-    public List<RawField> getStaticFields() { return _referencedType.getStaticFields(); }
+    public List<RawField> getStaticFields() { return getActualType().getStaticFields(); }
     @Override
-    public List<RawMethod> getStaticMethods() { return _referencedType.getStaticMethods(); }
+    public List<RawMethod> getStaticMethods() { return getActualType().getStaticMethods(); }
     @Override
-    public List<RawMethod> getMemberMethods() { return _referencedType.getMemberMethods(); }
+    public List<RawMethod> getMemberMethods() { return getActualType().getMemberMethods(); }
     @Override
-    public List<RawConstructor> getConstructors() { return _referencedType.getConstructors(); }
+    public List<RawConstructor> getConstructors() { return getActualType().getConstructors(); }
     
     /*
     /**********************************************************************
@@ -151,23 +304,21 @@ public class ResolvedRecursiveType extends ResolvedType
     /* Other overrides
     /**********************************************************************
      */
-    
-    @Override public boolean equals(Object o)
+
+    // 02-Jan-2026: [classmate#117]: Do NOT compare _referencedType to avoid infinite
+    // recursion: super.equals() already compares class type, erased type, and type
+    // bindings,  which is sufficient for determining equality of recursive types.
+    // Comparing _referencedType causes StackOverflowError when comparing types
+    // from different TypeResolver instances.
+    /*
+    @Override
+    public boolean equals(Object o)
     {
-        if (!super.equals(o)) {
-            return false;
-        }
-        // not sure if we should match at all, but definitely need this
-        // additional part if we do:
-        ResolvedRecursiveType other = (ResolvedRecursiveType) o;
-        if (_referencedType == null) {
-            return other._referencedType == null;
-        }
-        return _referencedType.equals(other._referencedType);
+        return super.equals(o);
     }
+    */
 
     // Only for compliance purposes: lgtm.com complains if only equals overridden
-    @Override public int hashCode() {
-        return super.hashCode();
-    }
+    // 02-Jan-2026, tatu: No longer, base impl is fine
+    // @Override public int hashCode() { return super.hashCode(); }
 }

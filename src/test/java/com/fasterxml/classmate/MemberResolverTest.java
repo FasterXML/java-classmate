@@ -1,6 +1,9 @@
 package com.fasterxml.classmate;
 
-import java.lang.reflect.InvocationTargetException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -82,8 +85,8 @@ public class MemberResolverTest extends BaseTest
 
     protected TypeResolver typeResolver;
 
-    @Override
-    protected void setUp()
+    @BeforeEach
+    public void setUp()
     {
         // Let's use a single instance for all tests, to increase chance of seeing failures
         typeResolver = new TypeResolver();
@@ -98,6 +101,7 @@ public class MemberResolverTest extends BaseTest
     /**
      * Test for most basic thing; type hierarchy resolution 
      */
+    @Test
     public void testSimpleHierarchy()
     {
         MemberResolver mr = new MemberResolver(typeResolver);
@@ -113,6 +117,7 @@ public class MemberResolverTest extends BaseTest
         assertSame(BaseClass.class, types.get(1).getErasedType());
     }
 
+    @Test
     public void testSimpleHierarchyWithMixins()
     {
         MemberResolver mr = new MemberResolver(typeResolver);
@@ -152,6 +157,7 @@ public class MemberResolverTest extends BaseTest
     /**
      * Test for checking basic member detection for super type.
      */
+    @Test
     public void testMembersForSupertype()
     {
         MemberResolver mr = new MemberResolver(typeResolver);
@@ -178,6 +184,7 @@ public class MemberResolverTest extends BaseTest
      * Test for checking basic aggregation with two types (subtype that
      * extends supertype)
      */
+    @Test
     public void testAggregationForSubtype()
     {
         MemberResolver mr = new MemberResolver(typeResolver);
@@ -187,6 +194,7 @@ public class MemberResolverTest extends BaseTest
         verifySubtypeAggregate(bean);
     }
 
+    @Test
     public void testAggregationForSubtypeAndDummyMixin()
     {
         MemberResolver mr = new MemberResolver(typeResolver);
@@ -200,6 +208,7 @@ public class MemberResolverTest extends BaseTest
         verifySubtypeAggregate(bean);
     }
 
+    @Test
     public void testIncludeObject()
     {
         ResolvedType simpleResolvedType = typeResolver.resolve(SimpleClass.class);
@@ -222,6 +231,7 @@ public class MemberResolverTest extends BaseTest
         assertEquals(1, simpleResolvedTypeWithMembers.getMemberFields().length);
     }
 
+    @Test
     public void testFilters()
     {
         ResolvedType simpleResolvedType = typeResolver.resolve(SimpleClass.class);
@@ -294,6 +304,7 @@ public class MemberResolverTest extends BaseTest
     //    like this. And since this breaks with JDK 17 (probably due to additional
     //    interfaces in JDK types), will comment out.
 /*
+    @Test
     public void testAddOverridesFromInterfaces() throws IllegalAccessException, InvocationTargetException
     {
         ResolvedType resolvedType = typeResolver.resolve(MemberResolver.class);
@@ -341,6 +352,7 @@ public class MemberResolverTest extends BaseTest
     }
     */
 
+    @Test
     public void testGatherTypesWithInterfaces() throws Exception
     {
         ResolvedType resolvedType = typeResolver.resolve(MemberResolver.class);
@@ -375,6 +387,7 @@ public class MemberResolverTest extends BaseTest
         assertEquals(2, types.size());
     }
 
+    @Test
     public void testJavaLangObject30() throws Exception
     {
         MemberResolver memberResolver = new MemberResolver(typeResolver);

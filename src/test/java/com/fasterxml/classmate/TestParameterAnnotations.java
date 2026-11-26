@@ -2,14 +2,14 @@ package com.fasterxml.classmate;
 
 import com.fasterxml.classmate.members.ResolvedConstructor;
 import com.fasterxml.classmate.members.ResolvedMethod;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests that parameters annotations (on constructors and member methods) can be
@@ -21,7 +21,7 @@ public class TestParameterAnnotations {
     MemberResolver members;
     AnnotationConfiguration annotations;
 
-    @Before
+    @BeforeEach
     public void setup() {
         types = new TypeResolver();
         members = new MemberResolver(types);

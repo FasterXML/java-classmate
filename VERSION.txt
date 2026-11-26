@@ -3,9 +3,108 @@ Java ClassMate project: licensed under Apache License 2.0
 
 Release notes:
 
-1.8.0 (not yet released)
+1.8.1 (not yet released)
 
--
+#143: Use access order for LRU type cache eviction
+ (contributed by @Mr-KnightCLI)
+- Upgrade to JUnit 5
+
+1.8.0 (10-Oct-2026)
+
+#125: Generic array types compare equal and collide in the resolver cache
+ (reported, fix contributed by 박재홍, @PHJ2000)
+- Array types no longer retain type bindings of the enclosing type; equality
+  of `ResolvedArrayType` now includes element type (self-referential element
+  types are compared by erased type and type bindings)
+- Raw types (like raw `Map` field, or raw supertype) no longer retain type bindings
+  of the enclosing type: type parameters resolve to their bounds instead
+  (f.ex raw `Map` within `Holder<String>` is now `Map<Object,Object>`, not `Map<String>`)
+- `TypeResolver.resolve(TypeBindings, Type)` no longer applies given bindings
+  to a `Class` passed as `Type` (f.ex bindings of `List<String>` with `List.class`
+  now result in `List<Object>`); use `resolve(Type, Type...)` instead
+- Array types are cached by `TypeResolver` using element type as part of the key
+- Types with `TypePlaceHolder`s (from `resolveSubtype()`) or self-references
+  (`ResolvedRecursiveType`) in their type parameters (at any level of nesting,
+  including array element types) are no longer cached
+#127: `resolveSubtype()` does not verify or resolve array element types
+- `resolveSubtype()` now rejects type variable bound to conflicting types
+  (like `E` in `Dup<E> extends Pair<E[], E>`; except that `Object`, which may
+  come from wildcard or raw type, is compatible with more specific type at any
+  level of nesting, like `List<?>` with `List<String>`) and primitive types bound
+  to type variables (like `int` for `E` in `E[]`)
+- Self-references (`ResolvedRecursiveType`) only valid within their original
+  resolution context (like ones in type parameters of `getParentClass()`) are no
+  longer included in types returned by `resolveSubtype()`: raw self-references
+  resolve to their bounds, others to the referenced type (self-references to
+  enclosing type, like in raw `Enum`, are retained as-is)
+- `TypeResolver.resolve(Type, Type...)` and `TypeBindings.create()` now fail with
+  `IllegalArgumentException` if any of type parameters is a primitive type
+  (like `resolve(List.class, int.class)`)
+ (fix by @cowtowncoder w/ Claude code)
+#128: Self-references via supertypes still cached; self-references not equal
+  to fully resolved types
+- Types containing self-references to types still being resolved (like `B` in
+  `B extends Base<A>` when resolving `A extends Base<B>`) are no longer cached,
+  and are re-resolved when used later (like for member types)
+- Self-references (`ResolvedRecursiveType`) nested in type parameters or array
+  element types are equal to fully resolved types with same type bindings
+  (so f.ex raw `Enum` is now equal to `Enum<Enum<Object>>`)
+- Raw self-references have type parameters resolved to bounds, like other raw types
+  (except ones created while resolving bounds of the type itself, like `T` in
+  `RawBound<T extends RawBound>`; types containing those may also be shared)
+- Self-references with bindings different from referenced type (like raw `Mid`
+  within `Mid<String>`, or `N<N<T>>` within `N<T>`) now represent type with own
+  bindings: see new `ResolvedRecursiveType.getActualType()` (also used for
+  `getParentClass()`, members and `resolveSubtype()`)
+ (fix by @cowtowncoder w/ Claude code)
+#130: `resolveSubtype()` does not verify bounds of type variables
+- `resolveSubtype()` now rejects type variable bound to type that can not satisfy
+  its bounds (like `String` for `E extends Number`); check is lenient since bindings
+  from wildcards and raw types are not distinguished from exact ones: only types that
+  can not have a common subtype with bound (as per Java casting rules) are rejected
+ (fix by @cowtowncoder w/ Claude code)
+#132: `MemberResolver` misses members inherited via self-referential interface
+  (`ResolvedRecursiveType` as implemented interface)
+- `getImplementedInterfaces()` returns types self-referential interfaces represent
+  (same as `getParentClass()`): for expanding generic types (like `D<T>` for
+  `C<T> extends Base<D<T>>`, `D<T> extends C<List<T>>`), following supertypes and
+  their type parameters may yield ever deeper types
+- `ResolvedRecursiveType.getActualType()` returns stand-alone type if referenced
+  type is only valid within its resolution context (like `B` in `B extends Base<A>`,
+  when resolving `A extends Base<B>`)
+ (fix by @cowtowncoder w/ Claude code)
+#133: Member type of bare type variable bound to self-reference is `ResolvedRecursiveType`
+  (unlike `T[]` or `List<T>`)
+- `TypeResolver.resolve(TypeBindings, Type)` (used by `MemberResolver`) and
+  `resolve(Type, Type...)` now return type self-reference represents (instead of
+  `ResolvedRecursiveType`) when given type resolves to a self-reference: f.ex type of
+  field `X value` of `Base<X>`, inherited by `Sym<T extends Sym<T>> extends Base<T>`
+- Same for element type of array constructed with `TypeResolver.arrayType(Type)`
+- NOTE: potentially incompatible change: member types (and results of above methods)
+  are never `ResolvedRecursiveType`s now, so code that relies on
+  `TypeResolver.isSelfReference()` (or `getSelfReferencedType()`) of member types
+  to detect cycles needs to use other means (like tracking types already visited)
+ (fix by @cowtowncoder w/ Claude code)
+#137: Supertype lookups (`findSupertype()`) on a self-reference (`ResolvedRecursiveType`)
+  return `null`
+- `ResolvedRecursiveType.findSupertype()` (and so `typeParametersFor()`) now looks up
+  supertypes from type self-reference represents (`getActualType()`); `getParentClass()`
+  and `getImplementedInterfaces()` of self-references still return no supertypes
+- NOTE: `findSupertype()` with erased type of self-reference itself now returns the
+  type it represents, instead of the self-reference (so it is no longer
+  `ResolvedRecursiveType`)
+ (fix by @cowtowncoder w/ Claude code)
+
+1.7.3 (02-Jan-2026)
+
+#117: Regression in 1.7.2 (wrt #53) causes `StackOverflowError` for some recursive types
+ (reported by Marcin E)
+
+1.7.2 (27-Dec-2025)
+
+#53: Allow for subtype resolution with unknown generics
+ (reported by Carsten W, @CarstenWickner)
+- Update to `oss-parent` v74
 
 1.7.1 (26-Sep-2025)
 

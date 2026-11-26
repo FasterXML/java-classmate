@@ -1,17 +1,18 @@
 package com.fasterxml.classmate.members;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.fasterxml.classmate.types.ResolvedObjectType;
 import com.fasterxml.classmate.util.MethodKey;
 
 import java.lang.reflect.Constructor;
 
-import junit.framework.TestCase;
 
 /**
  * @author blangel
  */
 public class RawConstructorTest
-    extends TestCase
 {
 
     private static final Constructor<String> stringConstructor;
@@ -23,6 +24,7 @@ public class RawConstructorTest
         }
     }
 
+    @Test
     public void testCreateKey() {
         RawConstructor rawConstructor = new RawConstructor(ResolvedObjectType.create(Object.class, null, null, null), stringConstructor);
         MethodKey methodKey = rawConstructor.createKey();
@@ -30,6 +32,7 @@ public class RawConstructorTest
         assertEquals("<init>()", methodKey.toString());
     }
 
+    @Test
     public void testEquals() {
         // referential equality
         RawConstructor rawConstructor = new RawConstructor(ResolvedObjectType.create(Object.class, null, null, null), stringConstructor);
@@ -53,6 +56,7 @@ public class RawConstructorTest
         assertFalse(rawConstructor2.equals(rawConstructor1));
     }
 
+    @Test
     public void testRawConstructorHashCode() {
         RawConstructor rawConstructor = new RawConstructor(ResolvedObjectType.create(Object.class, null, null, null), stringConstructor);
         assertEquals(stringConstructor.getName().hashCode(), rawConstructor.hashCode());

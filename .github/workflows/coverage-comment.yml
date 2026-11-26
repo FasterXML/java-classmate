@@ -1,0 +1,60 @@
+name: Post Coverage Comment
+# Runs in the context of the base repository (with write access) after "Build"
+# completes for a pull request, so comments can be posted on PRs from forks too.
+# Only consumes the pre-rendered comment artifact; never checks out PR code.
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
+
+permissions:
+  actions: read
+  pull-requests: write
+
+# Serialize comment updates per PR branch so overlapping runs do not race
+concurrency:
+  group: coverage-comment-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  comment:
+    runs-on: ubuntu-24.04
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    steps:
+    - name: Download comment artifact
+      uses: dawidd6/action-download-artifact@a92c7ae74cf1df8810783758581e485ac3aaa309 # v28
+      with:
+        name: pr-comment
+        path: pr-comment/
+        run_id: ${{ github.event.workflow_run.id }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Post coverage comment
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REPO: ${{ github.repository }}
+        RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      run: |
+        PR_NUMBER=$(cat pr-comment/pr-number.txt)
+        # Artifact comes from an untrusted PR run: make sure PR number is numeric...
+        if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+          echo "Invalid PR number: '$PR_NUMBER'"
+          exit 1
+        fi
+        # ...and that it refers to the PR this run actually built (trusted event data).
+        # Also skips stale runs if the PR has been updated since.
+        PR_HEAD_SHA=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq '.head.sha')
+        if [ "$PR_HEAD_SHA" != "$RUN_HEAD_SHA" ]; then
+          echo "PR #$PR_NUMBER head ($PR_HEAD_SHA) does not match built commit ($RUN_HEAD_SHA); skipping"
+          exit 0
+        fi
+
+        # Find and delete existing coverage comment(s) posted by this bot
+        # (REST API gives numeric ids)
+        for COMMENT_ID in $(gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments" \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("<!-- jacoco-coverage-comment -->"))) | .id'); do
+          gh api -X DELETE "repos/$REPO/issues/comments/$COMMENT_ID" || true
+        done
+
+        # Post new comment
+        gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file pr-comment/comment-body.txt

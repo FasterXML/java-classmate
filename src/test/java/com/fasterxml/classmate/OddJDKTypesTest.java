@@ -1,11 +1,15 @@
 package com.fasterxml.classmate;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.*;
 
 public class OddJDKTypesTest extends BaseTest
 {
     // Simple test, based on issues Jackson's type resolver had with inner
     // classes of JDK (Hash)Map
+    @Test
     public void testJDKMaps()
     {
         TypeResolver resolver = new TypeResolver();

@@ -1,13 +1,12 @@
 package com.fasterxml.classmate;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static junit.framework.Assert.assertNull;
-import static junit.framework.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
-@SuppressWarnings("deprecation")
-public class StdConfigurationTest {
-
+public class StdConfigurationTest
+{
     @Test
     public void getInclusionForClass() {
         AnnotationConfiguration.StdConfiguration config = new AnnotationConfiguration.StdConfiguration(null);

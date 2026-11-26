@@ -3,17 +3,17 @@ package com.fasterxml.classmate.members;
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
 
-import static junit.framework.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author blangel
  */
-@SuppressWarnings("deprecation")
-public class ResolvedMethodTest {
+public class ResolvedMethodTest
+{
     private static abstract class ModifiersClass {
         private strictfp void strictfpMethod() { }
         private native void nativeMethod();

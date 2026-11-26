@@ -2,17 +2,16 @@ package com.fasterxml.classmate.members;
 
 import com.fasterxml.classmate.types.ResolvedObjectType;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-@SuppressWarnings("deprecation")
-public class RawFieldTest {
-
+public class RawFieldTest
+{
     @SuppressWarnings("unused")
     private static class ModifiersClass {
         private static String test;

@@ -1,5 +1,9 @@
 package com.fasterxml.classmate;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.*;
 
 /**
@@ -16,13 +20,14 @@ public class TestTypeDescriptions extends BaseTest
 
     protected TypeResolver typeResolver;
 
-    @Override
-    protected void setUp()
+    @BeforeEach
+    public void setUp()
     {
         // Let's use a single instance for all tests, to increase chance of seeing failures
         typeResolver = new TypeResolver();
     }
 
+    @Test
     public void testSimpleTypes()
     {
         // let's check some default java types
@@ -54,6 +59,7 @@ public class TestTypeDescriptions extends BaseTest
         assertEquals("Ljava/lang/String;", stringType.getSignature());
     }
 
+    @Test
     public void testPrimitiveTypes()
     {
         // let's check some default java types
@@ -68,6 +74,7 @@ public class TestTypeDescriptions extends BaseTest
         assertEquals("boolean", boolType.getFullDescription());
     }
 
+    @Test
     public void testGenericTypes()
     {
         ResolvedType mapType = typeResolver.resolve(new GenericType<Map<Long,Boolean>>() { });

@@ -1,16 +1,16 @@
 package com.fasterxml.classmate.members;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-
-import junit.framework.TestCase;
 
 import com.fasterxml.classmate.*;
 
 // for [#33]: "ghost" parameter
 public class GhostTypeParameterInFieldTest
-    extends TestCase
 {
     public static class GenericWithClass<T extends Number> {
         public List<T> listOfT;
@@ -24,6 +24,7 @@ public class GhostTypeParameterInFieldTest
         public Number i;
     }
 
+    @Test
     public void testGhostTypeParameterWithClass()
     {
         TypeResolver resolver = new TypeResolver();
@@ -47,7 +48,7 @@ public class GhostTypeParameterInFieldTest
         ResolvedType listOfT_Type = listOfT_Field.getType();
         assertEquals(List.class, listOfT_Type.getErasedType());
         List<ResolvedType> listOfT_TypeParams = listOfT_Type.getTypeParameters();
-        assertEquals("Expected 1 type parameter for listOfT, got " + listOfT_TypeParams.size() + ": " + listOfT_TypeParams, 1, listOfT_TypeParams.size());
+        assertEquals(1, listOfT_TypeParams.size(), "Expected 1 type parameter for listOfT, got " + listOfT_TypeParams.size() + ": " + listOfT_TypeParams);
         assertEquals(Integer.class, listOfT_TypeParams.get(0).getErasedType());
 
         // field t
@@ -56,7 +57,7 @@ public class GhostTypeParameterInFieldTest
         ResolvedType t_Type = t_Field.getType();
         assertEquals(Integer.class, t_Type.getErasedType());
         List<ResolvedType> t_TypeParams = t_Type.getTypeParameters();
-        assertEquals("Expected 0 type parameter for t, got " + t_TypeParams.size() + ": " + t_TypeParams, 0, t_TypeParams.size());
+        assertEquals(0, t_TypeParams.size(), "Expected 0 type parameter for t, got " + t_TypeParams.size() + ": " + t_TypeParams);
 
         // field i
         ResolvedField i_Field = fields[0];
@@ -64,9 +65,10 @@ public class GhostTypeParameterInFieldTest
         ResolvedType i_Type = i_Field.getType();
         assertEquals(Integer.class, i_Type.getErasedType());
         List<ResolvedType> i_TypeParams = i_Type.getTypeParameters();
-        assertEquals("Expected 0 type parameter for i, got " + i_TypeParams.size() + ": " + i_TypeParams, 0, i_TypeParams.size());
+        assertEquals(0, i_TypeParams.size(), "Expected 0 type parameter for i, got " + i_TypeParams.size() + ": " + i_TypeParams);
     }
 
+    @Test
     public void testGhostTypeParameterWithInterface()
     {
         TypeResolver resolver = new TypeResolver();
@@ -90,7 +92,7 @@ public class GhostTypeParameterInFieldTest
         ResolvedType listOfT_Type = listOfT_Field.getType();
         assertEquals(List.class, listOfT_Type.getErasedType());
         List<ResolvedType> listOfT_TypeParams = listOfT_Type.getTypeParameters();
-        assertEquals("Expected 1 type parameter for listOfT, got " + listOfT_TypeParams.size() + ": " + listOfT_TypeParams, 1, listOfT_TypeParams.size());
+        assertEquals(1, listOfT_TypeParams.size(), "Expected 1 type parameter for listOfT, got " + listOfT_TypeParams.size() + ": " + listOfT_TypeParams);
         assertEquals(Integer.class, listOfT_TypeParams.get(0).getErasedType());
 
         // field t
@@ -99,7 +101,7 @@ public class GhostTypeParameterInFieldTest
         ResolvedType t_Type = t_Field.getType();
         assertEquals(Integer.class, t_Type.getErasedType());
         List<ResolvedType> t_TypeParams = t_Type.getTypeParameters();
-        assertEquals("Expected 0 type parameter for t, got " + t_TypeParams.size() + ": " + t_TypeParams, 0, t_TypeParams.size());
+        assertEquals(0, t_TypeParams.size(), "Expected 0 type parameter for t, got " + t_TypeParams.size() + ": " + t_TypeParams);
 
         // field i
         ResolvedField i_Field = fields[0];
@@ -107,6 +109,6 @@ public class GhostTypeParameterInFieldTest
         ResolvedType i_Type = i_Field.getType();
         assertEquals(Number.class, i_Type.getErasedType());
         List<ResolvedType> i_TypeParams = i_Type.getTypeParameters();
-        assertEquals("Expected 0 type parameter for i, got " + i_TypeParams.size() + ": " + i_TypeParams, 0, i_TypeParams.size());
+        assertEquals(0, i_TypeParams.size(), "Expected 0 type parameter for i, got " + i_TypeParams.size() + ": " + i_TypeParams);
     }
 }

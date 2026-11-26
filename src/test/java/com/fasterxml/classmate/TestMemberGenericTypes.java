@@ -1,5 +1,9 @@
 package com.fasterxml.classmate;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -85,8 +89,8 @@ public class TestMemberGenericTypes extends BaseTest
 
     protected TypeResolver typeResolver;
     
-    @Override
-    protected void setUp()
+    @BeforeEach
+    public void setUp()
     {
         // Let's use a single instance for all tests, to increase chance of seeing failures
         typeResolver = new TypeResolver();
@@ -102,6 +106,7 @@ public class TestMemberGenericTypes extends BaseTest
      * Test for verifying that basic generic type information is properly resolved
      * through type hierarchy.
      */
+    @Test
     public void testGenericWrappersForResolvedLeafType()
     {
         MemberResolver mr = new MemberResolver(typeResolver);
@@ -148,6 +153,7 @@ public class TestMemberGenericTypes extends BaseTest
     /**
      * Tests handling of incomplete information for intermediate class.
      */
+    @Test
     public void testGenericWrappersForIntermediate()
     {
         MemberResolver mr = new MemberResolver(typeResolver);
@@ -194,6 +200,7 @@ public class TestMemberGenericTypes extends BaseTest
     /**
      * Tests handling of incomplete information for base type
      */
+    @Test
     public void testGenericWrappersForBaseType()
     {
         MemberResolver mr = new MemberResolver(typeResolver);
@@ -249,6 +256,7 @@ public class TestMemberGenericTypes extends BaseTest
     /**
      * Unit test for Issue#3; ensuring that we can handle "local" declarations
      */
+    @Test
     public void testLocalGenerics()
     {
         MemberResolver mr = new MemberResolver(typeResolver);
@@ -272,6 +280,7 @@ public class TestMemberGenericTypes extends BaseTest
         assertEquals(Serializable.class, arg.getErasedType());
     }
 
+    @Test
     public void testAliasingWithLocalType()
     {
         MemberResolver mr = new MemberResolver(typeResolver);
@@ -290,6 +299,7 @@ public class TestMemberGenericTypes extends BaseTest
     }
 
     // [JACKSON-887]
+    @Test
     public void testTypesViaSubtype()
     {
         MemberResolver mr = new MemberResolver(typeResolver);
@@ -304,6 +314,7 @@ public class TestMemberGenericTypes extends BaseTest
         assertEquals(Number.class, type.getErasedType());
     }
 
+    @Test
     public void testLocalBoundedType()
     {
         MemberResolver mr = new MemberResolver(typeResolver);

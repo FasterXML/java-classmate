@@ -1,5 +1,9 @@
 package com.fasterxml.classmate;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.Arrays;
 
 import com.fasterxml.classmate.members.ResolvedField;
@@ -56,8 +60,8 @@ public class TestSelfRefMemberTypes extends BaseTest
 
     protected TypeResolver typeResolver;
 
-    @Override
-    protected void setUp()
+    @BeforeEach
+    public void setUp()
     {
         // Let's use a single instance for all tests, to increase chance of seeing failures
         typeResolver = new TypeResolver();
@@ -69,6 +73,7 @@ public class TestSelfRefMemberTypes extends BaseTest
     /**********************************************************************
      */
 
+    @Test
     public void testSelfReferencesSimple()
     {
         MemberResolver memberResolver = new MemberResolver(typeResolver);
@@ -79,6 +84,7 @@ public class TestSelfRefMemberTypes extends BaseTest
         assertEquals(Comparable.class, resolvedMethods[0].getReturnType().getErasedType());
     }
 
+    @Test
     public void testSelfReferencesComplex()
     {
           MemberResolver memberResolver = new MemberResolver(typeResolver);
@@ -99,6 +105,7 @@ public class TestSelfRefMemberTypes extends BaseTest
           assertEquals(ComplexSelfType.class, returnType.getErasedType());
     }
 
+    @Test
     public void testSelfReferencesVaryingDimensions()
     {
           MemberResolver memberResolver = new MemberResolver(typeResolver);

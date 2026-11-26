@@ -1,16 +1,20 @@
 package com.fasterxml.classmate.util;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+import com.fasterxml.classmate.GenericType;
 import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.classmate.types.ResolvedInterfaceType;
 import com.fasterxml.classmate.types.ResolvedObjectType;
-
-import junit.framework.TestCase;
+import com.fasterxml.classmate.types.TypePlaceHolder;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class TestResolvedTypeCache extends TestCase
+public class TestResolvedTypeCache
 {
     static class KeySubclass extends ResolvedTypeKey {
         KeySubclass(Class<?> simpleType) {
@@ -18,12 +22,52 @@ public class TestResolvedTypeCache extends TestCase
         }
     }
 
+    @Test
     public void testSimpleLRUCaching()
     {
         LRUTypeCache cache = (LRUTypeCache) ResolvedTypeCache.lruCache(2);
         _testSimple(cache, true);
     }
 
+    @Test
+    public void testLRUCacheRetainsRecentlyAccessedEntry()
+    {
+        ResolvedTypeCache cache = ResolvedTypeCache.lruCache(2);
+        ResolvedType first = new ResolvedInterfaceType(Map.class, null, null);
+        ResolvedType second = new ResolvedInterfaceType(Set.class, null, null);
+        ResolvedType third = new ResolvedInterfaceType(List.class, null, null);
+        cache._addForTest(first);
+        cache._addForTest(second);
+
+        assertSame(first, cache.find(cache.key(Map.class)));
+        cache._addForTest(third);
+
+        assertEquals(2, cache.size());
+        assertNull(cache.find(cache.key(Set.class)));
+        assertSame(first, cache.find(cache.key(Map.class)));
+        assertSame(third, cache.find(cache.key(List.class)));
+    }
+
+    @Test
+    public void testLRUCacheReplacementRefreshesAccessOrder()
+    {
+        ResolvedTypeCache cache = ResolvedTypeCache.lruCache(2);
+        ResolvedType first = new ResolvedInterfaceType(Map.class, null, null);
+        ResolvedType replacement = new ResolvedInterfaceType(Map.class, null, null);
+        ResolvedType second = new ResolvedInterfaceType(Set.class, null, null);
+        ResolvedType third = new ResolvedInterfaceType(List.class, null, null);
+        cache._addForTest(first);
+        cache._addForTest(second);
+        cache._addForTest(replacement);
+        cache._addForTest(third);
+
+        assertEquals(2, cache.size());
+        assertNull(cache.find(cache.key(Set.class)));
+        assertSame(replacement, cache.find(cache.key(Map.class)));
+        assertSame(third, cache.find(cache.key(List.class)));
+    }
+
+    @Test
     public void testSimpleConcurrentCaching()
     {
         ConcurrentTypeCache cache = (ConcurrentTypeCache) ResolvedTypeCache.concurrentCache(2);
@@ -68,6 +112,48 @@ public class TestResolvedTypeCache extends TestCase
         }
     }
     
+    // Types with TypePlaceHolders must not be cached, even if nested
+    @Test
+    public void testNoCachingForPlaceHolders()
+    {
+        ResolvedTypeCache cache = ResolvedTypeCache.lruCache(200);
+        TypeResolver resolver = new TypeResolver(cache);
+        TypePlaceHolder placeholder = new TypePlaceHolder(0);
+        ResolvedType string = resolver.resolve(String.class);
+        ResolvedType listOfPlaceholder = resolver.resolve(List.class, placeholder);
+        int size = cache.size();
+
+        ResolvedType nested = resolver.resolve(List.class, listOfPlaceholder);
+        resolver.resolve(Map.class, string, resolver.arrayType(listOfPlaceholder));
+        assertEquals(size, cache.size());
+        assertNotSame(nested, resolver.resolve(List.class, listOfPlaceholder));
+
+        // but without placeholders, caching is used
+        ResolvedType listOfStrings = resolver.resolve(List.class, string);
+        ResolvedType listOfLists = resolver.resolve(List.class, listOfStrings);
+        assertTrue(cache.size() > size);
+        assertSame(listOfLists, resolver.resolve(List.class, listOfStrings));
+    }
+
+    static class ListGenericType extends GenericType<List<Integer>> { }
+
+    // [classmate#125]: GenericType must not use bindings of enclosing context
+    @Test
+    public void testGenericTypeCachedOnce()
+    {
+        ResolvedTypeCache cache = ResolvedTypeCache.lruCache(200);
+        TypeResolver resolver = new TypeResolver(cache);
+        ResolvedType listOfStrings = resolver.resolve(List.class, String.class);
+        ResolvedType direct = resolver.resolve(new ListGenericType());
+        int size = cache.size();
+        ResolvedType inContext = resolver.resolve(listOfStrings.getTypeBindings(),
+                new ListGenericType());
+
+        assertSame(direct, inContext);
+        assertEquals(size, cache.size());
+    }
+
+    @Test
     public void testKeyEquals()
     {
         try {

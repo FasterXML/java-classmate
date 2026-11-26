@@ -5,11 +5,10 @@ import java.util.*;
 
 import com.fasterxml.classmate.types.ResolvedObjectType;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static junit.framework.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-@SuppressWarnings("deprecation")
 public class TypeBindingsTest
 {
     @Test
@@ -22,6 +21,19 @@ public class TypeBindingsTest
         assertEquals(0, ((ResolvedType[]) typesField.get(instance)).length);
         instance = TypeBindings.create(String.class, Collections.<ResolvedType>emptyList());
         assertEquals(0, ((ResolvedType[]) typesField.get(instance)).length);
+    }
+
+    // [classmate#127]: primitive types are not valid type parameters
+    @Test
+    public void createWithPrimitive() {
+        ResolvedType intType = new TypeResolver().resolve(Integer.TYPE);
+        try {
+            TypeBindings.create(Comparable.class, Collections.singletonList(intType));
+            fail("Expected failure");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains(
+                    "Can not use primitive type (int) as type parameter #1/1 of java.lang.Comparable"), e.getMessage());
+        }
     }
 
     @Test

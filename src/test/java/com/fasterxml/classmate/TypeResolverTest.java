@@ -1,5 +1,8 @@
 package com.fasterxml.classmate;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.*;
 import java.lang.reflect.*;
 
@@ -10,7 +13,7 @@ import com.fasterxml.classmate.util.ClassKey;
 import com.fasterxml.classmate.util.ResolvedTypeKey;
 
 @SuppressWarnings("serial")
-public class TestTypeResolver extends BaseTest
+public class TypeResolverTest extends BaseTest
 {
     /*
     /**********************************************************************
@@ -90,6 +93,7 @@ public class TestTypeResolver extends BaseTest
     /**********************************************************************
      */
 
+    @Test
     public void testResolveWithEmptyTypeParameters()
     {
         ResolvedType reference = typeResolver.resolve(List.class);
@@ -109,6 +113,7 @@ public class TestTypeResolver extends BaseTest
         assertSame(reference, type);
     }
 
+    @Test
     public void testResolveGenericWithFailures()
     {
         final GenericType<String> type = new GenericType<String>() { };
@@ -139,6 +144,7 @@ public class TestTypeResolver extends BaseTest
         }
     }
     
+    @Test
     public void testSimpleTypes()
     {
         // let's check some default java types
@@ -154,6 +160,7 @@ public class TestTypeResolver extends BaseTest
         assertSame(objectType, stringParent);
     }
 
+    @Test
     public void testArrayTypes()
     {
         ResolvedType arrayType = typeResolver.resolve(int[].class);
@@ -173,6 +180,7 @@ public class TestTypeResolver extends BaseTest
         assertSame(elemType, arrayType3.getArrayElementType());
     }    
 
+    @Test
     public void testGenericMap()
     {
         // First, direct ref
@@ -200,6 +208,7 @@ public class TestTypeResolver extends BaseTest
         assertSame(Boolean.class, params2.get(1).getErasedType());
     }
 
+    @Test
     public void testParametricMap()
     {
         ResolvedType mapType = typeResolver.resolve(MyStringLongMap.class);
@@ -222,6 +231,7 @@ public class TestTypeResolver extends BaseTest
     /**
      * Unit test for verifying that it is ok to sub-class {@link GenericType}
      */
+    @Test
     public void testIndirectGeneric()
     {
         ResolvedType type = typeResolver.resolve(new IndirectRef());
@@ -254,6 +264,7 @@ public class TestTypeResolver extends BaseTest
         assertSame(Long.class, mapParams.get(1).getErasedType());
     }
 
+    @Test
     public void testJdkType() throws Exception
     {
         ResolvedType wrapperType = typeResolver.resolve(StringListWrapper.class);
@@ -277,6 +288,7 @@ public class TestTypeResolver extends BaseTest
         assertSame(String.class, tp.get(0).getErasedType());
     }
 
+    @Test
     public void testSimpleSelfRef()
     {
         ResolvedType type = typeResolver.resolve(SelfRefType.class);
@@ -296,6 +308,7 @@ public class TestTypeResolver extends BaseTest
         assertSame(type, compParam.getSelfReferencedType());
     }
 
+    @Test
     public void testTypesFromMapField() throws Exception
     {
         ResolvedType type = typeResolver.resolve(StringLongMapBean.class);
@@ -308,6 +321,7 @@ public class TestTypeResolver extends BaseTest
         assertSame(Long.class, mapTypes.get(1).getErasedType());
     }
 
+    @Test
     public void testTypesFromListField() throws Exception
     {
         ResolvedType type = typeResolver.resolve(StringListBean.class);
@@ -319,6 +333,7 @@ public class TestTypeResolver extends BaseTest
         assertSame(String.class, listType.get(0).getErasedType());
     }
 
+    @Test
     public void testResolvedTypeAsType()
     {
         ResolvedType t1 = typeResolver.resolve(getClass());
@@ -335,6 +350,7 @@ public class TestTypeResolver extends BaseTest
     /**
      * Unit test to verify that discrepancies are properly detected
      */
+    @Test
     public void testGenericParamMismatch()
     {
         // Maps require 2 type params:
@@ -354,6 +370,34 @@ public class TestTypeResolver extends BaseTest
         }
     }
 
+    // [classmate#127]: primitive types are not valid type parameters
+    @Test
+    public void testPrimitiveTypeParameter()
+    {
+        try {
+            typeResolver.resolve(List.class, int.class);
+            fail("Expected failure");
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "Can not use primitive type (int) as type parameter #1/1 of java.util.List");
+        }
+        try {
+            typeResolver.resolve(Map.class, String.class, typeResolver.resolve(Long.TYPE));
+            fail("Expected failure");
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "Can not use primitive type (long) as type parameter #2/2 of java.util.Map");
+        }
+        try {
+            typeResolver.resolve(new GenericType<List<?>>() { }, Void.TYPE);
+            fail("Expected failure");
+        } catch (IllegalArgumentException e) {
+            verifyException(e, "Can not use primitive type (void) as type parameter #1/1");
+        }
+        // but arrays of primitives are fine
+        ResolvedType t = typeResolver.resolve(List.class, int[].class);
+        assertSame(int[].class, t.getTypeParameters().get(0).getErasedType());
+    }
+
+    @Test
     public void testInvalidSubtype()
     {
         ResolvedType supertype = typeResolver.resolve(String.class);
@@ -403,6 +447,7 @@ public class TestTypeResolver extends BaseTest
         }
     }
 
+    @Test
     public void testResolveOfSelfReferencedType()
     {
         ResolvedType supertype = typeResolver.resolve(SelfRefType.class);
@@ -420,6 +465,7 @@ public class TestTypeResolver extends BaseTest
         assertTrue(TypeResolver.isSelfReference(selfSuperType));
     }
 
+    @Test
     public void testWildcardType()
     {
         @SuppressWarnings("rawtypes")
@@ -433,6 +479,7 @@ public class TestTypeResolver extends BaseTest
         assertEquals(List.class, typeParameters.get(1).getErasedType());
     }
 
+    @Test
     public void testUnknownJdkType()
     {
         Type type = new Type() { };
@@ -444,6 +491,7 @@ public class TestTypeResolver extends BaseTest
         }
     }
 
+    @Test
     public void testMissingSuperclass() throws IllegalAccessException, InvocationTargetException
     {
         ResolvedType resolvedType = typeResolver.resolve(TypeResolver.class);
@@ -460,6 +508,7 @@ public class TestTypeResolver extends BaseTest
         assertNull(resolveSuperClassMethod.invoke(typeResolver, null, Comparator.class, null));
     }
 
+    @Test
     public void testTypesMatch() throws IllegalAccessException, InvocationTargetException
     {
         ResolvedType resolvedType = typeResolver.resolve(TypeResolver.class);
@@ -498,7 +547,28 @@ public class TestTypeResolver extends BaseTest
         assertFalse((Boolean) typesMatchMethod.invoke(typeResolver, matchAListResolved, matchBListResolved));
         assertFalse((Boolean) typesMatchMethod.invoke(typeResolver, matchBListResolved, matchAListResolved));
     }
-    
+
+    @Test
+    public void testMultiDimensionalGenericArrays() throws Exception
+    {
+        ResolvedType resolvedType = typeResolver.resolve(new GenericType<List<String>[][]>() { });
+        assertEquals(List[][].class, resolvedType.getErasedType());
+        assertEquals(Collections.emptyList(), resolvedType.getTypeParameters());
+        assertTrue(resolvedType.isArray());
+        ResolvedArrayType arrayType = (ResolvedArrayType) resolvedType;
+        ResolvedType inner1 = arrayType.getArrayElementType();
+        assertEquals(List[].class, inner1.getErasedType());
+        assertTrue(inner1.isArray());
+        ResolvedArrayType arrayType2 = (ResolvedArrayType) inner1;
+        ResolvedType inner2 = arrayType2.getArrayElementType();
+        assertEquals(List.class, inner2.getErasedType());
+        List<ResolvedType> inner2TypeParams = inner2.getTypeParameters();
+        assertEquals(1, inner2TypeParams.size());
+        assertEquals(String.class, inner2TypeParams.get(0).getErasedType());
+
+        assertEquals("java.util.List<java.lang.String>[][]", resolvedType.toString());
+    }
+
     /*
     /**********************************************************************
     /* Helper methods

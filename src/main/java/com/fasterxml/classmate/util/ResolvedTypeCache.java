@@ -46,6 +46,8 @@ public abstract class ResolvedTypeCache implements Serializable
         }
         // 25-Oct-2015, tatu: Need to prevent caching of anything with TypePlaceHolder;
         //   can cause problems otherwise as those are ephemeral/mutable containers
+        // [classmate#125]: NOTE: `TypeResolver` also checks for nested placeholders
+        //   and self-references before calling this method
         for (int i = 0; i < len; ++i) {
             if (tp[i] instanceof TypePlaceHolder) {
                 return null;

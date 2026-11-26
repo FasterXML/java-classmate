@@ -1,12 +1,11 @@
 package com.fasterxml.classmate.types;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static junit.framework.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-@SuppressWarnings("deprecation")
-public class TypePlaceHolderTest {
-
+public class TypePlaceHolderTest
+{
     @Test
     public void canCreateSubtypes() {
         TypePlaceHolder placeHolder = new TypePlaceHolder(0);
